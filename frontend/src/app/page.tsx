@@ -39,9 +39,9 @@ export default function Dashboard() {
   useSSE(() => setRefresh(n => n + 1))
 
   useEffect(() => {
-    api.mails.stats().then(setStats).catch(() => {})
-    api.accounts.list().then(setAccounts).catch(() => {})
-    api.mails.list(undefined, 'INBOX', 5, 0).then(setRecentEmails).catch(() => {})
+    api.mails.stats().then(d => setStats(d ?? null)).catch(() => {})
+    api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
+    api.mails.list(undefined, 'INBOX', 5, 0).then(d => setRecentEmails(d ?? [])).catch(() => {})
   }, [refresh])
 
   const statCards = [

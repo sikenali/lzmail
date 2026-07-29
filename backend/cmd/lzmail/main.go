@@ -12,6 +12,24 @@ import (
 	"github.com/lzmail/backend/internal/store"
 )
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			origin = "*"
+		}
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Vary", "Origin")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func ensureDir(path string) {
 	if err := os.MkdirAll(path, 0755); err != nil {
 		log.Fatal(err)
@@ -34,6 +52,7 @@ func main() {
 	accountStore := store.NewAccountStore(db)
 	emailStore := store.NewEmailStore(db)
 	contactStore := store.NewContactStore(db)
+	settingsStore := store.NewSettingsStore(db)
 
 	sseHub := sse.NewHub()
 	go sseHub.Run()
@@ -42,11 +61,13 @@ func main() {
 	accounts, _ := accountStore.List()
 	syncEngine.StartAll(accounts)
 
-	handler := api.NewHandler(accountStore, emailStore, contactStore, sseHub)
+	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub)
 	mux := http.NewServeMux()
 	handler.Register(mux)
 
+	wrapped := corsMiddleware(mux)
+
 	addr := ":" + cfg.Port
 	fmt.Println("listening on", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, wrapped))
 }

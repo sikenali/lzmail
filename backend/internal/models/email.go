@@ -19,6 +19,8 @@ type Email struct {
 	ArchivePath     string    `json:"archive_path"`
 	MessageID       string    `json:"message_id"`
 	CreatedAt       time.Time `json:"created_at"`
+	AccountName     string    `json:"account_name"`
+	AccountBrand    string    `json:"account_brand"`
 }
 
 type Attachment struct {

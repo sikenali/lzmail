@@ -3,6 +3,7 @@ package sync
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 	"github.com/emersion/go-imap"
@@ -51,12 +52,14 @@ func (s *Syncer) Stop() {
 func (s *Syncer) syncFolder(folder string) {
 	c, err := s.connect()
 	if err != nil {
+		log.Printf("sync: account %s (%s) connect failed: %v", s.account.Email, s.account.Name, err)
 		return
 	}
 	defer c.Logout()
 
 	mbox, err := c.Select(folder, false)
 	if err != nil {
+		log.Printf("sync: account %s select %s failed: %v", s.account.Email, folder, err)
 		return
 	}
 
@@ -97,7 +100,9 @@ func (s *Syncer) syncFolder(folder string) {
 		}
 		s.emailStore.Upsert(email)
 	}
-	<-done
+	if err := <-done; err != nil {
+		log.Printf("sync: account %s fetch failed: %v", s.account.Email, err)
+	}
 }
 
 func (s *Syncer) connect() (*client.Client, error) {
@@ -113,10 +118,11 @@ func (s *Syncer) connect() (*client.Client, error) {
 		}
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("imap dial %s: %w", addr, err)
 	}
 	if err := c.Login(s.account.Username, s.account.Password); err != nil {
-		return nil, err
+		c.Logout()
+		return nil, fmt.Errorf("imap login %s: %w", s.account.Email, err)
 	}
 	return c, nil
 }

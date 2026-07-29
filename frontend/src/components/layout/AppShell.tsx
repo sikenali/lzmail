@@ -9,14 +9,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen bg-[var(--background)]">
-      <div className="w-[var(--sidebar-width)] flex flex-col bg-[var(--card)] border-r shrink-0">
-        <div className="flex items-center gap-2 px-5 h-[var(--header-height)] border-b">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">LZ</div>
-          <span className="text-sm font-semibold">LZMail</span>
+    <div className="flex h-screen" style={{ backgroundColor: '#f5f6f8' }}>
+      <div className="w-[var(--sidebar-width)] flex flex-col bg-white border-r shrink-0" style={{ borderColor: '#f3f4f6' }}>
+        <div className="flex items-center gap-3 px-5 h-[var(--header-height)] border-b shrink-0" style={{ borderColor: '#f3f4f6' }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+            style={{ background: 'linear-gradient(to bottom right, #3b82f6, #4f46e5)' }}
+          >LZ</div>
+          <span className="text-base font-bold" style={{ color: '#1e293b', fontFamily: 'SourceHanSans-Bold, system-ui' }}>LZMail</span>
         </div>
         <Sidebar currentPath={pathname} />
-        <div className="flex-1" />
         <AccountSwitcher
           current={null}
           onSwitch={() => {}}

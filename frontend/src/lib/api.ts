@@ -16,7 +16,9 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 204) return undefined as T
   const text = await res.text()
   if (!text) return undefined as T
-  return JSON.parse(text)
+  const parsed: T = JSON.parse(text)
+  if (parsed === null) return undefined as T
+  return parsed
 }
 
 export const api = {

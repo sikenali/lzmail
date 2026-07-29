@@ -3,13 +3,28 @@ package sse
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"sync/atomic"
 )
 
+type publishMsg struct {
+	id   uint64
+	data string
+}
+
+type storedEvent struct {
+	id   uint64
+	data string
+}
+
 type Hub struct {
-	clients map[chan string]struct{}
-	sub     chan chan string
-	unsub   chan chan string
-	publish chan string
+	clients   map[chan string]struct{}
+	sub       chan chan string
+	unsub     chan chan string
+	publish   chan publishMsg
+	counter   atomic.Uint64
+	eventRing [128]storedEvent
+	ringPos   int
 }
 
 func NewHub() *Hub {
@@ -17,7 +32,7 @@ func NewHub() *Hub {
 		clients: make(map[chan string]struct{}),
 		sub:     make(chan chan string),
 		unsub:   make(chan chan string),
-		publish: make(chan string, 64),
+		publish: make(chan publishMsg, 64),
 	}
 }
 
@@ -30,9 +45,12 @@ func (h *Hub) Run() {
 			delete(h.clients, ch)
 			close(ch)
 		case msg := <-h.publish:
+			formatted := fmt.Sprintf("id: %d\nevent: %s\n\n", msg.id, msg.data)
+			h.eventRing[h.ringPos%len(h.eventRing)] = storedEvent{id: msg.id, data: formatted}
+			h.ringPos++
 			for ch := range h.clients {
 				select {
-				case ch <- msg:
+				case ch <- formatted:
 				default:
 				}
 			}
@@ -41,7 +59,8 @@ func (h *Hub) Run() {
 }
 
 func (h *Hub) Publish(event string, data string) {
-	h.publish <- fmt.Sprintf("event: %s\ndata: %s\n\n", event, data)
+	id := h.counter.Add(1)
+	h.publish <- publishMsg{id: id, data: fmt.Sprintf("%s\ndata: %s", event, data)}
 }
 
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +72,23 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+
+	lastIDStr := r.Header.Get("Last-Event-ID")
+	if lastIDStr != "" {
+		lastID, _ := strconv.ParseUint(lastIDStr, 10, 64)
+		ringSize := len(h.eventRing)
+		start := h.ringPos - ringSize
+		if start < 0 {
+			start = 0
+		}
+		for i := start; i < h.ringPos; i++ {
+			ev := h.eventRing[i%ringSize]
+			if ev.id > lastID {
+				fmt.Fprint(w, ev.data)
+			}
+		}
+		flusher.Flush()
+	}
 
 	ch := make(chan string, 64)
 	h.sub <- ch

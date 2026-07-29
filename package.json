@@ -1,0 +1,11 @@
+{
+  "name": "lzmail",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"cd backend && go run ./cmd/lzmail/\" \"cd frontend && npm run dev\"",
+    "build": "cd backend && go build ./cmd/lzmail/ && cd ../frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"github.com/lzmail/backend/internal/api"
 	"github.com/lzmail/backend/internal/config"
 	"github.com/lzmail/backend/internal/sse"
@@ -11,9 +12,18 @@ import (
 	"github.com/lzmail/backend/internal/store"
 )
 
+func ensureDir(path string) {
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	cfg := config.Load()
 	fmt.Println("lzmail backend starting...")
+
+	ensureDir(cfg.DataDir)
+	ensureDir(cfg.ArchiveDir)
 
 	db, err := store.OpenDB(cfg.DataDir + "/lzmail.db")
 	if err != nil {

@@ -1,0 +1,20 @@
+package: cloud.lazycat.app.lzmail
+version: 1.0.9
+name: 懒猫微邮
+description: 自托管多账号聚合 IMAP 邮件客户端，支持 Gmail/Outlook/QQ/网易/iCloud 等
+author: sikenali
+license: MIT
+homepage: https://github.com/sikenali/lzmail
+min_os_version: 1.5.0
+unsupported_platforms:
+  - ios
+locales:
+  zh-CN:
+    name: 懒猫微邮
+    description: 自托管多账号聚合 IMAP 邮件客户端
+  en:
+    name: LZMail
+    description: Self-hosted multi-account IMAP email client
+permissions:
+  required:
+    - net.internet

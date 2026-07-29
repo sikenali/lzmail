@@ -1,0 +1,88 @@
+name: Release LPK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Install lzc-cli
+        run: |
+          npm install -g @lazycatcloud/lzc-cli
+          lzc-cli --version
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci --registry https://registry.npmmirror.com
+          npm run build
+
+      - name: Generate icon from SVG
+        working-directory: frontend
+        run: |
+          node -e "
+            const sharp = require('sharp');
+            const fs = require('fs');
+            sharp(fs.readFileSync('public/favicon.svg'))
+              .resize(512, 512).png()
+              .toFile('../lzc/icon.png')
+              .then(() => console.log('icon generated'));
+          "
+
+      - name: Build and Release LPK
+        working-directory: lzc
+        env:
+          LPK_VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION=$(echo "${LPK_VERSION}" | sed 's/^v//')
+          VERSION="${VERSION:-0.0.0}"
+          echo "Building version: $VERSION"
+          # 设置版本号供 build.sh 使用
+          export LPK_VERSION="$VERSION"
+          bash build.sh
+          # 生成 LPK
+          node $(npm root -g)/@lazycatcloud/lzc-cli/scripts/cli.js project release -o output.lpk
+          # 重命名为版本化文件名
+          LPK_NAME="cloud.lazycat.app.lzmail-${VERSION}.lpk"
+          mv output.lpk "$LPK_NAME"
+          echo "LPK_FILE=$LPK_NAME" >> $GITHUB_ENV
+          echo "Generated: $LPK_NAME"
+
+      - name: Get tag version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag: v$VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: LZMail v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            lzc/${{ env.LPK_FILE }}

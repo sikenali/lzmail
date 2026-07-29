@@ -1,26 +1,43 @@
 'use client'
 import { useEffect, useRef } from 'react'
-
-const SSE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { api } from '@/lib/api'
 
 export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
   const eventSourceRef = useRef<EventSource | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onMailNewRef = useRef(onMailNew)
+  const onMailUpdatedRef = useRef(onMailUpdated)
+  onMailNewRef.current = onMailNew
+  onMailUpdatedRef.current = onMailUpdated
 
   useEffect(() => {
-    const es = new EventSource(`${SSE_URL}/api/v1/events`)
-    eventSourceRef.current = es
+    let stopped = false
 
-    es.addEventListener('mail:new', () => onMailNew?.())
-    es.addEventListener('mail:updated', () => onMailUpdated?.())
-    es.addEventListener('sync:status', (e) => console.log('sync:', e.data))
+    function connect() {
+      if (stopped) return
+      try {
+        const es = new EventSource(`${api.events.url()}`)
+        eventSourceRef.current = es
 
-    es.onerror = () => {
-      es.close()
-      setTimeout(() => {
-        new EventSource(`${SSE_URL}/api/v1/events`)
-      }, 5000)
+        es.addEventListener('mail:new', () => onMailNewRef.current?.())
+        es.addEventListener('mail:updated', () => onMailUpdatedRef.current?.())
+        es.addEventListener('mail:sent', () => onMailNewRef.current?.())
+        es.addEventListener('sync:status', (e) => console.log('sync:', e.data))
+
+        es.onerror = () => {
+          es.close()
+          eventSourceRef.current = null
+          timerRef.current = setTimeout(connect, 5000)
+        }
+      } catch {}
     }
 
-    return () => es.close()
-  }, [onMailNew, onMailUpdated])
+    connect()
+
+    return () => {
+      stopped = true
+      if (timerRef.current) clearTimeout(timerRef.current)
+      eventSourceRef.current?.close()
+    }
+  }, [])
 }

@@ -31,6 +31,17 @@ export interface Email {
   archive_path: string
   message_id: string
   created_at: string
+  account_name?: string
+  account_brand?: string
+}
+
+export interface Attachment {
+  id: number
+  email_id: number
+  filename: string
+  mime_type: string
+  size: number
+  path: string
 }
 
 export interface Contact {
@@ -40,4 +51,27 @@ export interface Contact {
   account_id: number
   created_at: string
   updated_at: string
+}
+
+export interface MailStats {
+  total_emails: number
+  unread_emails: number
+  today_emails: number
+  account_count: number
+  storage_bytes: number
+}
+
+export interface EmailDetail {
+  email: Email
+  attachments: Attachment[]
+  body_html: string
+}
+
+export interface ComposePayload {
+  account_id: number
+  to: string
+  cc: string
+  subject: string
+  body_text: string
+  body_html: string
 }

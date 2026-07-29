@@ -1,0 +1,31 @@
+package models
+
+import "time"
+
+type Email struct {
+	ID              int64     `json:"id"`
+	AccountID       int64     `json:"account_id"`
+	UID             uint32    `json:"uid"`
+	Folder          string    `json:"folder"`
+	Subject         string    `json:"subject"`
+	From            string    `json:"from"`
+	To              string    `json:"to"`
+	CC              string    `json:"cc"`
+	Date            time.Time `json:"date"`
+	BodyPreview     string    `json:"body_preview"`
+	IsRead          bool      `json:"is_read"`
+	IsStarred       bool      `json:"is_starred"`
+	HasAttachments  bool      `json:"has_attachments"`
+	ArchivePath     string    `json:"archive_path"`
+	MessageID       string    `json:"message_id"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type Attachment struct {
+	ID       int64  `json:"id"`
+	EmailID  int64  `json:"email_id"`
+	Filename string `json:"filename"`
+	MimeType string `json:"mime_type"`
+	Size     int64  `json:"size"`
+	Path     string `json:"path"`
+}

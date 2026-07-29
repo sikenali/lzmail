@@ -33,7 +33,7 @@ func (s *EmailStore) List(accountID int64, folder string, limit, offset int) ([]
 		return nil, err
 	}
 	defer rows.Close()
-	var emails []models.Email
+	emails := make([]models.Email, 0)
 	for rows.Next() {
 		e, err := scanEmail(rows)
 		if err != nil {
@@ -58,7 +58,7 @@ func (s *EmailStore) ListAll(folder string, limit, offset int) ([]models.Email, 
 		return nil, err
 	}
 	defer rows.Close()
-	var emails []models.Email
+	emails := make([]models.Email, 0)
 	for rows.Next() {
 		e, err := scanEmail(rows)
 		if err != nil {

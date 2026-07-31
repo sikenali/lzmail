@@ -24,6 +24,48 @@
   --outlook: #0078d4;
   --qq: #12b7f5;
   --netease: #e53e3e;
+  /* App shell background */
+  --app-background: #f5f6f8;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f3f4f6;
+}
+
+[data-theme="light"] {
+  --background: #f8fafc;
+  --card: #ffffff;
+  --card-border: #f3f4f6;
+  --foreground: #0f172a;
+  --foreground-secondary: #334155;
+  --foreground-tertiary: #64748b;
+  --muted: #f1f5f9;
+  --muted-foreground: #94a3b8;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --border: #e2e8f0;
+  --app-background: #f5f6f8;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f3f4f6;
+}
+
+[data-theme="dark"] {
+  --background: #0f172a;
+  --card: #1e293b;
+  --card-border: #334155;
+  --foreground: #f1f5f9;
+  --foreground-secondary: #cbd5e1;
+  --foreground-tertiary: #94a3b8;
+  --muted: #1e293b;
+  --muted-foreground: #64748b;
+  --primary: #3b82f6;
+  --primary-foreground: #0f172a;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --border: #334155;
+  --app-background: #1e293b;
+  --sidebar-bg: #1e293b;
+  --sidebar-border: #334155;
 }
 
 .dark {
@@ -40,6 +82,9 @@
   --accent: #1e293b;
   --accent-foreground: #f1f5f9;
   --border: #334155;
+  --app-background: #1e293b;
+  --sidebar-bg: #1e293b;
+  --sidebar-border: #334155;
 }
 
 * {
@@ -51,6 +96,7 @@ body {
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @media (max-width: 768px) {

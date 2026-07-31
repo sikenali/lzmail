@@ -78,8 +78,8 @@ export default function Dashboard() {
         <div className="max-w-[1200px] mx-auto" style={{ padding: '24px' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#1e293b', fontFamily: 'SourceHanSans-Bold, system-ui' }}>仪表盘</h1>
-              <p className="text-sm mt-0.5" style={{ color: '#94a3b8' }}>邮件概况与统计</p>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)', fontFamily: 'SourceHanSans-Bold, system-ui' }}>仪表盘</h1>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>邮件概况与统计</p>
             </div>
             <div className="flex items-center gap-2 bg-white border rounded-lg" style={{ borderColor: '#e5e7eb', padding: '8px 12px' }}>
               <Calendar className="w-3.5 h-3.5" style={{ color: '#9ca3af' }} />

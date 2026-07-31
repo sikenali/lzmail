@@ -48,8 +48,8 @@ export default function ComposePage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col h-full max-w-[860px] mx-auto bg-[var(--card)] border-x">
-        <div className="flex items-center justify-between px-5 h-14 border-b">
+      <div className="flex flex-col h-full max-w-[860px] mx-auto bg-[var(--card)] border-x" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between px-5 h-14 border-b" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2">
             <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><ArrowLeft className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
             <span className="text-sm font-semibold">新邮件</span>

@@ -36,26 +36,59 @@ export function useSettings() {
   const [loading, setLoading] = useState(true)
   const loaded = useRef(false)
 
+  // Apply theme to document element
+  const applyTheme = (theme: string) => {
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
+    } else {
+      document.documentElement.setAttribute('data-theme', theme)
+    }
+  }
+
   useEffect(() => {
     if (loaded.current) return
     loaded.current = true
+    
+    // Initialize theme before fetching settings (use system/localStorage default)
+    const saved = localStorage.getItem('lzmail_theme')
+    const initialTheme = saved && ['light', 'dark', 'system'].includes(saved) 
+      ? saved 
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    applyTheme(initialTheme)
+
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
-      setLoading(false)
+      // Apply theme from settings or fallback
+      const themeToApply = (s?.theme || defaults.theme) as 'light' | 'dark' | 'system'
+      applyTheme(themeToApply)
     }).catch(() => {
       setSettings(defaults)
-      setLoading(false)
+      // Use saved theme or system preference on error
+      applyTheme(initialTheme)
     })
+    setLoading(false)
   }, [])
 
   const setSetting = useCallback((key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
     api.settings.set({ [key]: value }).catch(() => {})
+    
+    // If theme changed, apply it immediately and save to localStorage
+    if (key === 'theme') {
+      applyTheme(value)
+      localStorage.setItem('lzmail_theme', value)
+    }
   }, [])
 
   const setSettingsBatch = useCallback((batch: Record<string, string>) => {
     setSettings((prev) => ({ ...prev, ...batch }))
     api.settings.set(batch).catch(() => {})
+    
+    if (batch.theme) {
+      applyTheme(batch.theme)
+      localStorage.setItem('lzmail_theme', batch.theme)
+    }
   }, [])
 
   return { settings, loading, setSetting, setSettingsBatch }

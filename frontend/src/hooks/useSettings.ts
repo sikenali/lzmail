@@ -29,6 +29,7 @@ const defaults: Settings = {
   keep_attachments: 'true',
   compress_attachments: 'false',
   auto_cleanup: 'true',
+  animations: 'true',
 }
 
 export function useSettings() {

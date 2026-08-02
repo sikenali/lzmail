@@ -5,6 +5,11 @@ import { api } from '@/lib/api'
 import type { EmailDetail } from '@/types'
 import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Link, MailQuestion } from 'lucide-react'
 
+function shiftColor(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
+  return `rgb(${Math.max(0, r - 40)}, ${Math.max(0, g - 40)}, ${Math.max(0, b - 40)})`
+}
+
 export default function MailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -80,7 +85,11 @@ export default function MailPage() {
           </div>
 
           <div className="flex items-start gap-3 pb-6 border-b">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+              style={{ background: (email as any).account_brand
+                ? `linear-gradient(135deg, ${(email as any).account_brand}, ${shiftColor((email as any).account_brand)})`
+                : 'linear-gradient(135deg, #c43d3d, #a83232)' }}
+            >
               {email.from[0]?.toUpperCase() || '?'}
             </div>
             <div className="flex-1">

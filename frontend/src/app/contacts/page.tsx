@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Search, Plus, MoreVertical, ChevronDown, User } from 'lucide-react'
+import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building } from 'lucide-react'
 import type { Contact } from '@/types'
 
 const gradients = [
@@ -16,6 +16,7 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [view, setView] = useState<'grid' | 'table'>('grid')
 
   useEffect(() => {
     api.contacts.list().then(list => setContacts(list || [])).catch(() => {}).finally(() => setLoading(false))
@@ -37,60 +38,66 @@ export default function ContactsPage() {
 
   return (
     <AppShell>
-      <div className="flex h-full">
-        <div className="w-[280px] border-r shrink-0 bg-[var(--card)] flex flex-col">
-          <div className="px-5 py-4 border-b">
-            <h1 className="text-sm font-semibold mb-3">联系人</h1>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 bg-[var(--muted)] rounded-lg outline-none text-sm" placeholder="搜索联系人..." />
+      <div className="p-6" style={{ backgroundColor: '#fbf7f0', minHeight: '100%' }}>
+        {/* Title */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: '#6b8fa3' }} />
+            <div>
+              <h1 className="text-xl font-bold" style={{ color: '#3d2b1f', fontFamily: 'SourceHanSans-Bold, system-ui' }}>联系人</h1>
+              <p className="text-xs mt-0.5" style={{ color: '#8b7355' }}>管理你的联系人</p>
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-3">
-            {availableLetters.map(l => (
-              <a key={l} href={`#letter-${l}`}
-                className="flex items-center justify-between px-3 h-8 rounded-lg text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]"
-              >
-                {l}
-                <span className="text-xs">{grouped[l].length}</span>
-              </a>
-            ))}
+          <button className="flex items-center gap-2 px-4 h-10 bg-[#6b8fa3] text-white rounded-xl text-sm font-medium hover:opacity-90">
+            <Plus className="w-4 h-4" /> 添加联系人
+          </button>
+        </div>
+
+        {/* Search + view toggle */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9ca3af' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full h-10 pl-9 pr-4 bg-white rounded-xl outline-none text-sm placeholder:text-[#b8a88a]"
+              style={{ border: '1px solid #f3ede3', color: '#3d2b1f' }}
+              placeholder="搜索联系人..."
+            />
+          </div>
+          <div className="flex items-center gap-1 bg-white rounded-xl border p-1" style={{ borderColor: '#f3ede3' }}>
+            <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[#6b8fa3] text-white' : 'text-[#8b7355] hover:bg-[#f5f0e8]'}`}>
+              卡片
+            </button>
+            <button onClick={() => setView('table')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'table' ? 'bg-[#6b8fa3] text-white' : 'text-[#8b7355] hover:bg-[#f5f0e8]'}`}>
+              列表
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-[var(--foreground-secondary)]">{filtered.length} 个联系人</span>
-            </div>
-            <button className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">
-              <Plus className="w-4 h-4" /> 新建联系人
-            </button>
-          </div>
-          {loading ? (
-            <div className="text-center py-12"><div className="w-16 h-16 rounded-2xl bg-[var(--muted)] flex items-center justify-center mx-auto mb-4"><User className="w-8 h-8 text-[var(--muted-foreground)]" /></div><p className="text-sm text-[var(--muted-foreground)]">加载中...</p></div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12"><div className="w-16 h-16 rounded-2xl bg-[var(--muted)] flex items-center justify-center mx-auto mb-4"><User className="w-8 h-8 text-[var(--muted-foreground)]" /></div><p className="text-sm text-[var(--muted-foreground)]">暂无联系人</p></div>
-          ) : (
+        {loading ? (
+          <div className="text-center py-12 text-sm" style={{ color: '#b8a88a' }}>加载中...</div>
+        ) : view === 'grid' ? (
+          <>
+            {/* Grid view */}
             <div className="space-y-6">
-              {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([letter, items]) => (
+              {availableLetters.map(letter => (
                 <div key={letter} id={`letter-${letter}`}>
-                  <div className="sticky top-0 bg-[var(--background)] z-10 pb-2 mb-2 border-b">
-                    <span className="text-lg font-semibold text-[var(--foreground)]">{letter}</span>
+                  <div className="sticky top-0 bg-[#fbf7f0] z-10 pb-2 mb-3 border-b" style={{ borderColor: '#f3ede3' }}>
+                    <span className="text-lg font-semibold" style={{ color: '#3d2b1f' }}>{letter}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {items.map((c, i) => (
-                      <div key={c.id} className="flex items-center gap-3 p-4 bg-[var(--card)] rounded-xl border hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="grid grid-cols-4 gap-4">
+                    {grouped[letter].map((c, i) => (
+                      <div key={c.id} className="flex items-center gap-3 p-4 bg-white rounded-2xl border hover:shadow-sm transition-shadow cursor-pointer"
+                        style={{ borderColor: '#f3ede3' }}
+                      >
                         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
                           {(c.name?.[0] || '?').toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{c.name || '(无名)'}</div>
-                          <div className="text-xs text-[var(--muted-foreground)] truncate">{c.email}</div>
+                          <div className="text-sm font-medium truncate" style={{ color: '#3d2b1f' }}>{c.name || '(无名)'}</div>
+                          <div className="text-xs truncate" style={{ color: '#8b7355' }}>{c.email}</div>
                         </div>
-                        <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg">
-                          <MoreVertical className="w-4 h-4 text-[var(--foreground-tertiary)]" />
+                        <button className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f0e8] rounded-lg">
+                          <MoreVertical className="w-4 h-4" style={{ color: '#8b7355' }} />
                         </button>
                       </div>
                     ))}
@@ -98,8 +105,71 @@ export default function ContactsPage() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Table view */}
+            <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#f3ede3' }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#f3ede3' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: '#c43d3d' }} />
+                  <span className="font-semibold text-sm" style={{ color: '#3d2b1f' }}>联系人列表</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#fef9f0', color: '#c43d3d' }}>{filtered.length}</span>
+                </div>
+                <button className="flex items-center gap-1 text-xs text-[#8b7355] hover:bg-[#f5f0e8] px-3 h-8 rounded-lg">
+                  排序 <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-xs text-[#8b7355]" style={{ borderBottom: '1px solid #f3ede3' }}>
+                    <th className="text-left px-6 py-3 font-medium w-[220px]">姓名</th>
+                    <th className="text-left px-6 py-3 font-medium">邮箱</th>
+                    <th className="text-left px-6 py-3 font-medium">电话</th>
+                    <th className="text-left px-6 py-3 font-medium">公司</th>
+                    <th className="text-left px-6 py-3 font-medium w-[132px]">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((c) => (
+                    <tr key={c.id} className="hover:bg-[#faf8f5] transition-colors" style={{ borderBottom: '1px solid #f5f0e8' }}>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
+                            {(c.name?.[0] || '?').toUpperCase()}
+                          </div>
+                          <span className="text-sm font-medium" style={{ color: '#3d2b1f' }}>{c.name || '(无名)'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>{c.email}</td>
+                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>—</td>
+                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>—</td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f5f0e8]">
+                            <MailIcon className="w-4 h-4" style={{ color: '#8b7355' }} />
+                          </button>
+                          <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f5f0e8]">
+                            <MoreVertical className="w-4 h-4" style={{ color: '#8b7355' }} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {filtered.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f5f0e8' }}>
+              <MailIcon className="w-8 h-8" style={{ color: '#b8a88a' }} />
+            </div>
+            <p className="text-sm" style={{ color: '#b8a88a' }}>暂无联系人</p>
+          </div>
+        )}
       </div>
     </AppShell>
   )

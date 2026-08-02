@@ -51,8 +51,8 @@ function MailPageInner() {
 
   const handleArchive = async () => {
     if (!selectedId) return
-    // Archive: mark as read (true folder move requires backend PATCH API)
-    await api.mails.markRead(selectedId).catch(() => {})
+    // Move to Archive folder
+    await api.mails.move(selectedId, 'Archive').catch(() => {})
     setSelectedId(null); setDetail(null)
     setRefresh(n => n + 1)
   }

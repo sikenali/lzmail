@@ -160,6 +160,43 @@ func (s *EmailStore) Stats() (*MailStats, error) {
 	return &st, nil
 }
 
+
+type TrendPoint struct {
+	Date    string `json:"date"`
+	Receive int    `json:"receive"`
+	Send    int    `json:"send"`
+}
+
+func (s *EmailStore) Trend(days int) ([]TrendPoint, error) {
+	rows, err := s.db.Query(`
+		SELECT date(date, '"'"'-? days'"'"') as day,
+			COUNT(CASE WHEN folder = 'INBOX' THEN 1 END) as receive,
+			COUNT(CASE WHEN folder = 'Sent' THEN 1 END) as send
+		FROM emails
+		WHERE date >= date('now', ' -? days')
+		GROUP BY day
+		ORDER BY day DESC
+		LIMIT ?
+	`, days, days, days)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var result []TrendPoint
+	for rows.Next() {
+		var p TrendPoint
+		if err := rows.Scan(&p.Date, &p.Receive, &p.Send); err != nil {
+			return nil, err
+		}
+		result = append(result, p)
+	}
+	// Reverse to chronological
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+		result[i], result[j] = result[j], result[i]
+	}
+	return result, nil
+}
+
 func (s *EmailStore) Upsert(e *models.Email) error {
 	_, err := s.db.Exec(
 		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, has_attachments, archive_path, message_id)
@@ -174,6 +211,12 @@ func (s *EmailStore) InsertSent(e *models.Email) error {
 		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, is_read, message_id)
 		 VALUES (?,?,?,?,?,?,?,?,1,?)`,
 		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC, e.Date, e.MessageID)
+	return err
+}
+
+
+func (s *EmailStore) Move(id int64, folder string) error {
+	_, err := s.db.Exec(`UPDATE emails SET folder = ? WHERE id = ?`, folder, id)
 	return err
 }
 

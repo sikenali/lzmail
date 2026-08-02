@@ -5,6 +5,17 @@ import (
 	"github.com/lzmail/backend/internal/models"
 )
 
+
+func (h *Handler) handleSearchContacts(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	contacts, err := h.contacts.Search(q)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, contacts)
+}
+
 func (h *Handler) handleListContacts(w http.ResponseWriter, r *http.Request) {
 	contacts, err := h.contacts.List()
 	if err != nil {

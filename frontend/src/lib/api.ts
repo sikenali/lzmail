@@ -44,7 +44,9 @@ export const api = {
     search: (q: string, limit = 50, offset = 0) =>
       fetchJSON<Email[]>(`/api/v1/mails/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
     stats: () => fetchJSON<MailStats>('/api/v1/mails/stats'),
+    trend: (days = 7) => fetchJSON<Array<{date: string; receive: number; send: number}>>(`/api/v1/mails/trend?days=${days}`),
     markRead: (id: number) => fetchJSON<{ status: string }>(`/api/v1/mails/${id}/read`, { method: 'POST' }),
+    move: (id: number, folder: string) => fetchJSON<{ status: string }>(`/api/v1/mails/${id}`, { method: 'PATCH', body: JSON.stringify({ folder }) }),
     markStar: (id: number, starred: boolean) =>
       fetchJSON<{ status: string }>(`/api/v1/mails/${id}/star?starred=${starred}`, { method: 'POST' }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/mails/${id}`, { method: 'DELETE' }),

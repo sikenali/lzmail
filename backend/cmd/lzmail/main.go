@@ -61,7 +61,7 @@ func main() {
 	accounts, _ := accountStore.List()
 	syncEngine.StartAll(accounts)
 
-	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub)
+	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub, cfg.ArchiveDir)
 	mux := http.NewServeMux()
 	handler.Register(mux)
 

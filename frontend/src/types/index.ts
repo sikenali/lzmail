@@ -59,12 +59,14 @@ export interface MailStats {
   today_emails: number
   account_count: number
   storage_bytes: number
+  storage_limit?: number
 }
 
 export interface EmailDetail {
   email: Email
   attachments: Attachment[]
   body_html: string
+  schedule_at?: string
 }
 
 export interface ComposePayload {
@@ -74,4 +76,5 @@ export interface ComposePayload {
   subject: string
   body_text: string
   body_html: string
+  schedule_at?: string
 }

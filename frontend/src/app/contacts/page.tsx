@@ -24,10 +24,17 @@ export default function ContactsPage() {
     api.contacts.list().then(list => setContacts(list || [])).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const filtered = contacts.filter(c =>
-    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
-  )
+  const [loadingSearch, setLoadingSearch] = useState(false)
+  const [filtered, setFiltered] = useState<Contact[]>([])
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setFiltered(contacts)
+      return
+    }
+    setLoadingSearch(true)
+    api.contacts.search(search).then(list => setFiltered(list || [])).catch(() => setFiltered(contacts)).finally(() => setLoadingSearch(false))
+  }, [search, contacts])
 
   const grouped: Record<string, Contact[]> = {}
   for (const c of filtered) {

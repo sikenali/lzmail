@@ -16,6 +16,8 @@ export default function ComposePage() {
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+  const [attachments, setAttachments] = useState<Array<{name: string, size: number, file: File}>>([])
+  const [scheduleAt, setScheduleAt] = useState('')
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -51,6 +53,7 @@ export default function ComposePage() {
         subject,
         body_text: body,
         body_html: '',
+        (scheduleAt ? { schedule_at: scheduleAt } : {}) as any,
       })
       toast.success('邮件已发送')
       setTo(''); setSubject(''); setBody('')
@@ -145,6 +148,26 @@ export default function ComposePage() {
               style={{ color: '#3d2b1f' }}
             />
 
+            {/* Attachments list */}
+            {attachments.length > 0 && (
+              <div className="py-3 border-t" style={{ borderColor: '#f5f0e8' }}>
+                <div className="text-xs font-medium mb-2" style={{ color: '#8b7355' }}>附件 ({attachments.length})</div>
+                <div className="flex flex-wrap gap-2">
+                  {attachments.map((att, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs" style={{ borderColor: '#f3ede3', backgroundColor: '#faf8f5' }}>
+                      <Paperclip className="w-3 h-3" style={{ color: '#8b7355' }} />
+                      <span className="max-w-[150px] truncate" style={{ color: '#3d2b1f' }}>{att.name}</span>
+                      <span style={{ color: '#b8a88a' }}>({(att.size / 1024).toFixed(0)}KB)</span>
+                      <button onClick={() => removeAttachment(i)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-[#fdf2f2]">
+                        <span style={{ color: '#c43d3d' }}>✕</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Hidden file input */}
+            <input type="file" multiple accept="*/*" onChange={handleAttach} className="hidden" id="attach-input" />
             {/* Bottom bar */}
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-xs" style={{ color: '#b8a88a' }}>
@@ -153,9 +176,9 @@ export default function ComposePage() {
                 <span>Ctrl + Enter 发送</span>
               </div>
               <div className="flex items-center gap-2">
-                <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8]" style={{ color: '#6b5b4f' }}>
+                <label htmlFor="attach-input" className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8] cursor-pointer" style={{ color: '#6b5b4f' }}>
                   <Paperclip className="w-4 h-4" /> 添加附件
-                </button>
+                </label>
                 <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8]" style={{ color: '#6b5b4f' }}>
                   <Trash2 className="w-4 h-4" /> 删除
                 </button>

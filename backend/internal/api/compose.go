@@ -5,6 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path"
+	"path/filepath"
 	"net"
 	"net/http"
 	"net/smtp"
@@ -16,12 +20,13 @@ import (
 )
 
 type ComposeRequest struct {
-	AccountID int64  `json:"account_id"`
-	To        string `json:"to"`
-	Cc        string `json:"cc"`
-	Subject   string `json:"subject"`
-	BodyText  string `json:"body_text"`
-	BodyHTML  string `json:"body_html"`
+	AccountID  int64      `json:"account_id"`
+	To         string     `json:"to"`
+	Cc         string     `json:"cc"`
+	Subject    string     `json:"subject"`
+	BodyText   string     `json:"body_text"`
+	BodyHTML   string     `json:"body_html"`
+	ScheduleAt *time.Time `json:"schedule_at,omitempty"`
 }
 
 func buildMessage(from, to, cc, subject, bodyText, bodyHTML string) []byte {
@@ -100,6 +105,45 @@ func needsEncoding(s string) bool {
 	return false
 }
 
+
+func (h *Handler) handleUploadAttachment(w http.ResponseWriter, r *http.Request) {
+	// multipart form upload
+	err := r.ParseMultipartForm(50 << 20) // 50MB max
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file too large"})
+		return
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	defer file.Close()
+
+	// Save to archive dir
+	os.MkdirAll(h.archiveDir, 0755)
+	filename := path.Join(h.archiveDir, fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename)))
+	dst, err := os.Create(filename)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	defer dst.Close()
+	size, err := io.Copy(dst, file)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":         time.Now().UnixNano(),
+		"filename":   header.Filename,
+		"mime_type":  header.Header.Get("Content-Type"),
+		"size":       size,
+		"path":       filename,
+	})
+}
+
 func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 	var req ComposeRequest
 	if err := readJSON(r, &req); err != nil {
@@ -131,6 +175,24 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sendDate := time.Now()
+	if req.ScheduleAt != nil && req.ScheduleAt.After(time.Now()) {
+		// Schedule for later - store as draft with scheduled flag
+		h.emails.InsertSent(&models.Email{
+			AccountID:  req.AccountID,
+			UID:        uint32(time.Now().UnixNano() % 0xFFFFFFFF),
+			Folder:     "Drafts",
+			Subject:    req.Subject,
+			From:       account.Email,
+			To:         req.To,
+			Date:       *req.ScheduleAt,
+			IsRead:     true,
+			IsStarred:  false,
+			MessageID:  fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
+		})
+		writeJSON(w, http.StatusOK, map[string]string{"status": "scheduled", "send_at": req.ScheduleAt.Format(time.RFC3339)})
+		return
+	}
 	h.emails.InsertSent(&models.Email{
 		AccountID:  req.AccountID,
 		UID:        uint32(time.Now().Unix()),
@@ -138,10 +200,10 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 		Subject:    req.Subject,
 		From:       account.Email,
 		To:         req.To,
-		Date:       time.Now(),
+		Date:       sendDate,
 		IsRead:     true,
 		IsStarred:  false,
-		MessageID:  fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
+		MessageID:  fmt.Sprintf("<%d.%s>", sendDate.UnixNano(), account.Email),
 	})
 
 	if h.sseHub != nil {

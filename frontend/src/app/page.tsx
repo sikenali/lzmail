@@ -62,7 +62,7 @@ export default function Dashboard() {
 
   const totalEmails = stats?.total_emails || 0
   const storageBytes = stats?.storage_bytes || 0
-  const storageCap = 50 * 1024 * 1024 * 1024 // 50GB limit
+  const storageCap = (stats as any)?.storage_limit || 50 * 1024 * 1024 * 1024 // 50GB limit
   const storagePct = Math.min((storageBytes / storageCap) * 100, 100)
 
   const today = new Date()
@@ -227,7 +227,7 @@ export default function Dashboard() {
               </div>
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span style={{ color: '#8b7355' }}>{formatBytes(storageBytes)} / 50 GB</span>
+                  <span style={{ color: '#8b7355' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span>
                   <span className="font-semibold" style={{ color: '#3d2b1f' }}>{storagePct.toFixed(1)}%</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#f3ede3' }}>

@@ -19,6 +19,7 @@ type Email struct {
 	ArchivePath     string    `json:"archive_path"`
 	MessageID       string    `json:"message_id"`
 	CreatedAt       time.Time `json:"created_at"`
+	ScheduleAt      *time.Time `json:"schedule_at,omitempty"`
 	AccountName     string    `json:"account_name"`
 	AccountBrand    string    `json:"account_brand"`
 }

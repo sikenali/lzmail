@@ -59,6 +59,23 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+
+func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	var body struct {
+		Folder string `json:"folder"`
+	}
+	if err := readJSON(r, &body); err != nil || body.Folder == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "folder required"})
+		return
+	}
+	if err := h.emails.Move(id, body.Folder); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "moved"})
+}
+
 func (h *Handler) handleMarkRead(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err := h.emails.MarkRead(id); err != nil {
@@ -105,6 +122,18 @@ func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, emails)
+}
+
+
+func (h *Handler) handleMailTrend(w http.ResponseWriter, r *http.Request) {
+	rangeDays, _ := strconv.Atoi(r.URL.Query().Get("days"))
+	if rangeDays <= 0 { rangeDays = 7 }
+	trend, err := h.emails.Trend(rangeDays)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, trend)
 }
 
 func (h *Handler) handleMailStats(w http.ResponseWriter, r *http.Request) {

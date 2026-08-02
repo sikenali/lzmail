@@ -30,6 +30,28 @@ func (s *ContactStore) List() ([]models.Contact, error) {
 	return contacts, nil
 }
 
+
+func (s *ContactStore) Search(q string) ([]models.Contact, error) {
+	var pattern = "%" + q + "%"
+	rows, err := s.db.Query(
+		`SELECT id, name, email, account_id, created_at, updated_at FROM contacts
+		 WHERE name LIKE ? OR email LIKE ? ORDER BY name`,
+		pattern, pattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var contacts []models.Contact
+	for rows.Next() {
+		var c models.Contact
+		if err := rows.Scan(&c.ID, &c.Name, &c.Email, &c.AccountID, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, err
+		}
+		contacts = append(contacts, c)
+	}
+	return contacts, nil
+}
+
 func (s *ContactStore) Create(c *models.Contact) error {
 	result, err := s.db.Exec(`INSERT INTO contacts (name, email, account_id) VALUES (?,?,?) ON CONFLICT(email, account_id) DO NOTHING`, c.Name, c.Email, c.AccountID)
 	if err != nil {

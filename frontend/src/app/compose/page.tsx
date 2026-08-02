@@ -16,7 +16,7 @@ export default function ComposePage() {
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
-  const [attachments, setAttachments] = useState<Array<{name: string, size: number, file: File}>>([])
+  const [attachments, setAttachments] = useState<Array<{name: string, size: number}>>([])
   const [scheduleAt, setScheduleAt] = useState('')
 
   useEffect(() => {
@@ -25,6 +25,30 @@ export default function ComposePage() {
       if (list.length > 0) setAccountId(list[0].id)
     }).catch(() => {})
   }, [])
+
+  const handleSend = async () => {
+    if (!to) { toast.error('请输入收件人'); return }
+    if (!accountId) { toast.error('请选择发件账号'); return }
+    setSending(true)
+    try {
+      const data: any = {
+        account_id: accountId,
+        to,
+        cc: '',
+        subject,
+        body_text: body,
+        body_html: '',
+      }
+      if (scheduleAt) data.schedule_at = scheduleAt
+      await api.compose(data)
+      toast.success('邮件已发送')
+      setTo(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
+      router.push('/')
+    } catch (err: any) {
+      toast.error(err?.message || '发送失败')
+    }
+    setSending(false)
+  }
 
   const handleSaveDraft = async () => {
     if (sending || savingDraft) return
@@ -41,27 +65,17 @@ export default function ComposePage() {
     setSavingDraft(false)
   }
 
-  const handleSend = async () => {
-    if (!to) { toast.error('请输入收件人'); return }
-    if (!accountId) { toast.error('请选择发件账号'); return }
-    setSending(true)
-    try {
-      await api.compose({
-        account_id: accountId,
-        to,
-        cc: '',
-        subject,
-        body_text: body,
-        body_html: '',
-        (scheduleAt ? { schedule_at: scheduleAt } : {}) as any,
-      })
-      toast.success('邮件已发送')
-      setTo(''); setSubject(''); setBody('')
-      router.push('/')
-    } catch (err: any) {
-      toast.error(err?.message || '发送失败')
-    }
-    setSending(false)
+  const handleAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+    Array.from(files).forEach(f => {
+      if (f.size > 50 * 1024 * 1024) { toast.error(`${f.name} 超过50MB限制`); return }
+      setAttachments(prev => [...prev, { name: f.name, size: f.size }])
+    })
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
@@ -97,12 +111,8 @@ export default function ComposePage() {
               {/* From */}
               <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: '#f5f0e8' }}>
                 <span className="text-sm w-12 shrink-0" style={{ color: '#8b7355' }}>发件</span>
-                <select
-                  value={accountId}
-                  onChange={e => setAccountId(Number(e.target.value))}
-                  className="flex-1 outline-none text-sm bg-transparent"
-                  style={{ color: '#3d2b1f' }}
-                >
+                <select value={accountId} onChange={e => setAccountId(Number(e.target.value))}
+                  className="flex-1 outline-none text-sm bg-transparent" style={{ color: '#3d2b1f' }}>
                   {accounts.length === 0 && <option value={0}>暂无账号</option>}
                   {accounts.map(a => <option key={a.id} value={a.id}>{a.name} &lt;{a.email}&gt;</option>)}
                 </select>
@@ -111,17 +121,13 @@ export default function ComposePage() {
               <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: '#f5f0e8' }}>
                 <span className="text-sm w-12 shrink-0" style={{ color: '#8b7355' }}>收件人</span>
                 <input value={to} onChange={e => setTo(e.target.value)} placeholder="输入邮箱地址..."
-                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[#b8a88a]"
-                  style={{ color: '#3d2b1f' }}
-                />
+                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[#b8a88a]" style={{ color: '#3d2b1f' }} />
               </div>
               {/* Subject */}
               <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: '#f5f0e8' }}>
                 <span className="text-sm w-12 shrink-0" style={{ color: '#8b7355' }}>主题</span>
                 <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="主题"
-                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[#b8a88a]"
-                  style={{ color: '#3d2b1f' }}
-                />
+                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[#b8a88a]" style={{ color: '#3d2b1f' }} />
               </div>
             </div>
 
@@ -144,11 +150,9 @@ export default function ComposePage() {
 
             {/* Body */}
             <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="写邮件..."
-              className="w-full h-64 outline-none text-sm bg-transparent resize-none placeholder:text-[#b8a88a]"
-              style={{ color: '#3d2b1f' }}
-            />
+              className="w-full h-64 outline-none text-sm bg-transparent resize-none placeholder:text-[#b8a88a]" style={{ color: '#3d2b1f' }} />
 
-            {/* Attachments list */}
+            {/* Attachments */}
             {attachments.length > 0 && (
               <div className="py-3 border-t" style={{ borderColor: '#f5f0e8' }}>
                 <div className="text-xs font-medium mb-2" style={{ color: '#8b7355' }}>附件 ({attachments.length})</div>
@@ -166,8 +170,8 @@ export default function ComposePage() {
                 </div>
               </div>
             )}
-            {/* Hidden file input */}
             <input type="file" multiple accept="*/*" onChange={handleAttach} className="hidden" id="attach-input" />
+
             {/* Bottom bar */}
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-xs" style={{ color: '#b8a88a' }}>

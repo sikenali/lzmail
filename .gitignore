@@ -3,3 +3,8 @@ node_modules/
 *.exe
 data/
 archives/
+backend/lzmail
+frontend/tsconfig.tsbuildinfo
+*.db
+data/
+archives/

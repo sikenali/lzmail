@@ -62,7 +62,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
         </div>
 
         {/* Settings */}
-        <a href="/settings/general" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#f3ede3] transition-colors">
+        <a href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#f3ede3] transition-colors">
           <Settings className="w-5 h-5" style={{ color: '#6b5b4f' }} />
         </a>
 

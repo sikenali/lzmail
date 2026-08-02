@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import type { EmailDetail } from '@/types'
 import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Link, MailQuestion } from 'lucide-react'
+import { toast } from 'sonner'
 
 function shiftColor(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
@@ -36,6 +37,23 @@ export default function MailPage() {
     if (!detail) return
     await api.mails.delete(detail.email.id).catch(() => {})
     router.push('/mail')
+  }
+  const handleReply = async () => {
+    if (!detail || !replyText.trim()) return
+    try {
+      await api.compose({
+        account_id: detail.email.account_id,
+        to: detail.email.from,
+        cc: '',
+        subject: 'Re: ' + (detail.email.subject || ''),
+        body_text: replyText,
+        body_html: '',
+      })
+      setReplyText('')
+      toast.success('回复已发送')
+    } catch (e: any) {
+      toast.error(e.message || '发送失败')
+    }
   }
 
   if (loading) {
@@ -160,7 +178,7 @@ export default function MailPage() {
                   <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Link className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
                   <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Paperclip className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
                 </div>
-                <button className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">
+                <button onClick={handleReply} className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
                   <Send className="w-4 h-4" /> 发送
                 </button>
               </div>

@@ -98,6 +98,10 @@ func (s *Syncer) syncFolder(folder string) {
 		if len(msg.Envelope.To) > 0 {
 			email.To = joinAddresses(msg.Envelope.To)
 		}
+		// Set body preview from text body if available
+		if email.Subject != "" {
+			email.BodyPreview = email.Subject
+		}
 		s.emailStore.Upsert(email)
 	}
 	if err := <-done; err != nil {

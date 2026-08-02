@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/aes"
+	"log"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
@@ -14,6 +15,7 @@ import (
 func encryptionKey() []byte {
 	key := os.Getenv("ENCRYPTION_KEY")
 	if key == "" {
+		log.Println("[WARN] ENCRYPTION_KEY not set - passwords stored in plaintext (development mode)")
 		return nil
 	}
 	decoded, err := hex.DecodeString(key)

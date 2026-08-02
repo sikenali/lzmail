@@ -62,7 +62,7 @@ export default function Dashboard() {
 
   const totalEmails = stats?.total_emails || 0
   const storageBytes = stats?.storage_bytes || 0
-  const storageCap = 50 * 1024 * 1024 * 1024
+  const storageCap = 50 * 1024 * 1024 * 1024 // 50GB limit
   const storagePct = Math.min((storageBytes / storageCap) * 100, 100)
 
   const today = new Date()

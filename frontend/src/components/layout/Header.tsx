@@ -1,11 +1,12 @@
 'use client'
-import { Search, Settings, Sun, Moon, RefreshCw } from 'lucide-react'
+import { Search, Settings, Sun, Moon, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { useSettings } from '@/hooks/useSettings'
 import { useState } from 'react'
 
 export function Header({ onCompose }: { onCompose: () => void }) {
   const { settings, setSetting } = useSettings()
   const [searchFocused, setSearchFocused] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
 
   const handleThemeToggle = () => {
     const currentTheme = settings.theme as 'light' | 'dark' | 'system'
@@ -53,9 +54,11 @@ export function Header({ onCompose }: { onCompose: () => void }) {
       {/* Right actions */}
       <div className="flex items-center gap-2">
         {/* Sync status */}
-        <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg" style={{ backgroundColor: '#edf5ec' }}>
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#5b8c5a' }} />
-          <span className="text-xs font-medium" style={{ color: '#5b8c5a' }}>同步中</span>
+        <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg" style={{ backgroundColor: syncStatus === 'ok' ? '#edf5ec' : syncStatus === 'error' ? '#fdf2f2' : '#fef9f0' }}>
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: syncStatus === 'ok' ? '#5b8c5a' : syncStatus === 'error' ? '#c43d3d' : '#c9a96e' }} />
+          <span className="text-xs font-medium" style={{ color: syncStatus === 'ok' ? '#5b8c5a' : syncStatus === 'error' ? '#c43d3d' : '#c9a96e' }}>
+            {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : '同步中'}
+          </span>
         </div>
 
         {/* Settings */}

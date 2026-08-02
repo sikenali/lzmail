@@ -425,7 +425,7 @@ function AboutPanel() {
         <div>
           <h2 className="text-lg font-semibold" style={{ color: '#3d2b1f', fontFamily: 'SourceHanSans-Bold, system-ui' }}>LZMail</h2>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fef9f0', color: '#c43d3d' }}>v1.2.0</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#fef9f0', color: '#c43d3d' }}>v1.3.0</span>
             <span className="text-xs" style={{ color: '#8b7355' }}>自托管 NAS 邮件客户端</span>
           </div>
           <p className="text-xs mt-1" style={{ color: '#b8a88a' }}>简洁、高效、安全的企业级邮件管理工具</p>

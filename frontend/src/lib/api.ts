@@ -27,6 +27,8 @@ export const api = {
     create: (data: Partial<Account> & { password?: string }) =>
       fetchJSON<Account>('/api/v1/accounts', { method: 'POST', body: JSON.stringify(data) }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/accounts/${id}`, { method: 'DELETE' }),
+    update: (id: number, data: Partial<Account> & { password?: string }) =>
+      fetchJSON<Account>(`/api/v1/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   },
 
   mails: {

@@ -30,8 +30,20 @@ function AccountPanel() {
   const handleCreate = async () => {
     try {
       if (editingId) {
-        // Update existing account (re-create with new values)
-        await api.accounts.create(form as any)
+        // Edit: use PATCH with existing account data + changes
+        const existing = accounts.find(a => a.id === editingId)
+        if (!existing) { alert('账号不存在'); return }
+        await api.accounts.update(editingId, {
+          ...existing,
+          name: form.name || existing.name,
+          email: form.email || existing.email,
+          imap_host: form.imap_host || existing.imap_host,
+          imap_port: form.imap_port || existing.imap_port,
+          smtp_host: form.smtp_host || existing.smtp_host,
+          smtp_port: form.smtp_port || existing.smtp_port,
+          username: form.username || existing.username,
+          use_idle: form.use_idle,
+        } as any)
         setEditingId(null)
       } else {
         await api.accounts.create(form as any)

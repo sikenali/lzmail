@@ -33,7 +33,7 @@ export function MailItem({ email, brand, onSelect }: { email: Email; brand?: str
 
   return (
     <div onClick={() => onSelect(email.id)}
-      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg border border-transparent hover:border-[var(--border]) hover:bg-gray-50 dark:hover:bg-gray-900/30"
+      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg border border-transparent hover:border-[var(--border)] hover:bg-gray-50 dark:hover:bg-gray-900/30"
     >
       <div className="w-1.5 h-10 rounded-full shrink-0" style={{ backgroundColor: barColor, borderRadius: '9999px' }} />
       <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>

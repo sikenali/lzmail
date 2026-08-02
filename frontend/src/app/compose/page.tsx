@@ -15,6 +15,7 @@ export default function ComposePage() {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -22,6 +23,21 @@ export default function ComposePage() {
       if (list.length > 0) setAccountId(list[0].id)
     }).catch(() => {})
   }, [])
+
+  const handleSaveDraft = async () => {
+    if (sending || savingDraft) return
+    setSavingDraft(true)
+    try {
+      await api.compose({
+        account_id: accountId,
+        to, cc: '', subject, body_text: body, body_html: '',
+      })
+      toast.success('草稿已保存')
+    } catch (err: any) {
+      toast.error(err?.message || '保存失败')
+    }
+    setSavingDraft(false)
+  }
 
   const handleSend = async () => {
     if (!to) { toast.error('请输入收件人'); return }
@@ -37,6 +53,7 @@ export default function ComposePage() {
         body_html: '',
       })
       toast.success('邮件已发送')
+      setTo(''); setSubject(''); setBody('')
       router.push('/')
     } catch (err: any) {
       toast.error(err?.message || '发送失败')
@@ -59,8 +76,8 @@ export default function ComposePage() {
             <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8]" style={{ color: '#6b5b4f' }}>
               <Clock className="w-4 h-4" /> 定时发送
             </button>
-            <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8]" style={{ color: '#6b5b4f' }}>
-              <Paperclip className="w-4 h-4" /> 存草稿
+            <button onClick={handleSaveDraft} disabled={savingDraft} className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[#f5f0e8] disabled:opacity-50" style={{ color: '#6b5b4f' }}>
+              <Paperclip className="w-4 h-4" /> {savingDraft ? '保存中...' : '存草稿'}
             </button>
             <button onClick={handleSend} disabled={sending}
               className="flex items-center gap-2 px-4 h-9 bg-[#c43d3d] text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50"

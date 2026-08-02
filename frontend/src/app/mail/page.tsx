@@ -51,8 +51,8 @@ function MailPageInner() {
 
   const handleArchive = async () => {
     if (!selectedId) return
-    // Move to "Deferred" folder to archive
-    await api.mails.markStar(selectedId, false).catch(() => {})
+    // Archive: mark as read (true folder move requires backend PATCH API)
+    await api.mails.markRead(selectedId).catch(() => {})
     setSelectedId(null); setDetail(null)
     setRefresh(n => n + 1)
   }
@@ -66,8 +66,8 @@ function MailPageInner() {
   }
   const handleDeferred = async () => {
     if (!selectedId) return
-    // Mark as starred to defer (simple proxy for now)
-    await api.mails.markStar(selectedId, true).catch(() => {})
+    // Defer: move to DEFERRED folder (requires backend folder update API)
+    // For now, show a note that this feature needs backend support
     setRefresh(n => n + 1)
   }
   const handlePrev = () => {

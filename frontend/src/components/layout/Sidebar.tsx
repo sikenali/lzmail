@@ -38,12 +38,29 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
-    api.mails.stats().then(d => {
-      if (d) { setBadgeUnread(d.unread_emails); setBadgeDraft(d.total_emails) }
+    Promise.all([
+      api.mails.stats(),
+      api.mails.list(undefined, 'DRAFTS', 1, 0).then(list => list?.length ?? 0).catch(() => 0),
+    ]).then(([stats, draftCount]) => {
+      if (stats) { setBadgeUnread(stats.unread_emails) }
+      setBadgeDraft(typeof draftCount === 'number' ? draftCount : null)
     }).catch(() => {})
   }, [])
 
-  const isActive = (href: string) => currentPath === href || (currentPath?.startsWith('/mail') && href.startsWith('/mail'))
+  const isActive = (href: string) => {
+    if (currentPath === href) return true
+    // For /mail paths with folder params, match by folder
+    if (href.startsWith('/mail') && currentPath?.startsWith('/mail')) {
+      const getFolder = (p: string) => {
+        try { return new URL(p, 'http://x').searchParams.get('folder') } catch { return null }
+      }
+      const hFolder = getFolder(href)
+      const cFolder = getFolder(currentPath)
+      if (hFolder && cFolder && hFolder === cFolder) return true
+      if (!hFolder && !cFolder) return true
+    }
+    return false
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -144,7 +161,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                 </div>
               )
             })}
-            <a href="/settings/account"
+            <a href="/settings"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
               style={{ color: '#b8a88a', borderRadius: '8px' }}
             >

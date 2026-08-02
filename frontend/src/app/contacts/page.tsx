@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building } from 'lucide-react'
+import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building, X } from 'lucide-react'
 import type { Contact } from '@/types'
 
 const gradients = [
@@ -17,6 +17,8 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'grid' | 'table'>('grid')
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newContact, setNewContact] = useState({ name: '', email: '' })
 
   useEffect(() => {
     api.contacts.list().then(list => setContacts(list || [])).catch(() => {}).finally(() => setLoading(false))
@@ -48,7 +50,7 @@ export default function ContactsPage() {
               <p className="text-xs mt-0.5" style={{ color: '#8b7355' }}>管理你的联系人</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 h-10 bg-[#6b8fa3] text-white rounded-xl text-sm font-medium hover:opacity-90">
+          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 h-10 bg-[#6b8fa3] text-white rounded-xl text-sm font-medium hover:opacity-90">
             <Plus className="w-4 h-4" /> 添加联系人
           </button>
         </div>
@@ -64,7 +66,35 @@ export default function ContactsPage() {
             />
           </div>
           <div className="flex items-center gap-1 bg-white rounded-xl border p-1" style={{ borderColor: '#f3ede3' }}>
-            <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[#6b8fa3] text-white' : 'text-[#8b7355] hover:bg-[#f5f0e8]'}`}>
+            {showAddForm && (
+            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowAddForm(false)}>
+              <div className="bg-white rounded-2xl p-6 w-[400px] mx-4" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm" style={{ color: '#3d2b1f' }}>新建联系人</h3>
+                  <button onClick={() => setShowAddForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f5f0e8]">
+                    <X className="w-4 h-4" style={{ color: '#8b7355' }} />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <input placeholder="姓名" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})}
+                    className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: '#f3ede3', color: '#3d2b1f' }} />
+                  <input placeholder="邮箱地址" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})}
+                    className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: '#f3ede3', color: '#3d2b1f' }} />
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setShowAddForm(false)} className="px-4 h-9 border rounded-lg text-sm hover:bg-[#f5f0e8]" style={{ borderColor: '#f3ede3', color: '#8b7355' }}>取消</button>
+                    <button onClick={async () => {
+                      if (!newContact.email) return
+                      await api.contacts.create(newContact)
+                      setShowAddForm(false)
+                      setNewContact({ name: '', email: '' })
+                      window.location.reload()
+                    }} className="px-4 h-9 bg-[#6b8fa3] text-white rounded-lg text-sm font-medium hover:opacity-90">保存</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[#6b8fa3] text-white' : 'text-[#8b7355] hover:bg-[#f5f0e8]'}`}>
               卡片
             </button>
             <button onClick={() => setView('table')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'table' ? 'bg-[#6b8fa3] text-white' : 'text-[#8b7355] hover:bg-[#f5f0e8]'}`}>

@@ -105,6 +105,32 @@ func (s *AccountStore) Create(a *models.Account) error {
 	return nil
 }
 
+
+func (s *AccountStore) Update(a *models.Account) error {
+	// Re-encrypt password if changed
+	if a.Password != "" {
+		encrypted, err := crypto.Encrypt(a.Password)
+		if err != nil {
+			return fmt.Errorf("encrypt password: %w", err)
+		}
+		a.Password = encrypted
+	} else {
+		// Keep existing password
+		existing, _ := s.GetByID(a.ID)
+		if existing != nil {
+			a.Password = existing.Password
+		}
+	}
+	_, err := s.db.Exec(
+		`UPDATE accounts SET name=?, email=?, imap_host=?, imap_port=?, smtp_host=?, smtp_port=?,
+		 auth_type=?, username=?, password=?, use_idle=?, brand_color=?, updated_at=CURRENT_TIMESTAMP
+		 WHERE id=?`,
+		a.Name, a.Email, a.IMAPHost, a.IMAPPort, a.SMTPHost, a.SMTPPort,
+		a.AuthType, a.Username, a.Password, a.UseIDLE, a.BrandColor, a.ID,
+	)
+	return err
+}
+
 func (s *AccountStore) UpdatePassword(id int64, password string) error {
 	encrypted, err := crypto.Encrypt(password)
 	if err != nil {

@@ -23,6 +23,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/accounts", h.handleListAccounts)
 	mux.HandleFunc("POST /api/v1/accounts", h.handleCreateAccount)
 	mux.HandleFunc("DELETE /api/v1/accounts/{id}", h.handleDeleteAccount)
+	mux.HandleFunc("PATCH /api/v1/accounts/{id}", h.handleUpdateAccount)
 
 	mux.HandleFunc("GET /api/v1/mails", h.handleListMails)
 	mux.HandleFunc("GET /api/v1/mails/{id}", h.handleGetMail)

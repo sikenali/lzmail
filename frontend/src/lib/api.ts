@@ -60,6 +60,7 @@ export const api = {
   contacts: {
     list: () => fetchJSON<Contact[]>('/api/v1/contacts'),
     create: (data: Partial<Contact>) => fetchJSON<Contact>('/api/v1/contacts', { method: 'POST', body: JSON.stringify(data) }),
+    search: (q: string) => fetchJSON<Contact[]>('/api/v1/contacts/search?q=' + encodeURIComponent(q)),
   },
 
   settings: {

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building, X } from 'lucide-react'
+import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building, X } from '@/lib/lucide-remix'
 import type { Contact } from '@/types'
 
 const gradients = [

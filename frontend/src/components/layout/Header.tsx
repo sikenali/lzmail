@@ -1,5 +1,5 @@
 'use client'
-import { Search, Settings, Sun, Moon, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { Search, Settings, Sun, Moon, RefreshCw, CheckCircle2 } from '@/lib/lucide-remix'
 import { useSettings } from '@/hooks/useSettings'
 import { useState } from 'react'
 

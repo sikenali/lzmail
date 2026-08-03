@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, Search, ChevronDown, Archive, Trash2, CheckCircle, Clock, ArrowLeft, Paperclip } from 'lucide-react'
+import { Mail, RefreshCw, Filter, Search, ChevronDown, Archive, Trash2, CheckCircle, Clock, ArrowLeft, Paperclip } from '@/lib/lucide-remix'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email } from '@/types'
 

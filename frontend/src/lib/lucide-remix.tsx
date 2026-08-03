@@ -1,0 +1,65 @@
+'use client'
+import React from 'react'
+
+// RemixIcon wrapper - replaces lucide-react with remixicon
+// Each icon renders as <i className="ri-xxx" />
+
+function icon(name: string) {
+  return React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+    function Icon({ className, style, ...props }, ref) {
+      return <i ref={ref} className={`${name} ${className || ''}`} style={style} {...props} />
+    }
+  )
+}
+
+export const Mail = icon('ri-mail-line')
+export const MailOpen = icon('ri-mail-open-line')
+export const Search = icon('ri-search-line')
+export const Settings = icon('ri-settings-3-line')
+export const LayoutDashboard = icon('ri-dashboard-line')
+export const Star = icon('ri-star-line')
+export const Clock = icon('ri-time-line')
+export const Send = icon('ri-send-plane-line')
+export const FileText = icon('ri-draft-line')
+export const AlertTriangle = icon('ri-alert-line')
+export const Plus = icon('ri-add-line')
+export const ChevronDown = icon('ri-arrow-down-s-line')
+export const MoreVertical = icon('ri-more-line')
+export const Trash2 = icon('ri-delete-bin-line')
+export const Paperclip = icon('ri-attachment-2')
+export const RefreshCw = icon('ri-refresh-line')
+export const Filter = icon('ri-filter-line')
+export const CheckCircle = icon('ri-checkbox-circle-line')
+export const ArrowLeft = icon('ri-arrow-left-s-line')
+export const Archive = icon('ri-archive-line')
+export const Sun = icon('ri-sun-line')
+export const Moon = icon('ri-moon-line')
+export const Bell = icon('ri-notification-line')
+export const User = icon('ri-user-line')
+export const Calendar = icon('ri-calendar-line')
+export const TrendingUp = icon('ri-arrow-up-line')
+export const TrendingDown = icon('ri-arrow-down-line')
+export const ChevronRight = icon('ri-arrow-right-s-line')
+export const ChevronUp = icon('ri-arrow-up-s-line')
+export const MoreHorizontal = icon('ri-more-2-line')
+export const Reply = icon('ri-reply-line')
+export const Forward = icon('ri-forward-line')
+export const Bold = icon('ri-bold')
+export const Italic = icon('ri-italic')
+export const Link = icon('ri-link')
+export const MailQuestion = icon('ri-question-line')
+export const X = icon('ri-close-line')
+export const Phone = icon('ri-phone-line')
+export const Building = icon('ri-building-line')
+export const CheckCircle2 = icon('ri-checkbox-circle-line')
+export const Check = icon('ri-check-line')
+export const Edit = icon('ri-edit-line')
+export const ExternalLink = icon('ri-external-link-line')
+export const Minus = icon('ri-subtract-line')
+export const HardDrive = icon('ri-hard-drive-line')
+export const Info = icon('ri-information-line')
+export const Palette = icon('ri-palette-line')
+export const Folder = icon('ri-folder-line')
+export const Activity = icon('ri-bar-chart-2-line')
+export const SendPlane = icon('ri-send-plane-line')
+export const XCircle = icon('ri-close-circle-line')

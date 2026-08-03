@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { ArrowLeft, Send, Paperclip, Trash2, Plus, Bold, Italic, Link, Clock } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Trash2, Plus, Bold, Italic, Link, Clock } from '@/lib/lucide-remix'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account } from '@/types'

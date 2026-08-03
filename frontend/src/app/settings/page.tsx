@@ -9,9 +9,7 @@ import {
   Plus, Trash2, RefreshCw, Check, Edit,
   Folder, FileText, ChevronDown,
   Minus, ExternalLink
-} from 'lucide-react'
-
-// ── 账号管理 ──────────────────────────────────────────────
+} from '@/lib/lucide-remix'// ── 账号管理 ──────────────────────────────────────────────
 function AccountPanel() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)

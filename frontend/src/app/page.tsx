@@ -6,7 +6,7 @@ import { useSSE } from '@/hooks/useSSE'
 import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
   ChevronRight, RefreshCw, CheckCircle2, XCircle
-} from 'lucide-react'
+} from '@/lib/lucide-remix'
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
 import type { MailStats, Email, Account } from '@/types'
 

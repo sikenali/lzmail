@@ -28,6 +28,9 @@ func (e *Engine) AddAccount(account *models.Account) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	if _, exists := e.syncers[account.ID]; exists {
+		return
+	}
 	s := NewSyncer(account, e.emailStore, e.archiveDir, e.sseHub)
 	s.Start()
 	e.syncers[account.ID] = s

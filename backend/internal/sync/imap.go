@@ -4,13 +4,21 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
+
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/store"
 	"github.com/lzmail/backend/internal/sse"
+)
+
+const (
+	maxRetryBackoff = 5 * time.Minute
+	minRetryBackoff = 10 * time.Second
+	retryMultiplier = 2.0
 )
 
 type Syncer struct {
@@ -19,6 +27,7 @@ type Syncer struct {
 	archiveDir string
 	sseHub     *sse.Hub
 	stopCh     chan struct{}
+	doneCh     chan struct{}
 }
 
 func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub) *Syncer {
@@ -28,38 +37,150 @@ func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir
 		archiveDir: archiveDir,
 		sseHub:     sseHub,
 		stopCh:     make(chan struct{}),
+		doneCh:     make(chan struct{}),
 	}
 }
 
 func (s *Syncer) Start() {
-	go func() {
-		for {
-			select {
-			case <-s.stopCh:
-				return
-			default:
-				s.syncFolder("INBOX")
-				time.Sleep(5 * time.Minute)
-			}
-		}
-	}()
+	go s.run()
 }
 
 func (s *Syncer) Stop() {
 	close(s.stopCh)
+	<-s.doneCh
+}
+
+func (s *Syncer) run() {
+	defer close(s.doneCh)
+
+	syncOnce := func() {
+		s.syncAllFolders()
+	}
+
+	if s.account.UseIDLE {
+		s.idleLoop(syncOnce)
+	} else {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		syncOnce()
+		for {
+			select {
+			case <-s.stopCh:
+				return
+			case <-ticker.C:
+				syncOnce()
+			}
+		}
+	}
+}
+
+func (s *Syncer) idleLoop(syncOnce func()) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.stopCh:
+			return
+		default:
+		}
+
+		if err := s.idleSync(); err != nil {
+			log.Printf("[sync] account %s idle failed: %v", s.account.Email, err)
+		}
+
+		select {
+		case <-s.stopCh:
+			return
+		case <-ticker.C:
+			syncOnce()
+		}
+	}
+}
+
+func (s *Syncer) idleSync() error {
+	c, err := s.connect()
+	if err != nil {
+		return err
+	}
+	defer c.Logout()
+
+	if _, err := c.Select("INBOX", false); err != nil {
+		return fmt.Errorf("select INBOX: %w", err)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Idle(s.stopCh, nil)
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			return err
+		}
+		s.syncAllFolders()
+		return nil
+	case <-s.stopCh:
+		return nil
+	}
+}
+
+func (s *Syncer) syncAllFolders() {
+	folders, err := s.listFolders()
+	if err != nil {
+		log.Printf("[sync] account %s list folders failed: %v", s.account.Email, err)
+		folders = []string{"INBOX"}
+	}
+
+	for _, folder := range folders {
+		select {
+		case <-s.stopCh:
+			return
+		default:
+		}
+		if strings.Contains(folder, "Drafts") || strings.Contains(folder, "Sent") || strings.Contains(folder, "Trash") || strings.Contains(folder, "Archive") {
+			continue
+		}
+		s.syncFolder(folder)
+	}
+}
+
+func (s *Syncer) listFolders() ([]string, error) {
+	c, err := s.connect()
+	if err != nil {
+		return nil, err
+	}
+	defer c.Logout()
+
+	ch := make(chan *imap.MailboxInfo, 64)
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- c.List("", "*", ch)
+		close(ch)
+	}()
+
+	var folders []string
+	for m := range ch {
+		name := m.Name
+		if !strings.Contains(name, "Drafts") && !strings.Contains(name, "Sent") && !strings.Contains(name, "Trash") && !strings.Contains(name, "Archive") {
+			folders = append(folders, name)
+		}
+	}
+	return folders, <-errCh
 }
 
 func (s *Syncer) syncFolder(folder string) {
 	c, err := s.connect()
 	if err != nil {
-		log.Printf("sync: account %s (%s) connect failed: %v", s.account.Email, s.account.Name, err)
+		log.Printf("[sync] account %s (%s) connect failed: %v", s.account.Email, s.account.Name, err)
 		return
 	}
 	defer c.Logout()
 
 	mbox, err := c.Select(folder, false)
 	if err != nil {
-		log.Printf("sync: account %s select %s failed: %v", s.account.Email, folder, err)
+		log.Printf("[sync] account %s select %s failed: %v", s.account.Email, folder, err)
 		return
 	}
 
@@ -67,10 +188,22 @@ func (s *Syncer) syncFolder(folder string) {
 		return
 	}
 
-	from := uint32(1)
-	if mbox.Messages > 50 {
-		from = mbox.Messages - 50
+	lastUID := s.emailStore.GetLastUIDByFolder(s.account.ID, folder)
+
+	var from uint32
+	if lastUID > 0 && lastUID < mbox.Messages {
+		from = lastUID + 1
+	} else {
+		from = uint32(1)
+		if mbox.Messages > 50 {
+			from = mbox.Messages - 50
+		}
 	}
+
+	if from > mbox.Messages {
+		return
+	}
+
 	seqset := new(imap.SeqSet)
 	seqset.AddRange(from, mbox.Messages)
 
@@ -85,12 +218,13 @@ func (s *Syncer) syncFolder(folder string) {
 			continue
 		}
 		email := &models.Email{
-			AccountID: s.account.ID,
-			UID:       msg.Uid,
-			Folder:    folder,
-			Subject:   msg.Envelope.Subject,
-			Date:      msg.Envelope.Date,
-			IsRead:    !hasFlag(msg.Flags, "\\Seen"),
+			AccountID:   s.account.ID,
+			UID:         msg.Uid,
+			Folder:      folder,
+			Subject:     msg.Envelope.Subject,
+			Date:        msg.Envelope.Date,
+			IsRead:      !hasFlag(msg.Flags, "\\Seen"),
+			BodyPreview: extractBodyPreview(msg),
 		}
 		if len(msg.Envelope.From) > 0 {
 			email.From = msg.Envelope.From[0].Address()
@@ -98,37 +232,74 @@ func (s *Syncer) syncFolder(folder string) {
 		if len(msg.Envelope.To) > 0 {
 			email.To = joinAddresses(msg.Envelope.To)
 		}
-		// Set body preview from text body if available
-		if email.Subject != "" {
-			email.BodyPreview = email.Subject
+		if err := s.emailStore.Upsert(email); err != nil {
+			log.Printf("[sync] account %s upsert failed: %v", s.account.Email, err)
 		}
-		s.emailStore.Upsert(email)
 	}
+
 	if err := <-done; err != nil {
-		log.Printf("sync: account %s fetch failed: %v", s.account.Email, err)
+		log.Printf("[sync] account %s fetch failed: %v", s.account.Email, err)
+	}
+
+	if mbox.Messages > 0 {
+		if err := s.emailStore.SaveLastUID(s.account.ID, folder, mbox.Messages); err != nil {
+			log.Printf("[sync] account %s save last UID failed: %v", s.account.Email, err)
+		}
 	}
 }
 
 func (s *Syncer) connect() (*client.Client, error) {
-	addr := fmt.Sprintf("%s:%d", s.account.IMAPHost, s.account.IMAPPort)
-	var c *client.Client
-	var err error
-	if s.account.IMAPPort == 993 {
-		c, err = client.DialTLS(addr, &tls.Config{InsecureSkipVerify: false})
-	} else {
-		c, err = client.Dial(addr)
-		if err == nil {
-			err = c.StartTLS(&tls.Config{InsecureSkipVerify: false})
+	backoff := minRetryBackoff
+	maxAttempts := 3
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if attempt > 0 {
+			log.Printf("[sync] account %s reconnecting in %v (attempt %d/%d)", s.account.Email, backoff, attempt+1, maxAttempts)
+			select {
+			case <-time.After(backoff):
+				backoff = time.Duration(math.Min(float64(backoff)*retryMultiplier, float64(maxRetryBackoff)))
+			case <-s.stopCh:
+				return nil, fmt.Errorf("stopped")
+			}
 		}
+
+		addr := fmt.Sprintf("%s:%d", s.account.IMAPHost, s.account.IMAPPort)
+		var c *client.Client
+		var err error
+		if s.account.IMAPPort == 993 {
+			c, err = client.DialTLS(addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
+		} else {
+			c, err = client.Dial(addr)
+			if err == nil {
+				err = c.StartTLS(&tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
+			}
+		}
+		if err != nil {
+			continue
+		}
+		if err := c.Login(s.account.Username, s.account.Password); err != nil {
+			c.Logout()
+			continue
+		}
+		return c, nil
 	}
-	if err != nil {
-		return nil, fmt.Errorf("imap dial %s: %w", addr, err)
+	return nil, fmt.Errorf("failed to connect after %d attempts", maxAttempts)
+}
+
+func extractBodyPreview(msg *imap.Message) string {
+	body, ok := msg.Items[imap.FetchBodyStructure]
+	if !ok {
+		return ""
 	}
-	if err := c.Login(s.account.Username, s.account.Password); err != nil {
-		c.Logout()
-		return nil, fmt.Errorf("imap login %s: %w", s.account.Email, err)
+	bs, ok := body.(*imap.BodyStructure)
+	if !ok || bs == nil {
+		return ""
 	}
-	return c, nil
+	// Try to get text body preview from the envelope if available
+	if msg.Envelope != nil && msg.Envelope.Subject != "" {
+		return msg.Envelope.Subject
+	}
+	return ""
 }
 
 func hasFlag(flags []string, flag string) bool {

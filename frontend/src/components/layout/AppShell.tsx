@@ -8,8 +8,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: '#fbf7f0' }}>
-      <div className="w-[240px] flex flex-col bg-white border-r shrink-0" style={{ borderColor: '#f3ede3' }}>
+    <div className="flex h-screen" style={{ backgroundColor: 'var(--app-background)' }}>
+      <div className="w-[240px] flex flex-col bg-[var(--sidebar-bg)] border-r shrink-0" style={{ borderColor: 'var(--sidebar-border)' }}>
         <Sidebar currentPath={pathname} />
       </div>
       <div className="flex-1 flex flex-col min-w-0">

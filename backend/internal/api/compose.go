@@ -6,14 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"path"
-	"path/filepath"
+	"log"
 	"net"
 	"net/http"
 	"net/smtp"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lzmail/backend/internal/models"
@@ -27,6 +29,85 @@ type ComposeRequest struct {
 	BodyText   string     `json:"body_text"`
 	BodyHTML   string     `json:"body_html"`
 	ScheduleAt *time.Time `json:"schedule_at,omitempty"`
+}
+
+type scheduledJob struct {
+	mu          sync.Mutex
+	accountID   int64
+	to          string
+	cc          string
+	subject     string
+	bodyText    string
+	bodyHTML    string
+	sendDate    time.Time
+	sent        bool
+}
+
+var (
+	scheduledJobs   = make(map[int64]*scheduledJob)
+	scheduledJobsMu sync.Mutex
+)
+
+func processScheduledJobs() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := time.Now()
+		scheduledJobsMu.Lock()
+		for id, job := range scheduledJobs {
+			if job.sent || job.sendDate.After(now) {
+				continue
+			}
+			job.mu.Lock()
+			job.sent = true
+			job.mu.Unlock()
+			go func(jobID int64) {
+				scheduledJobsMu.Lock()
+				j := scheduledJobs[jobID]
+				scheduledJobsMu.Unlock()
+				if j == nil {
+					return
+				}
+				executeJob(j)
+				scheduledJobsMu.Lock()
+				delete(scheduledJobs, jobID)
+				scheduledJobsMu.Unlock()
+			}(id)
+		}
+		scheduledJobsMu.Unlock()
+	}
+}
+
+func executeJob(job *scheduledJob) {
+	account, err := AccountStoreInstance.GetByID(job.accountID)
+	if err != nil {
+		log.Printf("[send] scheduled job: account %d not found", job.accountID)
+		return
+	}
+
+	msg := buildMessage(account.Email, job.to, job.cc, job.subject, job.bodyText, job.bodyHTML)
+
+	addr := fmt.Sprintf("%s:%d", account.SMTPHost, account.SMTPPort)
+	host := account.SMTPHost
+
+	var auth smtp.Auth
+	if account.AuthType == "plain" {
+		auth = smtp.PlainAuth("", account.Username, account.Password, host)
+	} else {
+		auth = smtp.PlainAuth("", account.Username, account.Password, host)
+	}
+
+	recipients := splitEmails(job.to)
+	if err := sendMail(addr, auth, account.Email, recipients, msg); err != nil {
+		log.Printf("[send] scheduled job %d failed: %v", job.accountID, err)
+		return
+	}
+	log.Printf("[send] scheduled email sent: %s -> %s", account.Email, job.to)
+}
+
+func init() {
+	go processScheduledJobs()
 }
 
 func buildMessage(from, to, cc, subject, bodyText, bodyHTML string) []byte {
@@ -105,10 +186,8 @@ func needsEncoding(s string) bool {
 	return false
 }
 
-
 func (h *Handler) handleUploadAttachment(w http.ResponseWriter, r *http.Request) {
-	// multipart form upload
-	err := r.ParseMultipartForm(50 << 20) // 50MB max
+	err := r.ParseMultipartForm(50 << 20)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file too large"})
 		return
@@ -120,7 +199,6 @@ func (h *Handler) handleUploadAttachment(w http.ResponseWriter, r *http.Request)
 	}
 	defer file.Close()
 
-	// Save to archive dir
 	os.MkdirAll(h.archiveDir, 0755)
 	filename := path.Join(h.archiveDir, fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename)))
 	dst, err := os.Create(filename)
@@ -136,11 +214,11 @@ func (h *Handler) handleUploadAttachment(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]interface{}{
-		"id":         time.Now().UnixNano(),
-		"filename":   header.Filename,
-		"mime_type":  header.Header.Get("Content-Type"),
-		"size":       size,
-		"path":       filename,
+		"id":        time.Now().UnixNano(),
+		"filename":  header.Filename,
+		"mime_type": header.Header.Get("Content-Type"),
+		"size":      size,
+		"path":      filename,
 	})
 }
 
@@ -170,29 +248,44 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 	}
 
 	recipients := splitEmails(req.To)
+
+	sendDate := time.Now()
+	if req.ScheduleAt != nil && req.ScheduleAt.After(time.Now()) {
+		scheduledJobsMu.Lock()
+		jobID := time.Now().UnixNano()
+		scheduledJobs[jobID] = &scheduledJob{
+			accountID: req.AccountID,
+			to:        req.To,
+			cc:        req.Cc,
+			subject:   req.Subject,
+			bodyText:  req.BodyText,
+			bodyHTML:  req.BodyHTML,
+			sendDate:  *req.ScheduleAt,
+		}
+		scheduledJobsMu.Unlock()
+
+		h.emails.InsertSent(&models.Email{
+			AccountID: req.AccountID,
+			UID:       uint32(time.Now().UnixNano() % 0xFFFFFFFF),
+			Folder:    "Drafts",
+			Subject:   req.Subject,
+			From:      account.Email,
+			To:        req.To,
+			Date:      *req.ScheduleAt,
+			IsRead:    true,
+			IsStarred: false,
+			MessageID: fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
+		})
+
+		writeJSON(w, http.StatusOK, map[string]string{"status": "scheduled", "send_at": req.ScheduleAt.Format(time.RFC3339)})
+		return
+	}
+
 	if err := sendMail(addr, auth, account.Email, recipients, msg); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("send failed: %v", err)})
 		return
 	}
 
-	sendDate := time.Now()
-	if req.ScheduleAt != nil && req.ScheduleAt.After(time.Now()) {
-		// Schedule for later - store as draft with scheduled flag
-		h.emails.InsertSent(&models.Email{
-			AccountID:  req.AccountID,
-			UID:        uint32(time.Now().UnixNano() % 0xFFFFFFFF),
-			Folder:     "Drafts",
-			Subject:    req.Subject,
-			From:       account.Email,
-			To:         req.To,
-			Date:       *req.ScheduleAt,
-			IsRead:     true,
-			IsStarred:  false,
-			MessageID:  fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
-		})
-		writeJSON(w, http.StatusOK, map[string]string{"status": "scheduled", "send_at": req.ScheduleAt.Format(time.RFC3339)})
-		return
-	}
 	h.emails.InsertSent(&models.Email{
 		AccountID:  req.AccountID,
 		UID:        uint32(time.Now().Unix()),

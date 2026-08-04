@@ -1,6 +1,18 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { api } from '@/lib/api'
+import type { Account, Email, Contact, MailStats } from '@/types'
+
+const DEBOUNCE_MS = 300
+
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debouncedValue
+}
 
 export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -12,12 +24,14 @@ export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
 
   useEffect(() => {
     let stopped = false
+    let reconnectAttempts = 0
 
     function connect() {
       if (stopped) return
       try {
         const es = new EventSource(`${api.events.url()}`)
         eventSourceRef.current = es
+        reconnectAttempts = 0
 
         es.addEventListener('mail:new', () => onMailNewRef.current?.())
         es.addEventListener('mail:updated', () => onMailUpdatedRef.current?.())
@@ -27,7 +41,9 @@ export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
         es.onerror = () => {
           es.close()
           eventSourceRef.current = null
-          timerRef.current = setTimeout(connect, 5000)
+          reconnectAttempts++
+          const delay = Math.min(5000 * Math.pow(1.5, reconnectAttempts), 30000)
+          timerRef.current = setTimeout(connect, delay)
         }
       } catch {}
     }

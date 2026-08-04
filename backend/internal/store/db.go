@@ -5,12 +5,17 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+const currentSchemaVersion = 1
+
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
 	if err != nil {
 		return nil, err
 	}
 	if err := migrate(db); err != nil {
+		return nil, err
+	}
+	if err := addIndexes(db); err != nil {
 		return nil, err
 	}
 	return db, nil
@@ -80,4 +85,18 @@ func migrate(db *sql.DB) error {
 	`
 	_, err := db.Exec(schema)
 	return err
+}
+
+func addIndexes(db *sql.DB) error {
+	indexes := []string{
+		`CREATE INDEX IF NOT EXISTS idx_emails_is_read ON emails(account_id, is_read)`,
+		`CREATE INDEX IF NOT EXISTS idx_emails_is_starred ON emails(account_id, is_starred)`,
+		`CREATE INDEX IF NOT EXISTS idx_emails_folder ON emails(account_id, folder, date DESC)`,
+	}
+	for _, idx := range indexes {
+		if _, err := db.Exec(idx); err != nil {
+			return err
+		}
+	}
+	return nil
 }

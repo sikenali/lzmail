@@ -116,10 +116,12 @@ func (s *EmailStore) GetAttachmentsByEmailID(emailID int64) ([]models.Attachment
 }
 
 func (s *EmailStore) Search(query string, limit, offset int) ([]models.Email, error) {
-	q := fmt.Sprintf("%%%s%%", query)
+	q := "%" + query + "%"
 	rows, err := s.db.Query(
 		`SELECT `+emailSelectCols+`
-		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ? ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
+		 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?
+		 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
 		q, q, q, limit, offset)
 	if err != nil {
 		return nil, err
@@ -137,11 +139,12 @@ func (s *EmailStore) Search(query string, limit, offset int) ([]models.Email, er
 }
 
 type MailStats struct {
-	TotalEmails   int `json:"total_emails"`
-	UnreadEmails  int `json:"unread_emails"`
-	TodayEmails   int `json:"today_emails"`
-	AccountCount  int `json:"account_count"`
-	StorageBytes  int64 `json:"storage_bytes"`
+	TotalEmails   int    `json:"total_emails"`
+	UnreadEmails  int    `json:"unread_emails"`
+	TodayEmails   int    `json:"today_emails"`
+	AccountCount  int    `json:"account_count"`
+	StorageBytes  int64  `json:"storage_bytes"`
+	StorageLimit  int64  `json:"storage_limit"`
 }
 
 func (s *EmailStore) Stats() (*MailStats, error) {
@@ -150,16 +153,16 @@ func (s *EmailStore) Stats() (*MailStats, error) {
 		SELECT
 			COALESCE((SELECT COUNT(*) FROM emails), 0),
 			COALESCE((SELECT COUNT(*) FROM emails WHERE is_read = 0), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE date >= datetime('now', 'start of day')), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE date >= date('now', 'start of day')), 0),
 			COALESCE((SELECT COUNT(*) FROM accounts), 0),
-			COALESCE((SELECT SUM(COALESCE(size,0)) FROM attachments), 0)
-	`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes)
+			COALESCE((SELECT COALESCE(SUM(size), 0) FROM attachments), 0),
+			COALESCE((SELECT value FROM settings WHERE key = 'storage_limit_bytes'), 0)
+	`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit)
 	if err != nil {
 		return nil, err
 	}
 	return &st, nil
 }
-
 
 type TrendPoint struct {
 	Date    string `json:"date"`
@@ -169,15 +172,15 @@ type TrendPoint struct {
 
 func (s *EmailStore) Trend(days int) ([]TrendPoint, error) {
 	rows, err := s.db.Query(`
-		SELECT date(date, '"'"'-? days'"'"') as day,
-			COUNT(CASE WHEN folder = 'INBOX' THEN 1 END) as receive,
-			COUNT(CASE WHEN folder = 'Sent' THEN 1 END) as send
-		FROM emails
-		WHERE date >= date('now', ' -? days')
+		SELECT date(e.date, 'localtime') as day,
+			COUNT(CASE WHEN e.folder = 'INBOX' THEN 1 END) as receive,
+			COUNT(CASE WHEN e.folder = 'Sent' THEN 1 END) as send
+		FROM emails e
+		WHERE e.date >= datetime('now', ? || ' days')
 		GROUP BY day
 		ORDER BY day DESC
 		LIMIT ?
-	`, days, days, days)
+	`, fmt.Sprintf("-%d", days), days)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +193,6 @@ func (s *EmailStore) Trend(days int) ([]TrendPoint, error) {
 		}
 		result = append(result, p)
 	}
-	// Reverse to chronological
 	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
 		result[i], result[j] = result[j], result[i]
 	}
@@ -214,7 +216,6 @@ func (s *EmailStore) InsertSent(e *models.Email) error {
 	return err
 }
 
-
 func (s *EmailStore) Move(id int64, folder string) error {
 	_, err := s.db.Exec(`UPDATE emails SET folder = ? WHERE id = ?`, folder, id)
 	return err
@@ -232,5 +233,26 @@ func (s *EmailStore) MarkStar(id int64, starred bool) error {
 
 func (s *EmailStore) Delete(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM emails WHERE id = ?`, id)
+	return err
+}
+
+func (s *EmailStore) GetLastUIDByFolder(accountID int64, folder string) uint32 {
+	key := fmt.Sprintf("last_uid:%d:%s", accountID, folder)
+	var uid uint32
+	err := s.db.QueryRow(
+		`SELECT value FROM settings WHERE key = ?`, key,
+	).Scan(&uid)
+	if err != nil {
+		return 0
+	}
+	return uid
+}
+
+func (s *EmailStore) SaveLastUID(accountID int64, folder string, uid uint32) error {
+	key := fmt.Sprintf("last_uid:%d:%s", accountID, folder)
+	_, err := s.db.Exec(
+		`INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+		key, uid,
+	)
 	return err
 }

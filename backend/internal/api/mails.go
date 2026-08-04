@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"encoding/json"
 )
 
 func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +16,13 @@ func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
 	if limit == 0 {
 		limit = 50
 	}
+	if limit > 200 {
+		limit = 200
+	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offset < 0 {
+		offset = 0
+	}
 
 	var emails interface{}
 	var err error
@@ -53,12 +60,11 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"email":      email,
+		"email":       email,
 		"attachments": atts,
-		"body_html":  bodyHTML,
+		"body_html":   bodyHTML,
 	})
 }
-
 
 func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -73,6 +79,10 @@ func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if h.sseHub != nil {
+		d, _ := json.Marshal(map[string]string{"id": strconv.FormatInt(id, 10), "folder": body.Folder})
+		h.sseHub.Publish("mail:updated", string(d))
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "moved"})
 }
 
@@ -81,6 +91,9 @@ func (h *Handler) handleMarkRead(w http.ResponseWriter, r *http.Request) {
 	if err := h.emails.MarkRead(id); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if h.sseHub != nil {
+		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d}`, id))
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
@@ -92,6 +105,9 @@ func (h *Handler) handleMarkStar(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if h.sseHub != nil {
+		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"star":%s}`, id, strconv.FormatBool(starred)))
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
@@ -100,6 +116,9 @@ func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
 	if err := h.emails.Delete(id); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if h.sseHub != nil {
+		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"deleted":true}`, id))
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -124,10 +143,14 @@ func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, emails)
 }
 
-
 func (h *Handler) handleMailTrend(w http.ResponseWriter, r *http.Request) {
 	rangeDays, _ := strconv.Atoi(r.URL.Query().Get("days"))
-	if rangeDays <= 0 { rangeDays = 7 }
+	if rangeDays <= 0 {
+		rangeDays = 7
+	}
+	if rangeDays > 365 {
+		rangeDays = 365
+	}
 	trend, err := h.emails.Trend(rangeDays)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -192,5 +215,3 @@ func (h *Handler) handleRenderMail(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
 }
-
-

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +37,7 @@ func ensureDir(path string) {
 
 func main() {
 	cfg := config.Load()
-	fmt.Println("lzmail backend starting...")
+	log.Println("lzmail backend starting...")
 
 	ensureDir(cfg.DataDir)
 	ensureDir(cfg.ArchiveDir)
@@ -65,9 +64,9 @@ func main() {
 	mux := http.NewServeMux()
 	handler.Register(mux)
 
-	wrapped := corsMiddleware(mux)
+	wrapped := corsMiddleware(api.LoggingMiddleware(mux))
 
 	addr := ":" + cfg.Port
-	fmt.Println("listening on", addr)
+	log.Println("listening on", addr)
 	log.Fatal(http.ListenAndServe(addr, wrapped))
 }

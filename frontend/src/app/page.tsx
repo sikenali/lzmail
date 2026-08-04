@@ -5,9 +5,9 @@ import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
-  ChevronRight, RefreshCw, CheckCircle2, XCircle
+  ChevronRight, CheckCircle2
 } from '@/lib/lucide-remix'
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
+import { TrendChart } from './TrendChart'
 import type { MailStats, Email, Account } from '@/types'
 
 function formatBytes(bytes: number): string {
@@ -48,22 +48,6 @@ export default function Dashboard() {
   const today = new Date()
   const dateStr = today.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
-  const chartXData = trendData.length > 0
-    ? trendData.map(d => d.date)
-    : ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-  const chartReceive = trendData.length > 0
-    ? trendData.map(d => d.receive)
-    : [8, 14, 6, 11, 18, 4, 7]
-  const chartSend = trendData.length > 0
-    ? trendData.map(d => d.send)
-    : [4, 5, 2, 4, 4, 2, 3]
-
-  const chartCombinedData = chartXData.map((name, i) => ({
-    name,
-    receive: chartReceive[i] ?? 0,
-    send: chartSend[i] ?? 0,
-  }))
-
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',
     boxShadow: 'var(--card-shadow)',
@@ -91,38 +75,10 @@ export default function Dashboard() {
         {/* Stats cards */}
         <div className="flex gap-4 mb-6">
           {[
-            {
-              icon: Mail,
-              iconBg: 'var(--accent)',
-              iconColor: 'var(--primary)',
-              trend: { direction: 'up' as const, pct: '12%', color: 'var(--success)' },
-              value: String(totalEmails),
-              label: '总邮件',
-            },
-            {
-              icon: MailOpen,
-              iconBg: 'var(--danger-bg)',
-              iconColor: 'var(--danger)',
-              trend: { direction: 'down' as const, pct: '3%', color: 'var(--danger)' },
-              value: String(unreadEmails),
-              label: '未读',
-            },
-            {
-              icon: Send,
-              iconBg: 'var(--success-bg)',
-              iconColor: 'var(--success)',
-              trend: null,
-              value: String(todaySent),
-              label: '已发送',
-            },
-            {
-              icon: Paperclip,
-              iconBg: 'var(--gold-bg)',
-              iconColor: 'var(--gold)',
-              trend: null,
-              value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—',
-              label: '附件',
-            },
+            { icon: Mail, iconBg: 'var(--accent)', iconColor: 'var(--primary)', trend: { direction: 'up' as const, pct: '12%', color: 'var(--success)' }, value: String(totalEmails), label: '总邮件' },
+            { icon: MailOpen, iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', trend: { direction: 'down' as const, pct: '3%', color: 'var(--danger)' }, value: String(unreadEmails), label: '未读' },
+            { icon: Send, iconBg: 'var(--success-bg)', iconColor: 'var(--success)', trend: null, value: String(todaySent), label: '已发送' },
+            { icon: Paperclip, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trend: null, value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—', label: '附件' },
           ].map((card, i) => {
             const Icon = card.icon
             return (
@@ -162,7 +118,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-0">
               {loading ? (
-                <div className="flex items-center justify-center py-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
+                <div className="text-center py-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
               ) : recentEmails.length === 0 ? (
                 <div className="text-center py-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>暂无邮件</div>
               ) : recentEmails.map((mail) => {
@@ -173,15 +129,15 @@ export default function Dashboard() {
                 const timeStr = isToday
                   ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
                   : date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-                const accentColor = bc.startsWith('#') ? bc : 'var(--primary)'
+                const accentColor = bc.startsWith('#') ? bc : '#c43d3d'
                 const gradientMap: Record<string, string> = {
                   '#ea4335': 'linear-gradient(135deg, #fb923c, #ef4444)',
                   '#0078d4': 'linear-gradient(135deg, #60a5fa, #6366f1)',
                   '#12b7f5': 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
                   '#e53e3e': 'linear-gradient(135deg, #f87171, #f43f5e)',
                   '#6b8fa3': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
+                  '#c43d3d': 'linear-gradient(135deg, var(--primary), #a83232)',
                   'var(--primary)': 'linear-gradient(135deg, var(--primary), #a83232)',
-                  '#6366f1': 'linear-gradient(135deg, #818cf8, #6366f1)',
                 }
                 return (
                   <a key={mail.id} href={`/mail/${mail.id}`}
@@ -189,7 +145,7 @@ export default function Dashboard() {
                   >
                     <div className="w-1 h-10 shrink-0 rounded-full" style={{ backgroundColor: accentColor }} />
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                      style={{ background: gradientMap[accentColor] || 'linear-gradient(135deg, #c43d3d, #a83232)' }}
+                      style={{ background: gradientMap[accentColor] || 'linear-gradient(135deg, var(--primary), #a83232)' }}
                     >
                       {(mail.from?.[0] || '?').toUpperCase()}
                     </div>
@@ -254,13 +210,7 @@ export default function Dashboard() {
                   <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{storagePct.toFixed(1)}%</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${storagePct}%`,
-                      background: storagePct > 80 ? 'linear-gradient(to right, var(--gold), var(--danger))' : 'linear-gradient(to right, var(--gold), var(--danger))',
-                    }}
-                  />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, background: 'linear-gradient(to right, var(--gold), var(--danger))' }} />
                 </div>
               </div>
               <div className="flex gap-3 text-xs">
@@ -289,34 +239,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartCombinedData}>
-                <defs>
-                  <linearGradient id="receiveGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="sendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--success)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--card)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '12px',
-                    boxShadow: 'var(--card-shadow)',
-                    color: 'var(--foreground)',
-                  }}
-                  labelStyle={{ color: 'var(--foreground-secondary)' }}
-                />
-                <Area type="monotone" dataKey="receive" stroke="var(--primary)" strokeWidth={2} fill="url(#receiveGrad)" />
-                <Area type="monotone" dataKey="send" stroke="var(--success)" strokeWidth={2} fill="url(#sendGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <TrendChart data={trendData} />
           </div>
         </div>
       </div>

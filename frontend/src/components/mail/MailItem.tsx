@@ -1,5 +1,5 @@
 'use client'
-import { Paperclip, Star } from '@/lib/lucide-remix'
+import { Paperclip, Star } from '@/lib/icons'
 import type { Email } from '@/types'
 
 const avatarGradients: Record<string, string> = {

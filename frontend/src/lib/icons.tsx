@@ -1,9 +1,6 @@
 'use client'
 import React from 'react'
 
-// RemixIcon wrapper - replaces lucide-react with remixicon
-// Each icon renders as <i className="ri-xxx" />
-
 function icon(name: string) {
   return React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
     function Icon({ className, style, ...props }, ref) {

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { ChevronUp, Plus } from '@/lib/lucide-remix'
+import { ChevronUp, Plus } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 

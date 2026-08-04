@@ -59,6 +59,11 @@ func (lrw *logResponseWriter) WriteHeader(status int) {
 	lrw.status = status
 	lrw.w.WriteHeader(status)
 }
+func (lrw *logResponseWriter) Flush() {
+	if f, ok := lrw.w.(http.Flusher); ok {
+		f.Flush()
+	}
+}
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

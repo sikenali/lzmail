@@ -180,7 +180,7 @@ export default function Dashboard() {
                   '#12b7f5': 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
                   '#e53e3e': 'linear-gradient(135deg, #f87171, #f43f5e)',
                   '#6b8fa3': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
-                  'var(--primary)': 'linear-gradient(135deg, #c43d3d, #a83232)',
+                  'var(--primary)': 'linear-gradient(135deg, var(--primary), #a83232)',
                   '#6366f1': 'linear-gradient(135deg, #818cf8, #6366f1)',
                 }
                 return (
@@ -258,7 +258,7 @@ export default function Dashboard() {
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${storagePct}%`,
-                      background: storagePct > 80 ? 'linear-gradient(to right, var(--gold), var(--danger))' : 'linear-gradient(to right, var(--gold), #c43d3d)',
+                      background: storagePct > 80 ? 'linear-gradient(to right, var(--gold), var(--danger))' : 'linear-gradient(to right, var(--gold), var(--danger))',
                     }}
                   />
                 </div>

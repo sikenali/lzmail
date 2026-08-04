@@ -106,7 +106,7 @@ export default function MailPage() {
             <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
               style={{ background: (email as any).account_brand
                 ? `linear-gradient(135deg, ${(email as any).account_brand}, ${shiftColor((email as any).account_brand)})`
-                : 'linear-gradient(135deg, #c43d3d, #a83232)' }}
+                : 'linear-gradient(135deg, var(--primary), #a83232)' }}
             >
               {email.from[0]?.toUpperCase() || '?'}
             </div>

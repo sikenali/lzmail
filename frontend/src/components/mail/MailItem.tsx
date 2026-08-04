@@ -57,7 +57,7 @@ export function MailItem({ email, brand, onSelect }: { email: Email; brand?: str
       <div className="flex flex-col items-end gap-2 shrink-0">
         <span className="text-xs whitespace-nowrap" style={{ color: 'var(--muted-foreground)' }}>{timeStr}</span>
         <div className="flex items-center gap-1">
-          {email.has_attachments && <Paperclip className="w-3 h-3" style={{ color: '#94a3b8' }} />}
+          {email.has_attachments && <Paperclip className="w-3 h-3" style={{ color: 'var(--muted-foreground)' }} />}
         </div>
       </div>
     </div>

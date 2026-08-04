@@ -64,7 +64,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--primary)' }}
         >
-          <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-current" style={{ color: 'var(--primary-foreground)' }}>
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" style={{ color: 'var(--primary-foreground)' }}>
             <path d="M3 5h2V3a1 1 0 00-1-1H4a1 1 0 00-1 1v2zm16 0h2V3a1 1 0 00-1-1h-1a1 1 0 00-1 1v2zM5 19H3v2a1 1 0 001 1h1a1 1 0 001-1v-2zm14 0h2v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2zM12 3L5 9l1.5 1.5L12 6l5.5 4.5L19 9 12 3zM5 15l7 7 7-7-1.5-1.5L12 19l-5.5-5.5L5 15z"/>
           </svg>
           写邮件

@@ -18,6 +18,18 @@ function formatBytes(bytes: number): string {
   return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i]
 }
 
+const gradientMap: Record<string, string> = {
+  '#ea4335': 'linear-gradient(135deg, #fb923c, #ef4444)',
+  '#0078d4': 'linear-gradient(135deg, #60a5fa, #6366f1)',
+  '#12b7f5': 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
+  '#e53e3e': 'linear-gradient(135deg, #f87171, #f43f5e)',
+  '#6b8fa3': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
+  '#c43d3d': 'linear-gradient(135deg, #c43d3d, #a83232)',
+  '#6366f1': 'linear-gradient(135deg, #818cf8, #6366f1)',
+  '#5b8c5a': 'linear-gradient(135deg, #6b9b6a, #5b8c5a)',
+  '#c9a96e': 'linear-gradient(135deg, #d4b87a, #c9a96e)',
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<MailStats | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -52,6 +64,7 @@ export default function Dashboard() {
     backgroundColor: 'var(--card)',
     boxShadow: 'var(--card-shadow)',
     border: '1px solid var(--card-border)',
+    borderRadius: '16px',
   }
 
   return (
@@ -122,7 +135,7 @@ export default function Dashboard() {
               ) : recentEmails.length === 0 ? (
                 <div className="text-center py-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>暂无邮件</div>
               ) : recentEmails.map((mail) => {
-                const bc = (mail as any).account_brand || 'var(--primary)'
+                const bc = (mail as any).account_brand || '#c43d3d'
                 const an = (mail as any).account_name || ''
                 const date = new Date(mail.date)
                 const isToday = new Date().toDateString() === date.toDateString()
@@ -130,15 +143,6 @@ export default function Dashboard() {
                   ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
                   : date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
                 const accentColor = bc.startsWith('#') ? bc : '#c43d3d'
-                const gradientMap: Record<string, string> = {
-                  '#ea4335': 'linear-gradient(135deg, #fb923c, #ef4444)',
-                  '#0078d4': 'linear-gradient(135deg, #60a5fa, #6366f1)',
-                  '#12b7f5': 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
-                  '#e53e3e': 'linear-gradient(135deg, #f87171, #f43f5e)',
-                  '#6b8fa3': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
-                  '#c43d3d': 'linear-gradient(135deg, var(--primary), #a83232)',
-                  'var(--primary)': 'linear-gradient(135deg, var(--primary), #a83232)',
-                }
                 return (
                   <a key={mail.id} href={`/mail/${mail.id}`}
                     className="flex items-center gap-3 py-3 hover:bg-[var(--accent)] rounded-lg px-2 -mx-2 transition-colors cursor-pointer"

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, Phone, Building, X } from '@/lib/icons'
+import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, X } from '@/lib/icons'
 import type { Contact } from '@/types'
 
 const gradients = [
@@ -10,13 +10,11 @@ const gradients = [
   'from-red-400 to-pink-500', 'from-purple-400 to-pink-500', 'from-green-400 to-emerald-500',
 ]
 
-const ALPHABET = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<'grid' | 'table'>('grid')
+  const [view, setView] = useState<'grid' | 'table'>('table')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newContact, setNewContact] = useState({ name: '', email: '' })
 
@@ -24,7 +22,6 @@ export default function ContactsPage() {
     api.contacts.list().then(list => setContacts(list || [])).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const [loadingSearch, setLoadingSearch] = useState(false)
   const [filtered, setFiltered] = useState<Contact[]>([])
 
   useEffect(() => {
@@ -32,8 +29,7 @@ export default function ContactsPage() {
       setFiltered(contacts)
       return
     }
-    setLoadingSearch(true)
-    api.contacts.search(search).then(list => setFiltered(list || [])).catch(() => setFiltered(contacts)).finally(() => setLoadingSearch(false))
+    api.contacts.search(search).then(list => setFiltered(list || [])).catch(() => setFiltered(contacts))
   }, [search, contacts])
 
   const grouped: Record<string, Contact[]> = {}
@@ -43,7 +39,7 @@ export default function ContactsPage() {
     grouped[letter].push(c)
   }
 
-  const availableLetters = ALPHABET.filter(l => grouped[l])
+  const availableLetters = Object.keys(grouped).sort()
 
   return (
     <AppShell>
@@ -51,13 +47,13 @@ export default function ContactsPage() {
         {/* Title */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: '#6b8fa3' }} />
+            <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
             <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)', fontFamily: 'SourceHanSans-Bold, system-ui' }}>联系人</h1>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>联系人</h1>
               <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理你的联系人</p>
             </div>
           </div>
-          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 h-10 bg-[#6b8fa3] text-white rounded-xl text-sm font-medium hover:opacity-90">
+          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90">
             <Plus className="w-4 h-4" /> 添加联系人
           </button>
         </div>
@@ -65,50 +61,52 @@ export default function ContactsPage() {
         {/* Search + view toggle */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9ca3af' }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 bg-white rounded-xl outline-none text-sm placeholder:text-[var(--muted-foreground)]"
+              className="w-full h-10 pl-9 pr-4 bg-[var(--card)] rounded-xl outline-none text-sm placeholder:text-[var(--muted-foreground)]"
               style={{ border: '1px solid var(--card-border)', color: 'var(--foreground)' }}
               placeholder="搜索联系人..."
             />
           </div>
-          <div className="flex items-center gap-1 bg-white rounded-xl border p-1" style={{ borderColor: 'var(--card-border)' }}>
-            {showAddForm && (
-            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowAddForm(false)}>
-              <div className="bg-white rounded-2xl p-6 w-[400px] mx-4" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>新建联系人</h3>
-                  <button onClick={() => setShowAddForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">
-                    <X className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <input placeholder="姓名" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})}
-                    className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-                  <input placeholder="邮箱地址" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})}
-                    className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-                  <div className="flex gap-2 justify-end">
-                    <button onClick={() => setShowAddForm(false)} className="px-4 h-9 border rounded-lg text-sm hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
-                    <button onClick={async () => {
-                      if (!newContact.email) return
-                      await api.contacts.create(newContact)
-                      setShowAddForm(false)
-                      setNewContact({ name: '', email: '' })
-                      window.location.reload()
-                    }} className="px-4 h-9 bg-[#6b8fa3] text-white rounded-lg text-sm font-medium hover:opacity-90">保存</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[#6b8fa3] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
+          <div className="flex items-center gap-1 bg-[var(--card)] rounded-xl border p-1" style={{ borderColor: 'var(--card-border)' }}>
+            <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
               卡片
             </button>
-            <button onClick={() => setView('table')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'table' ? 'bg-[#6b8fa3] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
+            <button onClick={() => setView('table')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'table' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
               列表
             </button>
           </div>
         </div>
+
+        {/* Add contact modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowAddForm(false)}>
+            <div className="bg-[var(--card)] rounded-2xl p-6 w-[400px] mx-4" style={{ border: '1px solid var(--card-border)' }} onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>新建联系人</h3>
+                <button onClick={() => setShowAddForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">
+                  <X className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <input placeholder="姓名" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})}
+                  className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+                <input placeholder="邮箱地址" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})}
+                  className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setShowAddForm(false)} className="px-4 h-9 border rounded-lg text-sm hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
+                  <button onClick={async () => {
+                    if (!newContact.email) return
+                    await api.contacts.create(newContact)
+                    setShowAddForm(false)
+                    setNewContact({ name: '', email: '' })
+                    window.location.reload()
+                  }} className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">保存</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12 text-sm" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
@@ -123,7 +121,7 @@ export default function ContactsPage() {
                   </div>
                   <div className="grid grid-cols-4 gap-4">
                     {grouped[letter].map((c, i) => (
-                      <div key={c.id} className="flex items-center gap-3 p-4 bg-white rounded-2xl border hover:shadow-sm transition-shadow cursor-pointer"
+                      <div key={c.id} className="flex items-center gap-3 p-4 bg-[var(--card)] rounded-2xl border hover:shadow-sm transition-shadow cursor-pointer"
                         style={{ borderColor: 'var(--card-border)' }}
                       >
                         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
@@ -146,12 +144,12 @@ export default function ContactsPage() {
         ) : (
           <>
             {/* Table view */}
-            <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
+            <div className="bg-[var(--card)] rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
               <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
                   <span className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>联系人列表</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#fef9f0', color: 'var(--primary)' }}>{filtered.length}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>{filtered.length}</span>
                 </div>
                 <button className="flex items-center gap-1 text-xs text-[var(--foreground-tertiary)] hover:bg-[var(--muted)] px-3 h-8 rounded-lg">
                   排序 <ChevronDown className="w-3 h-3" />
@@ -169,7 +167,7 @@ export default function ContactsPage() {
                 </thead>
                 <tbody>
                   {filtered.map((c) => (
-                    <tr key={c.id} className="hover:bg-[var(--accent)] transition-colors" style={{ borderBottom: '1px solid var(--muted)' }}>
+                    <tr key={c.id} className="hover:bg-[var(--accent)] transition-colors" style={{ borderBottom: '1px solid var(--card-border)' }}>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
@@ -204,7 +202,7 @@ export default function ContactsPage() {
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--muted)' }}>
               <MailIcon className="w-8 h-8" style={{ color: 'var(--muted-foreground)' }} />
             </div>
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>暂无联系人</p>
+            <p className="text-sm" style={{ color: 'var(--foreground-tertiary)' }}>暂无联系人</p>
           </div>
         )}
       </div>

@@ -21,8 +21,9 @@ export default function ComposePage() {
 
   useEffect(() => {
     api.accounts.list().then(list => {
-      setAccounts(list)
-      if (list.length > 0) setAccountId(list[0].id)
+      const accounts = list || []
+      setAccounts(accounts)
+      if (accounts.length > 0) setAccountId(accounts[0].id)
     }).catch(() => {})
   }, [])
 

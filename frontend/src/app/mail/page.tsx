@@ -4,11 +4,13 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, Search, ChevronDown, Archive, Trash2, CheckCircle, Clock, ArrowLeft, Paperclip } from '@/lib/icons'
+import { Mail, RefreshCw, Filter, ChevronDown, Archive, Trash2, CheckCircle, Clock, ArrowLeft, Paperclip, Search, Check, Tags, FolderMove } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { Skeleton } from '@/components/Skeleton'
+// MOCK 假数据（上线前删除）：import { MOCK_EMAILS, MOCK_DETAIL } from '@/lib/mockMailData'
+import { MOCK_EMAILS, MOCK_DETAIL } from '@/lib/mockMailData'
 
 function MailPageInner() {
   const router = useRouter()

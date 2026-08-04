@@ -1,21 +1,10 @@
 'use client'
-import { Search, Settings, Sun, Moon, RefreshCw, CheckCircle2 } from '@/lib/icons'
-import { useSettings } from '@/hooks/useSettings'
+import { Search, Settings } from '@/lib/icons'
 import { useState } from 'react'
 
 export function Header({ onCompose }: { onCompose: () => void }) {
-  const { settings, setSetting } = useSettings()
   const [searchFocused, setSearchFocused] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
-
-  const handleThemeToggle = () => {
-    const currentTheme = settings.theme as 'light' | 'dark' | 'system'
-    let nextTheme: 'light' | 'dark' | 'system'
-    if (currentTheme === 'light') nextTheme = 'dark'
-    else if (currentTheme === 'dark') nextTheme = 'system'
-    else nextTheme = 'light'
-    setSetting('theme', nextTheme)
-  }
 
   return (
     <div className="flex items-center justify-between h-16 px-6 border-b shrink-0" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}>
@@ -32,8 +21,8 @@ export function Header({ onCompose }: { onCompose: () => void }) {
         </div>
       </div>
 
-      <div className="flex-1 max-w-[320px] mx-6">
-        <div className="relative">
+      <div className="flex items-center gap-3">
+        <div className="relative w-[320px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
           <input
             className="w-full h-10 pl-9 pr-4 rounded-lg outline-none text-sm"
@@ -47,9 +36,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
             onBlur={() => setSearchFocused(false)}
           />
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success-bg)' : syncStatus === 'error' ? 'var(--danger-bg)' : 'var(--accent)' }}>
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
           <span className="text-xs font-medium" style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
@@ -60,14 +47,6 @@ export function Header({ onCompose }: { onCompose: () => void }) {
         <a href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--accent)] transition-colors">
           <Settings className="w-5 h-5" style={{ color: 'var(--foreground-secondary)' }} />
         </a>
-
-        <button onClick={handleThemeToggle} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--accent)] transition-colors">
-          {((settings.theme as 'light' | 'dark' | 'system') === 'dark' ||
-            ((settings.theme as 'light' | 'dark' | 'system') === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) ?
-            <Moon className="w-5 h-5" style={{ color: 'var(--foreground-secondary)' }} /> :
-            <Sun className="w-5 h-5" style={{ color: 'var(--foreground-secondary)' }} />
-          }
-        </button>
 
         <div className="w-10 h-10 ml-1 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer"
           style={{ backgroundColor: 'var(--gold)' }}

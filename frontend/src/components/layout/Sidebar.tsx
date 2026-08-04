@@ -46,22 +46,9 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-5 h-16 border-b shrink-0">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary-foreground)' }}>
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-base font-bold leading-none" style={{ color: 'var(--foreground)' }}>LZMail</span>
-          <span className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>懒猫微服</span>
-        </div>
-      </div>
-
       <div className="px-4 pt-4 pb-2">
         <a href="/compose"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90"
+          className="flex items-center justify-center gap-2 w-full h-12 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--primary)' }}
         >
           <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" style={{ color: 'var(--primary-foreground)' }}>

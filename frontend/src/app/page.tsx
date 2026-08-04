@@ -91,7 +91,7 @@ export default function Dashboard() {
             { icon: Mail, iconBg: 'var(--accent)', iconColor: 'var(--primary)', trend: { direction: 'up' as const, pct: '12%', color: 'var(--success)' }, value: String(totalEmails), label: '总邮件' },
             { icon: MailOpen, iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', trend: { direction: 'down' as const, pct: '3%', color: 'var(--danger)' }, value: String(unreadEmails), label: '未读' },
             { icon: Send, iconBg: 'var(--success-bg)', iconColor: 'var(--success)', trend: null, value: String(todaySent), label: '已发送' },
-            { icon: Paperclip, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trend: null, value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—', label: '附件' },
+            { icon: Paperclip, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trend: { direction: 'up' as const, pct: '8%', color: 'var(--gold)' }, value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—', label: '附件' },
           ].map((card, i) => {
             const Icon = card.icon
             return (
@@ -173,7 +173,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right panel */}
-          <div className="flex-[2] flex flex-col gap-4">
+          <div className="w-[380px] flex flex-col gap-4">
             {/* Sync status card */}
             <div className="rounded-2xl p-5" style={cardStyle}>
               <div className="flex items-center gap-2 mb-4">

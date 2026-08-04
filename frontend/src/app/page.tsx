@@ -6,7 +6,7 @@ import { useSSE } from '@/hooks/useSSE'
 import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
   ChevronRight, CheckCircle2
-} from '@/lib/lucide-remix'
+} from '@/lib/icons'
 import { TrendChart } from './TrendChart'
 import type { MailStats, Email, Account } from '@/types'
 

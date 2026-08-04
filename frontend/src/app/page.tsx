@@ -7,7 +7,7 @@ import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
   ChevronRight, CheckCircle2
 } from '@/lib/icons'
-import { TrendChart } from './TrendChart'
+import TrendChart from './TrendChart'
 import type { MailStats, Email, Account } from '@/types'
 
 function formatBytes(bytes: number): string {

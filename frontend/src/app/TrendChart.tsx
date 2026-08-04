@@ -1,20 +1,32 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 type TrendPoint = { date: string; receive: number; send: number }
 
-export function TrendChart({ data }: { data: TrendPoint[] }) {
-  const chartData = data.length > 0
-    ? data.map(d => ({ name: d.date, receive: d.receive, send: d.send }))
-    : [
-        { name: '周一', receive: 8, send: 4 },
-        { name: '周二', receive: 14, send: 5 },
-        { name: '周三', receive: 6, send: 2 },
-        { name: '周四', receive: 11, send: 4 },
-        { name: '周五', receive: 18, send: 4 },
-        { name: '周六', receive: 4, send: 2 },
-        { name: '周日', receive: 7, send: 3 },
-      ]
+const FALLBACK_DATA: TrendPoint[] = [
+  { date: '周一', receive: 8, send: 4 },
+  { date: '周二', receive: 14, send: 5 },
+  { date: '周三', receive: 6, send: 2 },
+  { date: '周四', receive: 11, send: 4 },
+  { date: '周五', receive: 18, send: 4 },
+  { date: '周六', receive: 4, send: 2 },
+  { date: '周日', receive: 7, send: 3 },
+]
+
+export default function TrendChart({ data }: { data: TrendPoint[] }) {
+  const [mounted, setMounted] = useState(false)
+  const chartData = (data.length > 0 ? data : FALLBACK_DATA).map(d => ({
+    name: d.date,
+    receive: d.receive,
+    send: d.send,
+  }))
+
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!mounted) {
+    return <div style={{ width: '100%', height: 192 }} />
+  }
 
   return (
     <ResponsiveContainer width="100%" height={192}>

@@ -173,14 +173,14 @@ export default function Dashboard() {
                 const timeStr = isToday
                   ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
                   : date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-                const accentColor = bc.startsWith('#') ? bc : '#c43d3d'
+                const accentColor = bc.startsWith('#') ? bc : 'var(--primary)'
                 const gradientMap: Record<string, string> = {
                   '#ea4335': 'linear-gradient(135deg, #fb923c, #ef4444)',
                   '#0078d4': 'linear-gradient(135deg, #60a5fa, #6366f1)',
                   '#12b7f5': 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
                   '#e53e3e': 'linear-gradient(135deg, #f87171, #f43f5e)',
                   '#6b8fa3': 'linear-gradient(135deg, #93c5fd, #60a5fa)',
-                  '#c43d3d': 'linear-gradient(135deg, #c43d3d, #a83232)',
+                  'var(--primary)': 'linear-gradient(135deg, #c43d3d, #a83232)',
                   '#6366f1': 'linear-gradient(135deg, #818cf8, #6366f1)',
                 }
                 return (

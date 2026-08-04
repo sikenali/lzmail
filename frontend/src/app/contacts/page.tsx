@@ -178,9 +178,9 @@ export default function ContactsPage() {
                           <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{c.name || '(无名)'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>{c.email}</td>
-                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>—</td>
-                      <td className="px-6 py-3 text-sm" style={{ color: '#6b5b4f' }}>—</td>
+                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>{c.email}</td>
+                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>—</td>
+                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>—</td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">

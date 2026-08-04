@@ -2,10 +2,15 @@
   "name": "lzmail",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"cd backend && go run ./cmd/lzmail/\" \"cd frontend && npm run dev\"",
-    "build": "cd backend && go build ./cmd/lzmail/ && cd ../frontend && npm run build"
+    "dev:backend": "cd backend && go run ./cmd/lzmail/",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"wait-on tcp:8080 && npm run dev:frontend\"",
+    "build:backend": "cd backend && go build -o ../lzmail ./cmd/lzmail/",
+    "build:frontend": "cd frontend && npm run build",
+    "build": "npm run build:backend && npm run build:frontend"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "wait-on": "^8.0.0"
   }
 }

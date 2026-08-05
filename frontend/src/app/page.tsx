@@ -76,7 +76,7 @@ export default function Dashboard() {
             <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
             <div>
               <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>仪表盘</h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件概况与统计</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件概览与同步状态</p>
             </div>
           </div>
           <div className="flex items-center gap-2 px-3 h-8 rounded-lg" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
@@ -88,10 +88,10 @@ export default function Dashboard() {
         {/* Stats cards */}
         <div className="flex gap-4 mb-6">
           {[
-            { icon: Mail, iconBg: 'var(--accent)', iconColor: 'var(--primary)', trend: { direction: 'up' as const, pct: '12%', color: 'var(--success)' }, value: String(totalEmails), label: '总邮件' },
-            { icon: MailOpen, iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', trend: { direction: 'down' as const, pct: '3%', color: 'var(--danger)' }, value: String(unreadEmails), label: '未读' },
-            { icon: Send, iconBg: 'var(--success-bg)', iconColor: 'var(--success)', trend: null, value: String(todaySent), label: '已发送' },
-            { icon: Paperclip, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trend: { direction: 'up' as const, pct: '8%', color: 'var(--gold)' }, value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—', label: '附件' },
+            { icon: Mail, iconBg: 'var(--accent)', iconColor: 'var(--primary)', trend: { direction: 'up' as const, pct: '12%', color: 'var(--success)' }, value: String(totalEmails), label: '总邮件数' },
+            { icon: MailOpen, iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', trend: { direction: 'down' as const, pct: '3%', color: 'var(--danger)' }, value: String(unreadEmails), label: '未读邮件' },
+            { icon: Send, iconBg: 'var(--success-bg)', iconColor: 'var(--success)', trend: { direction: 'up' as const, pct: '8%', color: 'var(--success)' }, value: String(todaySent), label: '已发送' },
+            { icon: Paperclip, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trend: { direction: 'up' as const, pct: '8%', color: 'var(--gold)' }, value: totalEmails > 0 ? String(Math.round(totalEmails * 0.3)) : '—', label: '附件总量' },
           ].map((card, i) => {
             const Icon = card.icon
             return (
@@ -111,6 +111,7 @@ export default function Dashboard() {
                 </div>
                 <div className="text-2xl font-bold mb-1" style={{ color: 'var(--foreground)' }}>{card.value}</div>
                 <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{card.label}</div>
+                {i === 3 && <div className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>本地 NAS 存储</div>}
               </div>
             )
           })}
@@ -206,7 +207,7 @@ export default function Dashboard() {
             <div className="rounded-2xl p-5 flex-1" style={cardStyle}>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-                <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>存储概览</h2>
+                <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>本地存储</h2>
               </div>
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs mb-2">
@@ -229,7 +230,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-[5px] h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-              <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>邮件趋势</h2>
+              <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>邮件趋势（近7天）</h2>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">

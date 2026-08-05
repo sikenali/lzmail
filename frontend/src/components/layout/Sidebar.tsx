@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, FlowChart } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, FlowChart } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
@@ -11,16 +11,7 @@ const navItems = [
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=SENT' },
   { icon: FileText, label: '草稿箱', href: '/mail?folder=DRAFTS', badge: 5, badgeStyle: 'gold' },
-  { icon: Contact, label: '联系人', href: '/contacts' },
   { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
-  { icon: Settings, label: '设置', href: '/settings' },
-]
-
-const categories = [
-  { label: '工作', color: '#c43d3d' },
-  { label: '个人', color: '#5b8c5a' },
-  { label: '订阅', color: '#6b8fa3' },
-  { label: '旅行', color: '#c9a96e' },
 ]
 
 export function Sidebar({ currentPath }: { currentPath: string }) {
@@ -85,23 +76,6 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               </a>
             )
           })}
-        </div>
-      </div>
-
-      <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
-
-      <div style={{ paddingTop: 16 }}>
-        <div className="text-[11px] font-semibold" style={{ color: 'rgba(184,168,138,1)', padding: '0 16px' }}>分类</div>
-        <div style={{ paddingTop: 16 }}>
-          {categories.map((cat) => (
-            <a key={cat.label} href="/mail"
-              className="flex items-center gap-3 rounded-[8px] text-[13px] font-medium transition-colors"
-              style={{ padding: '8px 16px', backgroundColor: 'transparent', color: 'rgba(61,43,31,1)' }}
-            >
-              <span className="w-[13px] h-3 rounded-[2px] shrink-0" style={{ backgroundColor: cat.color }} />
-              <span>{cat.label}</span>
-            </a>
-          ))}
         </div>
       </div>
 

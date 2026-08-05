@@ -16,6 +16,7 @@ const navItems = [
 ]
 
 export function Sidebar({ currentPath }: { currentPath: string }) {
+  const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
 
   useEffect(() => {

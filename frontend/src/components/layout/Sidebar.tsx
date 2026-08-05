@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, FlowChart } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, FlowChart } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 

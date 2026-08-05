@@ -28,37 +28,43 @@ export function MailItem({ email, brand, onSelect }: { email: Email; brand?: str
 
   const barColor = resolveBrand(brand || '')
   const gradient = avatarGradients[barColor] || defaultGradients[(email.id || 0) % defaultGradients.length]
-  const badgeColor = resolveBrand(brand || '')
   const brandName = email.account_name || ''
 
   return (
     <div onClick={() => onSelect(email.id)}
-      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 rounded-lg border border-transparent hover:border-[var(--border)] hover:bg-gray-50 dark:hover:bg-gray-900/30"
+      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors duration-200 border-b border-transparent hover:border-[var(--border)] hover:bg-gray-50 dark:hover:bg-gray-900/30"
     >
-      <div className="w-1.5 h-10 rounded-full shrink-0" style={{ backgroundColor: barColor, borderRadius: '9999px' }} />
-      <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
+      <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[10px] font-semibold shrink-0`}>
         {(email.from?.[0] || '?').toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{email.from}</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{email.from}</span>
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{email.subject || '(无主题)'}</span>
           {email.is_starred && <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />}
+        </div>
+        <div className="text-xs truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{email.body_preview}</div>
+        <div className="flex items-center gap-1.5 mt-1.5">
           {brandName && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-              style={{ backgroundColor: badgeColor + '1a', color: badgeColor }}
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md shrink-0"
+              style={{ backgroundColor: barColor + '1a', color: barColor }}
             >
               {brandName}
             </span>
           )}
+          {email.has_attachments && (
+            <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md shrink-0"
+              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}
+            >
+              <Paperclip className="w-2.5 h-2.5" /> 附件
+            </span>
+          )}
         </div>
-        <div className="text-sm font-medium truncate mt-0.5" style={{ color: 'var(--foreground-secondary)' }}>{email.subject || '(无主题)'}</div>
-        <div className="text-xs truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{email.body_preview}</div>
       </div>
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className="text-xs whitespace-nowrap" style={{ color: 'var(--muted-foreground)' }}>{timeStr}</span>
-        <div className="flex items-center gap-1">
-          {email.has_attachments && <Paperclip className="w-3 h-3" style={{ color: 'var(--muted-foreground)' }} />}
-        </div>
+      <div className="flex flex-col items-end justify-start gap-1 shrink-0 self-start pt-0.5">
+        <span className="text-xs whitespace-nowrap" style={{ color: 'var(--foreground-tertiary)' }}>{timeStr}</span>
       </div>
     </div>
   )

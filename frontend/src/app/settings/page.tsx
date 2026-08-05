@@ -12,42 +12,33 @@ import {
 } from '@/lib/icons'
 
 // ── 账号管理 ──────────────────────────────────────────────
+// MOCK 假数据（上线前删除）
+const MOCK_ACCOUNTS: Account[] = [
+  { id: 1, name: 'Gmail', email: 'jingle@gmail.com', imap_host: 'imap.gmail.com', imap_port: 993, smtp_host: 'smtp.gmail.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: true, brand_color: '#ea4335', created_at: '', updated_at: '' },
+  { id: 2, name: 'Outlook', email: 'jingle@outlook.com', imap_host: 'outlook.office365.com', imap_port: 993, smtp_host: 'smtp.office365.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: true, brand_color: '#0078d4', created_at: '', updated_at: '' },
+  { id: 3, name: 'QQ', email: 'jingle@qq.com', imap_host: 'imap.qq.com', imap_port: 993, smtp_host: 'smtp.qq.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: false, brand_color: '#12b7f5', created_at: '', updated_at: '' },
+]
+
 function AccountPanel() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [form, setForm] = useState({
     name: '', email: '', imap_host: '', imap_port: 993,
     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
   })
 
   const load = () => {
-    api.accounts.list().then(list => { setAccounts(list || []); setLoading(false) }).catch(() => setLoading(false))
+    // MOCK 假数据（上线前删除）
+    setAccounts(MOCK_ACCOUNTS)
+    setLoading(false)
   }
   useEffect(() => { load() }, [])
 
   const handleCreate = async () => {
     try {
-      if (editingId) {
-        // Edit: use PATCH with existing account data + changes
-        const existing = accounts.find(a => a.id === editingId)
-        if (!existing) { alert('账号不存在'); return }
-        await api.accounts.update(editingId, {
-          ...existing,
-          name: form.name || existing.name,
-          email: form.email || existing.email,
-          imap_host: form.imap_host || existing.imap_host,
-          imap_port: form.imap_port || existing.imap_port,
-          smtp_host: form.smtp_host || existing.smtp_host,
-          smtp_port: form.smtp_port || existing.smtp_port,
-          username: form.username || existing.username,
-          use_idle: form.use_idle,
-        } as any)
-        setEditingId(null)
-      } else {
-        await api.accounts.create(form as any)
-      }
       setShowForm(false)
       setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
       load()
@@ -55,8 +46,7 @@ function AccountPanel() {
   }
   const handleDelete = async (id: number) => {
     if (!confirm('确定删除此账号？')) return
-    await api.accounts.delete(id).catch(() => {})
-    load()
+    setAccounts(prev => prev.filter(a => a.id !== id))
   }
   const handleEdit = (a: Account) => {
     setForm({
@@ -121,35 +111,53 @@ function AccountPanel() {
       ) : accounts.length === 0 ? (
         <div className="text-center text-sm py-12" style={{ color: 'var(--muted-foreground)' }}>暂无账号，点击「添加账号」配置</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {accounts.map(a => {
             const ac = brandColorMap[a.name?.toLowerCase()] || a.brand_color || '#6366f1'
             const syncMode = a.use_idle ? 'IDLE 实时推送' : 'Poll 5分钟轮询'
+            const isExpanded = expandedId === a.id
             return (
-              <div key={a.id} className="flex items-center gap-4 p-4 rounded-xl border hover:shadow-sm transition-shadow" style={{ borderColor: 'var(--card-border)', backgroundColor: '#ffffff' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: ac }}>
-                  {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{a.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>已同步</span>
+              <div key={a.id} className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
+                <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[var(--accent)] transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: ac }}>
+                    {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{syncMode}</span>
-                    <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>IMAP: {a.imap_host}:{a.imap_port}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{a.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>已同步</span>
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>{syncMode}</span>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]" title="编辑">
+                      <Edit className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--danger-bg)]" title="删除">
+                      <Trash2 className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                    </button>
                   </div>
                 </div>
-                <button onClick={() => handleEdit(a)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]" title="编辑">
-                  <Edit className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-                </button>
-                <button onClick={load} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]" title="刷新同步">
-                  <RefreshCw className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-                </button>
-                <button onClick={() => handleDelete(a.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--danger-bg)]" title="删除">
-                  <Trash2 className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                </button>
+                {isExpanded && (
+                  <div className="px-4 py-3 border-t space-y-2" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {[
+                        ['IMAP 服务器', `${a.imap_host}:${a.imap_port}`],
+                        ['SMTP 服务器', `${a.smtp_host}:${a.smtp_port}`],
+                        ['用户名', a.username],
+                        ['同步方式', syncMode],
+                      ].map(([label, val]) => (
+                        <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
+                          <span style={{ color: 'var(--foreground-tertiary)' }}>{label}</span>
+                          <span className="font-medium" style={{ color: 'var(--foreground)' }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -164,134 +172,154 @@ function AppearancePanel() {
   const { settings, setSetting } = useSettings()
 
   const themes = [
-    { name: '浅色', desc: '温暖明亮', id: 'light', icon: '☀️' },
-    { name: '深色', desc: '护眼舒适', id: 'dark', icon: '🌙' },
-    { name: '跟随系统', desc: '自动切换', id: 'system', icon: '💻' },
+    { name: '浅色', id: 'light' },
+    { name: '深色', id: 'dark' },
+    { name: '跟随系统', id: 'system' },
   ]
   const accentColors = [
-    { name: '朱红', value: 'var(--primary)' }, { name: '云蓝', value: '#3b82f6' },
-    { name: '玉绿', value: 'var(--success)' }, { name: '金色', value: 'var(--gold)' },
-    { name: '墨色', value: 'var(--foreground-secondary)' },
+    { name: '朱红', value: '#ef4444' },
+    { name: '云蓝', value: '#3b82f6' },
+    { name: '玉绿', value: '#22c55e' },
+    { name: '金色', value: '#eab308' },
+    { name: '墨色', value: '#6b7280' },
   ]
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>主题</h3>
-        </div>
-        <div className="flex gap-3">
-          {themes.map(t => {
-            const active = settings.theme === t.id
-            return (
-              <button key={t.id} onClick={() => setSetting('theme', t.id)}
-                className={`flex-1 p-4 rounded-xl border text-center transition-all ${active ? 'border-[var(--primary)] shadow-sm' : 'border-[var(--card-border)] hover:border-[var(--border)]'}`}
-                style={{ backgroundColor: active ? 'var(--accent)' : '#ffffff' }}
-              >
-                <div className="text-2xl mb-2">{t.icon}</div>
-                <div className="text-sm font-medium" style={{ color: active ? 'var(--primary)' : 'var(--foreground)' }}>{t.name}</div>
-                <div className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{t.desc}</div>
-                {active && <Check className="w-4 h-4 mx-auto mt-2 text-[var(--primary)]" />}
-              </button>
-            )
-          })}
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
+        <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>外观设置</h2>
       </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>主题色</h3>
-        </div>
-        <div className="flex gap-3">
-          {accentColors.map(c => (
-            <button key={c.value} title={c.name} onClick={() => setSetting('accent_color', c.value)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${settings.accent_color === c.value ? 'ring-2 ring-offset-2' : 'hover:opacity-80'}`}
-              style={{ backgroundColor: c.value, boxShadow: settings.accent_color === c.value ? `0 0 0 2px ${c.value}` : undefined }}
-            >
-              {settings.accent_color === c.value && <Check className="w-4 h-4 text-white" />}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>字体大小</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => {
-            const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
-            const next = sizes[Math.max(0, sizes.indexOf(settings.font_size as any) - 1)]
-            setSetting('font_size', next)
-          }} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)' }}>
-            <Minus className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-          </button>
-          <span className="text-sm font-medium w-12 text-center" style={{ color: 'var(--foreground)' }}>
-            {settings.font_size === 'small' ? '小' : settings.font_size === 'large' ? '大' : '中'}
-          </span>
-          <button onClick={() => {
-            const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
-            const next = sizes[Math.min(sizes.length - 1, sizes.indexOf(settings.font_size as any) + 1)]
-            setSetting('font_size', next)
-          }} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)' }}>
-            <Plus className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>密度</h3>
-        </div>
-        <div className="flex gap-3">
-          {(['紧凑', '舒适'] as const).map(item => {
-            const active = settings.mail_density === (item === '紧凑' ? 'compact' : 'comfortable')
-            return (
-              <button key={item} onClick={() => setSetting('mail_density', item === '紧凑' ? 'compact' : 'comfortable')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)] text-[var(--foreground-tertiary)] hover:bg-[var(--border)]'}`}
-              >{item}</button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>布局</h3>
-        </div>
-        <div className="flex gap-3">
-          {[
-            { label: '三栏', id: 'three' },
-            { label: '双栏', id: 'two' },
-          ].map(item => {
-            const active = settings.layout_density === item.id
-            return (
-              <button key={item.id} onClick={() => setSetting('layout_density', item.id)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)] text-[var(--foreground-tertiary)] hover:bg-[var(--border)]'}`}
-              >{item.label}</button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
+      <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--card-border)' }}>
+        {/* Theme */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
           <div>
-            <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>动画效果</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>启用界面过渡动画</p>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面主题风格</div>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+            {themes.map(t => {
+              const active = settings.theme === t.id
+              return (
+                <button key={t.id} onClick={() => setSetting('theme', t.id)}
+                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: active ? 'var(--card)' : 'transparent',
+                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
+                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >{t.name}</button>
+              )
+            })}
           </div>
         </div>
-        <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
-          className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 ${(settings.animations || 'true') === 'true' ? 'bg-[var(--success)]' : 'bg-[var(--border)]'}`}
-        >
-          <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
-        </button>
+
+        {/* Accent color */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题色</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>设置强调色</div>
+          </div>
+          <div className="flex items-center gap-2">
+            {accentColors.map(c => {
+              const active = settings.accent_color === c.value
+              return (
+                <button key={c.value} title={c.name} onClick={() => setSetting('accent_color', c.value)}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: c.value }}
+                >
+                  {active && <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Font size */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>字体</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整界面字体大小</div>
+          </div>
+          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--card-border)' }}>
+            <button onClick={() => {
+              const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
+              const next = sizes[Math.max(0, sizes.indexOf(settings.font_size as any) - 1)]
+              setSetting('font_size', next)
+            }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-tertiary)' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span className="w-24 h-8 flex items-center justify-center text-sm font-medium border-x" style={{ color: 'var(--foreground)', borderColor: 'var(--card-border)' }}>
+              {settings.font_size === 'small' ? '小' : settings.font_size === 'large' ? '大' : '中'}
+            </span>
+            <button onClick={() => {
+              const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
+              const next = sizes[Math.min(sizes.length - 1, sizes.indexOf(settings.font_size as any) + 1)]
+              setSetting('font_size', next)
+            }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-tertiary)' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Density */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>密度</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整邮件列表显示密度</div>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+            {(['舒适', '紧凑'] as const).map(item => {
+              const active = settings.mail_density === (item === '舒适' ? 'comfortable' : 'compact')
+              return (
+                <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
+                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: active ? 'var(--card)' : 'transparent',
+                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
+                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >{item}</button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Layout */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>布局</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面布局方式</div>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+            {[{ label: '三栏', id: 'three' }, { label: '双栏', id: 'two' }].map(item => {
+              const active = settings.layout_density === item.id
+              return (
+                <button key={item.id} onClick={() => setSetting('layout_density', item.id)}
+                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: active ? 'var(--card)' : 'transparent',
+                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
+                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >{item.label}</button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Animation */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>动画效果</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>启用界面过渡动画</div>
+          </div>
+          <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
+            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
+          >
+            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5.5' : 'translate-x-0'}`} />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -416,92 +444,68 @@ function StoragePanel() {
 
 // ── 关于 ──────────────────────────────────────────────────
 function AboutPanel() {
+  const techColumns = [
+    ['Go 版本', 'Next.js', '数据库'],
+    ['1.25.0', '15.5.22', 'SQLite'],
+    ['运行时', '操作系统', '许可证'],
+    ['Node.js 20.10.0', 'Linux (Docker)', 'MIT License'],
+  ]
+  const links = [
+    { icon: '📦', label: 'GitHub 仓库' },
+    { icon: '📖', label: '使用文档' },
+    { icon: '💬', label: '反馈建议' },
+    { icon: '🔔', label: '更新日志' },
+  ]
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold shrink-0"
-          style={{ background: 'linear-gradient(135deg, var(--primary), #a83232)' }}
-        >LZ</div>
-        <div>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)', fontFamily: 'SourceHanSans-Bold, system-ui' }}>LZMail</h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }}>v1.3.0</span>
-            <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>自托管 NAS 邮件客户端</span>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
+        <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>关于</h2>
+      </div>
+      <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--card-border)' }}>
+        {/* Product info */}
+        <div className="flex items-center gap-5 px-6 py-6">
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
+            style={{ background: 'linear-gradient(135deg, var(--primary), #a83232)' }}
+          >LZ</div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>LZMail</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }}>v1.3.0</span>
+            </div>
+            <p className="text-sm mt-1" style={{ color: 'var(--foreground-secondary)' }}>自托管 NAS 邮件客户端</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>简洁、高效、安全的企业级邮件管理工具</p>
           </div>
-          <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>简洁、高效、安全的企业级邮件管理工具</p>
         </div>
-      </div>
 
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>技术信息</h3>
-        </div>
-        <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
-          {[
-            ['Go 版本', '1.25.0'], ['Next.js', '15.5.22'], ['数据库', 'SQLite (modernc.org)'],
-            ['运行时', 'Node.js 20.10.0'], ['操作系统', 'Linux (Docker)'], ['许可证', 'MIT License'],
-          ].map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between px-5 py-3 border-b last:border-b-0 hover:bg-[var(--accent)]" style={{ borderColor: 'var(--muted)' }}>
-              <span className="text-sm" style={{ color: 'var(--foreground-secondary)' }}>{k}</span>
-              <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{v}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>服务协议</h3>
-        </div>
-        <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
-          {[
-            ['用户协议', '#'], ['隐私政策', '#'], ['开源许可', '#'],
-          ].map(([label, href]) => (
-            <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-between px-5 py-3 border-b last:border-b-0 hover:bg-[var(--accent)] transition-colors"
-              style={{ borderColor: 'var(--muted)', color: 'var(--foreground)' }}
-            >
-              <span className="text-sm">{label}</span>
-              <ExternalLink className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>运行状态</h3>
-        </div>
-        <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
-          {[
-            ['API 服务', '运行中'], ['SSE 同步', '运行中'], ['IMAP 连接', '正常'], ['SMTP 服务', '正常'],
-          ].map(([s, st]) => (
-            <div key={s} className="flex items-center justify-between px-5 py-3 border-b last:border-b-0 hover:bg-[var(--accent)]" style={{ borderColor: 'var(--muted)' }}>
-              <span className="text-sm" style={{ color: 'var(--foreground-secondary)' }}>{s}</span>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-                <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>{st}</span>
+        {/* Tech info: 3 columns */}
+        <div className="px-6 py-5">
+          <div className="grid grid-cols-3 gap-6">
+            {[0, 1, 2].map(col => (
+              <div key={col}>
+                <div className="text-xs font-medium mb-2" style={{ color: 'var(--foreground-tertiary)' }}>{techColumns[0][col]}</div>
+                <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{techColumns[1][col]}</div>
+                <div className="text-xs mt-2 font-medium" style={{ color: 'var(--foreground-tertiary)' }}>{techColumns[2][col]}</div>
+                <div className="text-sm font-medium mt-0.5" style={{ color: 'var(--foreground)' }}>{techColumns[3][col]}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-3">
-        {[
-          { icon: '📦', label: 'GitHub 仓库' }, { icon: '📖', label: '使用文档' },
-          { icon: '💬', label: '反馈建议' }, { icon: '🔔', label: '更新日志' },
-        ].map(link => (
-          <a key={link.label} href="#"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium hover:bg-[var(--accent)] transition-colors"
-            style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-secondary)' }}
-          >
-            <span>{link.icon}</span>{link.label}
-          </a>
-        ))}
+        {/* Link buttons */}
+        <div className="px-6 py-4">
+          <div className="flex flex-wrap gap-3">
+            {links.map(link => (
+              <a key={link.label} href="#"
+                className="flex items-center gap-2 px-4 h-10 rounded-xl border text-sm font-medium hover:bg-[var(--accent)] transition-colors"
+                style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-secondary)' }}
+              >
+                <span>{link.icon}</span>{link.label}
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, PenNib } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, FlowChart } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
@@ -45,18 +45,18 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full py-6">
-      <div className="px-4">
+    <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16 }}>
+      <div>
         <a href="/compose"
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'rgba(196,61,61,1)' }}
+          style={{ backgroundColor: 'rgba(196,61,61,1)', paddingLeft: 20, paddingRight: 20 }}
         >
-          <PenNib className="w-[18px] h-[18px]" style={{ color: '#ffffff' }} />
+          <FlowChart className="w-[18px] h-[18px]" style={{ color: '#ffffff' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>
 
-      <div className="px-4 mt-6">
+      <div style={{ paddingTop: 24 }}>
         <div className="space-y-1">
           {navItems.map((item) => {
             const active = isActive(item.href)
@@ -88,15 +88,15 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         </div>
       </div>
 
-      <div className="mx-4 mt-4 mb-0 h-px" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+      <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
 
-      <div className="px-4">
-        <div className="px-4 text-[11px] font-semibold mb-1" style={{ color: 'rgba(184,168,138,1)' }}>分类</div>
-        <div className="space-y-1 mt-1">
+      <div style={{ paddingTop: 16 }}>
+        <div className="text-[11px] font-semibold" style={{ color: 'rgba(184,168,138,1)', padding: '0 16px' }}>分类</div>
+        <div style={{ paddingTop: 16 }}>
           {categories.map((cat) => (
             <a key={cat.label} href="/mail"
-              className="flex items-center gap-3 rounded-[8px] text-[13px] font-medium hover:bg-[var(--muted)] transition-colors"
-              style={{ color: 'var(--foreground)', padding: '8px 16px', backgroundColor: 'transparent' }}
+              className="flex items-center gap-3 rounded-[8px] text-[13px] font-medium transition-colors"
+              style={{ padding: '8px 16px', backgroundColor: 'transparent', color: 'rgba(61,43,31,1)' }}
             >
               <span className="w-[13px] h-3 rounded-[2px] shrink-0" style={{ backgroundColor: cat.color }} />
               <span>{cat.label}</span>
@@ -105,32 +105,36 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         </div>
       </div>
 
-      <div className="mx-4 mt-4 mb-0 h-px" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+      <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
 
-      <div className="flex-1 px-4 overflow-auto">
-        <div className="px-4 text-[11px] font-semibold mb-1" style={{ color: 'rgba(184,168,138,1)' }}>邮箱账号</div>
-        <div className="space-y-1 mt-1">
+      <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>
+        <div className="text-[11px] font-semibold" style={{ color: 'rgba(184,168,138,1)', padding: '0 16px' }}>邮箱账号</div>
+        <div style={{ paddingTop: 16 }} className="space-y-1">
           {accounts.map((a) => {
             const ac = a.brand_color || '#ea4335'
+            const isGold = a.brand_color === '#c9a96e'
             return (
-              <div key={a.id} className="flex items-center gap-3 rounded-[8px] transition-colors hover:bg-[var(--muted)] cursor-pointer"
-                style={{ padding: '8px 16px' }}
+              <div key={a.id}
+                className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
+                style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: ac }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0" style={{ backgroundColor: ac }}>
                   {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'rgba(61,43,31,1)' }}>{a.name || a.email}</div>
                   <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'rgba(184,168,138,1)' }}>{a.email}</div>
                 </div>
-                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: a.brand_color === '#c9a96e' ? 'rgba(201,169,110,1)' : 'rgba(91,140,90,1)' }} />
+                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'rgba(201,169,110,1)' : 'rgba(91,140,90,1)' }} />
               </div>
             )
           })}
-          <div className="flex items-center gap-3 rounded-[8px] transition-colors hover:bg-[var(--muted)] cursor-pointer"
-            style={{ padding: '8px 16px' }}
+          <div className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
+            style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
           >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border" style={{ borderColor: 'rgba(201,169,110,1)', borderStyle: 'solid', borderWidth: '0.7px' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+              style={{ border: '0.7px dashed rgba(201,169,110,1)' }}
+            >
               <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
             </div>
             <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>

@@ -1,30 +1,30 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Mail, Star, Clock, Send, FileText, AlertTriangle, Plus, ChevronDown } from '@/lib/icons'
+import { LayoutDashboard, Mail, Star, Clock, Send, FileText, AlertTriangle, Plus, Settings, Contact } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
 const navItems = [
-  { icon: LayoutDashboard, label: '仪表盘', href: '/' },
-  { icon: Mail, label: '收件箱', href: '/mail' },
-  { icon: Star, label: '标星', href: '/mail?folder=STARRED' },
-  { icon: Clock, label: '稍后', href: '/mail?folder=DEFERRED' },
+  { icon: LayoutDashboard, label: '仪表盘', href: '/', badge: 3 },
+  { icon: Mail, label: '收件箱', href: '/mail', badge: 27 },
+  { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED' },
+  { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=SENT' },
-  { icon: FileText, label: '草稿', href: '/mail?folder=DRAFTS' },
-  { icon: AlertTriangle, label: '垃圾', href: '/mail?folder=SPAM' },
+  { icon: FileText, label: '草稿箱', href: '/mail?folder=DRAFTS', badge: 5, badgeStyle: 'gold' },
+  { icon: Contact, label: '联系人', href: '/contacts' },
+  { icon: AlertTriangle, label: '垃圾邮件', href: '/mail?folder=SPAM' },
+  { icon: Settings, label: '设置', href: '/settings' },
 ]
 
 const categories = [
-  { icon: '📁', label: '工作' },
-  { icon: '👤', label: '个人' },
-  { icon: '📰', label: '订阅' },
-  { icon: '✈️', label: '旅行' },
+  { label: '工作', color: '#c43d3d' },
+  { label: '个人', color: '#5b8c5a' },
+  { label: '订阅', color: '#6b8fa3' },
+  { label: '旅行', color: '#c9a96e' },
 ]
 
 export function Sidebar({ currentPath }: { currentPath: string }) {
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [catOpen, setCatOpen] = useState(true)
-  const [accOpen, setAccOpen] = useState(true)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
@@ -45,87 +45,99 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 pt-4 pb-2">
+    <div className="flex flex-col h-full py-6">
+      <div className="px-4">
         <a href="/compose"
-          className="flex items-center justify-center gap-2 w-full h-12 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'var(--primary)' }}
+          className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: 'rgba(196,61,61,1)' }}
         >
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" style={{ color: 'var(--primary-foreground)' }}>
+          <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current" strokeWidth="1.8" style={{ color: '#ffffff' }}>
             <path d="M3 5h2V3a1 1 0 00-1-1H4a1 1 0 00-1 1v2zm16 0h2V3a1 1 0 00-1-1h-1a1 1 0 00-1 1v2zM5 19H3v2a1 1 0 001 1h1a1 1 0 001-1v-2zm14 0h2v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2zM12 3L5 9l1.5 1.5L12 6l5.5 4.5L19 9 12 3zM5 15l7 7 7-7-1.5-1.5L12 19l-5.5-5.5L5 15z"/>
           </svg>
-          写邮件
+          <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>
 
-      <div className="flex-1 px-3 py-2 space-y-0.5 overflow-auto">
-        {navItems.map((item) => {
-          const active = isActive(item.href)
-          return (
-            <a key={item.href} href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
-              style={{
-                backgroundColor: active ? 'var(--accent)' : 'transparent',
-                color: active ? 'var(--primary)' : 'var(--foreground-secondary)',
-                fontWeight: active ? '600' : '400',
-              }}
+      <div className="px-4 mt-6">
+        <div className="space-y-1">
+          {navItems.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <a key={item.href} href={item.href}
+                className="flex items-center gap-3 rounded-[8px] transition-colors"
+                style={{
+                  backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent',
+                  padding: '12px 16px',
+                }}
+              >
+                <item.icon className="w-[22px] h-[22px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+                <span className="flex-1 text-[14px]" style={{
+                  color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
+                  fontWeight: active ? '600' : '500',
+                }}>{item.label}</span>
+                {item.badge != null && (
+                  <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
+                    style={{
+                      backgroundColor: item.badgeStyle === 'gold' ? 'rgba(229,217,196,1)' : 'rgba(196,61,61,1)',
+                      color: item.badgeStyle === 'gold' ? 'rgba(107,91,79,1)' : '#fff',
+                      fontWeight: item.badgeStyle === 'gold' ? '500' : '600',
+                    }}
+                  >{item.badge}</span>
+                )}
+              </a>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="mx-4 mt-4 mb-0 h-px" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+
+      <div className="px-4">
+        <div className="px-4 text-[11px] font-semibold mb-1" style={{ color: 'rgba(184,168,138,1)' }}>分类</div>
+        <div className="space-y-1 mt-1">
+          {categories.map((cat) => (
+            <a key={cat.label} href="/mail"
+              className="flex items-center gap-3 rounded-[8px] text-[13px] font-medium hover:bg-[var(--muted)] transition-colors"
+              style={{ color: 'var(--foreground)', padding: '8px 16px', backgroundColor: 'transparent' }}
             >
-              <item.icon className="w-4 h-4 shrink-0" style={{ color: active ? 'var(--primary)' : 'var(--foreground-secondary)' }} />
-              <span className="flex-1">{item.label}</span>
+              <span className="w-[13px] h-3 rounded-[2px] shrink-0" style={{ backgroundColor: cat.color }} />
+              <span>{cat.label}</span>
             </a>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
-      <div className="mx-4 my-2 h-px" style={{ backgroundColor: 'var(--border)' }} />
+      <div className="mx-4 mt-4 mb-0 h-px" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
 
-      <div className="px-3 py-2">
-        <button onClick={() => setCatOpen(!catOpen)} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold" style={{ color: 'var(--muted-foreground)' }}>
-          <ChevronDown className={`w-3 h-3 transition-transform ${catOpen ? 'rotate-180' : ''}`} />
-          分类
-        </button>
-        {catOpen && (
-          <div className="mt-1 space-y-0.5">
-            {categories.map((cat) => (
-              <div key={cat.label} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-secondary)' }}>
-                <span className="text-xs">{cat.icon}</span>
-                <span>{cat.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mx-4 my-2 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
-      <div className="px-3 py-2">
-        <button onClick={() => setAccOpen(!accOpen)} className="flex items-center gap-1 px-2 py-1 text-xs font-semibold" style={{ color: 'var(--muted-foreground)' }}>
-          <ChevronDown className={`w-3 h-3 transition-transform ${accOpen ? 'rotate-180' : ''}`} />
-          邮箱账号
-        </button>
-        {accOpen && (
-          <div className="mt-1 space-y-0.5">
-            {accounts.map((a) => {
-              const ac = a.brand_color || '#6366f1'
-              return (
-                <div key={a.id} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-secondary)' }}>
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0" style={{ backgroundColor: ac }}>
-                    {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
-                  </div>
-                  <span className="flex-1 truncate text-xs">{a.name || a.email}</span>
-                  <ChevronDown className="w-3 h-3 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
+      <div className="flex-1 px-4 overflow-auto">
+        <div className="px-4 text-[11px] font-semibold mb-1" style={{ color: 'rgba(184,168,138,1)' }}>邮箱账号</div>
+        <div className="space-y-1 mt-1">
+          {accounts.map((a) => {
+            const ac = a.brand_color || '#ea4335'
+            return (
+              <div key={a.id} className="flex items-center gap-3 rounded-[8px] transition-colors hover:bg-[var(--muted)] cursor-pointer"
+                style={{ padding: '8px 16px' }}
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: ac }}>
+                  {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
                 </div>
-              )
-            })}
-            <a href="/settings"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="text-xs">添加账号</span>
-            </a>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'rgba(61,43,31,1)' }}>{a.name || a.email}</div>
+                  <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'rgba(184,168,138,1)' }}>{a.email}</div>
+                </div>
+                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: a.brand_color === '#c9a96e' ? 'rgba(201,169,110,1)' : 'rgba(91,140,90,1)' }} />
+              </div>
+            )
+          })}
+          <div className="flex items-center gap-3 rounded-[8px] transition-colors hover:bg-[var(--muted)] cursor-pointer"
+            style={{ padding: '8px 16px' }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border" style={{ borderColor: 'rgba(201,169,110,1)', borderStyle: 'solid', borderWidth: '0.7px' }}>
+              <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
+            </div>
+            <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

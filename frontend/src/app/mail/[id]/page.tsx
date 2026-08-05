@@ -6,6 +6,12 @@ import type { EmailDetail } from '@/types'
 import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Link, MailQuestion } from '@/lib/icons'
 import { toast } from 'sonner'
 
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function shiftColor(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
   return `rgb(${Math.max(0, r - 40)}, ${Math.max(0, g - 40)}, ${Math.max(0, b - 40)})`
@@ -15,7 +21,7 @@ export default function MailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [detail, setDetail] = useState<EmailDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [replyText, setReplyText] = useState('')
 
   useEffect(() => {
@@ -73,19 +79,19 @@ export default function MailPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-6 h-14 border-b shrink-0">
+        <div className="flex items-center justify-between px-6 h-14 border-b shrink-0" style={{ borderColor: 'rgba(229,217,196,1)' }}>
         <div className="flex items-center gap-1">
-          <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><ArrowLeft className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button onClick={handleDelete} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><Trash2 className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button onClick={handleStar} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg">
+          <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ArrowLeft className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button onClick={handleDelete} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Trash2 className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button onClick={handleStar} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]">
             <Star className={`w-4 h-4 ${email.is_starred ? 'fill-yellow-400 text-yellow-400' : 'text-[var(--foreground-tertiary)]'}`} />
           </button>
-          <div className="w-px h-5 bg-[var(--border)] mx-1" />
+          <div className="w-px h-5 bg-[rgba(229,217,196,1)] mx-1" />
         </div>
         <div className="flex items-center gap-1">
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><ChevronUp className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><ChevronDown className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-lg"><MoreHorizontal className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronUp className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronDown className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><MoreHorizontal className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
         </div>
       </div>
 
@@ -102,7 +108,7 @@ export default function MailPage() {
             <h1 className="text-xl font-semibold text-[var(--foreground)] mb-2">{email.subject || '(无主题)'}</h1>
           </div>
 
-          <div className="flex items-start gap-3 pb-6 border-b">
+          <div className="flex items-start gap-3 pb-6 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
             <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
               style={{ background: (email as any).account_brand
                 ? `linear-gradient(135deg, ${(email as any).account_brand}, ${shiftColor((email as any).account_brand)})`
@@ -117,18 +123,18 @@ export default function MailPage() {
                   <span className="text-sm text-[var(--muted-foreground)] ml-2">&lt;{email.from}&gt;</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-2 px-3 h-8 border rounded-lg text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]"><Reply className="w-3.5 h-3.5" /> 回复</button>
-                  <button className="flex items-center gap-2 px-3 h-8 border rounded-lg text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]"><Forward className="w-3.5 h-3.5" /> 转发</button>
+                  <button className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Reply className="w-3.5 h-3.5" /> 回复</button>
+                  <button className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Forward className="w-3.5 h-3.5" /> 转发</button>
                 </div>
               </div>
               <div className="text-xs text-[var(--muted-foreground)] mt-1">
-                收件人: {email.to} · {date.toLocaleDateString('zh-CN')} {date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                收件人: {email.to} · {formatDate(email.date)}
               </div>
             </div>
           </div>
 
           {attachments && attachments.length > 0 && (
-            <div className="border rounded-xl p-4">
+            <div className="border rounded-xl p-4" style={{ borderColor: 'rgba(229,217,196,1)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <Paperclip className="w-4 h-4 text-[var(--foreground-tertiary)]" />
                 <span className="text-sm font-medium">{attachments.length} 个附件</span>
@@ -136,7 +142,8 @@ export default function MailPage() {
               <div className="flex flex-wrap gap-2">
                 {attachments.map((att) => (
                   <a key={att.id} href={api.mails.attachmentUrl(email.id, att.id)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm hover:bg-[var(--accent)]"
+                    className="flex items-center gap-2 px-3 py-2 rounded-[8px] border text-sm hover:bg-[var(--accent)]"
+                    style={{ borderColor: 'rgba(229,217,196,1)' }}
                   >
                     <Paperclip className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
                     <span className="text-[var(--foreground-secondary)]">{att.filename}</span>
@@ -161,8 +168,8 @@ export default function MailPage() {
             </div>
           )}
 
-          <div className="border rounded-xl">
-            <div className="px-4 py-3 border-b text-sm text-[var(--foreground-tertiary)]">快捷回复</div>
+          <div className="border rounded-xl" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+            <div className="px-4 py-3 border-b text-sm text-[var(--foreground-tertiary)]" style={{ borderColor: 'rgba(229,217,196,1)' }}>快捷回复</div>
             <div className="p-4">
               <textarea
                 value={replyText}
@@ -173,10 +180,10 @@ export default function MailPage() {
               />
               <div className="flex items-center justify-between mt-3 pt-3 border-t">
                 <div className="flex items-center gap-1">
-                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Bold className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Italic className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Link className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded"><Paperclip className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Bold className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Italic className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Link className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+                  <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Paperclip className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
                 </div>
                 <button onClick={handleReply} className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
                   <Send className="w-4 h-4" /> 发送
@@ -189,3 +196,5 @@ export default function MailPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

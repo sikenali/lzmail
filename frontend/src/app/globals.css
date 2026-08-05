@@ -9,7 +9,7 @@
   --foreground: #3d2b1f;
   --foreground-secondary: #6b5b4f;
   --foreground-tertiary: #8b7355;
-  --muted: #f5f0e8;
+  --muted: #f3ede3;
   --muted-foreground: #b8a88a;
   --primary: #c43d3d;
   --primary-foreground: #ffffff;
@@ -44,7 +44,7 @@
   --foreground: #3d2b1f;
   --foreground-secondary: #6b5b4f;
   --foreground-tertiary: #8b7355;
-  --muted: #f5f0e8;
+  --muted: #f3ede3;
   --muted-foreground: #b8a88a;
   --primary: #c43d3d;
   --primary-foreground: #ffffff;
@@ -119,7 +119,7 @@
 }
 
 * {
-  border-color: var(--border);
+  border-color: rgba(229,217,196,1);
 }
 
 body {

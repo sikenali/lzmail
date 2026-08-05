@@ -43,36 +43,37 @@ export default function ContactsPage() {
 
   return (
     <AppShell>
-      <div className="p-6" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+      <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* Title */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
             <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>联系人</h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理您的联系人列表</p>
+              <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>联系人</h1>
+              <p className="text-[13px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>管理您的联系人列表</p>
             </div>
           </div>
-          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90">
-            <Plus className="w-4 h-4" /> 添加联系人
+          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 h-[47px] px-5 rounded-[12px] text-[14px] font-medium transition-opacity hover:opacity-90"
+            style={{ backgroundColor: 'rgba(107,143,163,1)', color: '#ffffff' }}>
+            <Plus className="w-[18px] h-[18px]" /> 添加联系人
           </button>
         </div>
 
         {/* Search + view toggle */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-8">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: 'rgba(139,115,85,1)' }} />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 bg-[var(--card)] rounded-xl outline-none text-sm placeholder:text-[var(--muted-foreground)]"
-              style={{ border: '1px solid var(--card-border)', color: 'var(--foreground)' }}
+              className="w-full h-[40px] pl-12 pr-4 bg-[rgba(243,237,227,1)] rounded-[8px] outline-none text-[14px] placeholder:text-[var(--muted-foreground)]"
+              style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
               placeholder="搜索联系人..."
             />
           </div>
-          <div className="flex items-center gap-1 bg-[var(--card)] rounded-xl border p-1" style={{ borderColor: 'var(--card-border)' }}>
-            <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'grid' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
+          <div className="flex items-center gap-1 bg-[var(--card)] rounded-[8px] p-0.5" style={{ border: '1px solid rgba(229,217,196,1)' }}>
+            <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-[8px] text-[13px] font-medium transition-colors ${view === 'grid' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
               卡片
             </button>
-            <button onClick={() => setView('table')} className={`px-3 h-8 rounded-lg text-xs font-medium transition-colors ${view === 'table' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
+            <button onClick={() => setView('table')} className={`px-3 h-8 rounded-[8px] text-[13px] font-medium transition-colors ${view === 'table' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
               列表
             </button>
           </div>
@@ -81,27 +82,27 @@ export default function ContactsPage() {
         {/* Add contact modal */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowAddForm(false)}>
-            <div className="bg-[var(--card)] rounded-2xl p-6 w-[400px] mx-4" style={{ border: '1px solid var(--card-border)' }} onClick={e => e.stopPropagation()}>
+             <div className="bg-[var(--card)] rounded-[16px] p-6 w-[400px] mx-4" style={{ border: '1px solid rgba(229,217,196,1)' }} onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>新建联系人</h3>
-                <button onClick={() => setShowAddForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">
+                <button onClick={() => setShowAddForm(false)} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
                   <X className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
                 </button>
               </div>
               <div className="space-y-3">
-                <input placeholder="姓名" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})}
-                  className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-                <input placeholder="邮箱地址" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})}
-                  className="w-full h-10 px-3 rounded-lg border outline-none text-sm bg-transparent" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+                 <input placeholder="姓名" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})}
+                   className="w-full h-[40px] px-4 rounded-[8px] outline-none text-[14px] bg-transparent" style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+                 <input placeholder="邮箱地址" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})}
+                   className="w-full h-[40px] px-4 rounded-[8px] outline-none text-[14px] bg-transparent" style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
                 <div className="flex gap-2 justify-end">
-                  <button onClick={() => setShowAddForm(false)} className="px-4 h-9 border rounded-lg text-sm hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
+                  <button onClick={() => setShowAddForm(false)} className="px-4 h-9 rounded-[8px] text-[14px] hover:bg-[var(--muted)]" style={{ border: '1px solid rgba(229,217,196,1)', color: 'var(--foreground-tertiary)' }}>取消</button>
                   <button onClick={async () => {
                     if (!newContact.email) return
                     await api.contacts.create(newContact)
                     setShowAddForm(false)
                     setNewContact({ name: '', email: '' })
                     window.location.reload()
-                  }} className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">保存</button>
+                  }} className="px-4 h-9 bg-[var(--primary)] text-white rounded-[8px] text-[14px] font-medium hover:opacity-90">保存</button>
                 </div>
               </div>
             </div>
@@ -116,13 +117,13 @@ export default function ContactsPage() {
             <div className="space-y-6">
               {availableLetters.map(letter => (
                 <div key={letter} id={`letter-${letter}`}>
-                  <div className="sticky top-0 bg-[var(--background)] z-10 pb-2 mb-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="sticky top-0 bg-[var(--background)] z-10 pb-2 mb-3 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
                     <span className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{letter}</span>
                   </div>
                   <div className="grid grid-cols-4 gap-4">
                     {grouped[letter].map((c, i) => (
-                      <div key={c.id} className="flex items-center gap-3 p-4 bg-[var(--card)] rounded-2xl border hover:shadow-sm transition-shadow cursor-pointer"
-                        style={{ borderColor: 'var(--card-border)' }}
+                      <div key={c.id} className="flex items-center gap-3 p-4 bg-[var(--card)] rounded-[16px] hover:shadow-sm transition-shadow cursor-pointer"
+                        style={{ border: '1px solid rgba(229,217,196,1)' }}
                       >
                         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
                           {(c.name?.[0] || '?').toUpperCase()}
@@ -144,20 +145,20 @@ export default function ContactsPage() {
         ) : (
           <>
             {/* Table view */}
-            <div className="bg-[var(--card)] rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
-              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
+            <div className="bg-[var(--card)] rounded-[16px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-                  <span className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>联系人列表</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>{filtered.length}</span>
+                  <div className="w-1 h-5 rounded-sm" style={{ backgroundColor: 'var(--primary)' }} />
+                  <span className="font-semibold text-[14px]" style={{ color: 'var(--foreground)' }}>联系人列表</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>{filtered.length}</span>
                 </div>
-                <button className="flex items-center gap-1 text-xs text-[var(--foreground-tertiary)] hover:bg-[var(--muted)] px-3 h-8 rounded-lg">
+                <button className="flex items-center gap-1 text-[13px] text-[var(--foreground-tertiary)] hover:bg-[var(--muted)] px-3 h-8 rounded-[8px]">
                   排序 <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
               <table className="w-full">
                 <thead>
-                  <tr className="text-xs text-[var(--foreground-tertiary)]" style={{ borderBottom: '1px solid var(--card-border)' }}>
+                  <tr className="text-[13px] text-[var(--foreground-tertiary)]" style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}>
                     <th className="text-left px-6 py-3 font-medium w-[220px]">姓名</th>
                     <th className="text-left px-6 py-3 font-medium">邮箱</th>
                     <th className="text-left px-6 py-3 font-medium">电话</th>
@@ -167,24 +168,24 @@ export default function ContactsPage() {
                 </thead>
                 <tbody>
                   {filtered.map((c) => (
-                    <tr key={c.id} className="hover:bg-[var(--accent)] transition-colors" style={{ borderBottom: '1px solid var(--card-border)' }}>
+                    <tr key={c.id} className="hover:bg-[var(--accent)] transition-colors" style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradients[(c.id % gradients.length)]} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
                             {(c.name?.[0] || '?').toUpperCase()}
                           </div>
-                          <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{c.name || '(无名)'}</span>
+                          <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>{c.name || '(无名)'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>{c.email}</td>
-                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>—</td>
-                      <td className="px-6 py-3 text-sm" style={{ color: 'var(--foreground-secondary)' }}>—</td>
+                      <td className="px-6 py-3 text-[14px]" style={{ color: 'var(--foreground-secondary)' }}>{c.email}</td>
+                      <td className="px-6 py-3 text-[14px]" style={{ color: 'var(--foreground-secondary)' }}>—</td>
+                      <td className="px-6 py-3 text-[14px]" style={{ color: 'var(--foreground-secondary)' }}>—</td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
-                          <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">
+                          <button className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
                             <MailIcon className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
                           </button>
-                          <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]">
+                          <button className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
                             <MoreVertical className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
                           </button>
                         </div>
@@ -209,3 +210,5 @@ export default function ContactsPage() {
     </AppShell>
   )
 }
+
+export const dynamic = 'force-dynamic'

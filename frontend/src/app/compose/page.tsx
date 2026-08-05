@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { ArrowLeft, Send, Paperclip, Bold, Italic, Link, Clock, Trash2 } from '@/lib/icons'
+import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X } from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account } from '@/types'
@@ -12,12 +12,18 @@ export default function ComposePage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [accountId, setAccountId] = useState(0)
   const [to, setTo] = useState('')
+  const [cc, setCc] = useState('')
+  const [bcc, setBcc] = useState('')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
-  const [attachments, setAttachments] = useState<Array<{name: string, size: number}>>([])
+  const [attachments, setAttachments] = useState<Array<{ name: string, size: number }>>([])
   const [scheduleAt, setScheduleAt] = useState('')
+  const [showCc, setShowCc] = useState(false)
+  const [showBcc, setShowBcc] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -35,7 +41,7 @@ export default function ComposePage() {
       const data: any = {
         account_id: accountId,
         to,
-        cc: '',
+        cc: [cc, bcc].filter(Boolean).join(','),
         subject,
         body_text: body,
         body_html: '',
@@ -43,7 +49,7 @@ export default function ComposePage() {
       if (scheduleAt) data.schedule_at = scheduleAt
       await api.compose(data)
       toast.success('邮件已发送')
-      setTo(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
+      setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
       router.push('/')
     } catch (err: any) {
       toast.error(err?.message || '发送失败')
@@ -66,126 +72,214 @@ export default function ComposePage() {
     setSavingDraft(false)
   }
 
-  const handleAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+  const handleAttach = (files: FileList | null) => {
     if (!files) return
     Array.from(files).forEach(f => {
-      if (f.size > 50 * 1024 * 1024) { toast.error(`${f.name} 超过50MB限制`); return }
+      if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name} 超过25MB限制`); return }
       setAttachments(prev => [...prev, { name: f.name, size: f.size }])
     })
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleAttach(e.target.files)
+    e.target.value = ''
   }
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    handleAttach(e.dataTransfer.files)
+  }
+
+  const selectedAccount = accounts.find(a => a.id === accountId)
+
   return (
     <AppShell>
-      <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--background)' }}>
-        <div className="flex items-center justify-between px-6 h-16 border-b shrink-0" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card-border)' }}>
-          <div className="flex items-center gap-2">
-            <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--accent)]">
-              <ArrowLeft className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-            </button>
-            <div>
-              <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>写邮件</span>
-              <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>新建邮件消息</p>
+      <div className="h-full overflow-auto" style={{ backgroundColor: 'var(--background)' }}>
+        <div className="px-12 py-8">
+          {/* 页面标题区 */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'var(--primary)' }} />
+              <div>
+                <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>写邮件</h1>
+                <p className="text-[13px] mt-1.5" style={{ color: 'var(--foreground-tertiary)' }}>新建邮件消息</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={handleSaveDraft} disabled={savingDraft}
+                className="flex items-center gap-2 h-[47px] px-5 rounded-[12px] text-[14px] font-medium transition-opacity hover:opacity-80 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)', border: '0.7px solid rgba(229,217,196,1)' }}>
+                <Paperclip className="w-[18px] h-[18px]" /> {savingDraft ? '保存中...' : '存草稿'}
+              </button>
+              <button onClick={handleSend} disabled={sending}
+                className="flex items-center gap-2 h-[47px] px-6 rounded-[12px] text-[14px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+                {sending ? '发送中...' : '发送'} <Send className="w-[18px] h-[18px]" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-secondary)' }}>
-              <Clock className="w-4 h-4" /> 定时发送
-            </button>
-            <button onClick={handleSaveDraft} disabled={savingDraft} className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[var(--accent)] disabled:opacity-50" style={{ color: 'var(--foreground-secondary)' }}>
-              <Paperclip className="w-4 h-4" /> {savingDraft ? '保存中...' : '存草稿'}
-            </button>
-            <button onClick={handleSend} disabled={sending}
-              className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" /> {sending ? '发送中...' : '发送'}
-            </button>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-[860px] mx-auto bg-[var(--card)] rounded-xl mx-6 my-4 p-6 shadow-sm" style={{ border: '1px solid var(--card-border)' }}>
-            <div className="space-y-0">
-              <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: 'var(--muted)' }}>
-                <span className="text-sm w-12 shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>发件</span>
-                <select value={accountId} onChange={e => setAccountId(Number(e.target.value))}
-                  className="flex-1 outline-none text-sm bg-transparent" style={{ color: 'var(--foreground)' }}>
-                  {accounts.length === 0 && <option value={0}>暂无账号</option>}
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} &lt;{a.email}&gt;</option>)}
-                </select>
-              </div>
-              <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: 'var(--muted)' }}>
-                <span className="text-sm w-12 shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>收件人</span>
+          {/* 编辑卡片 */}
+          <div className="mt-8 rounded-[16px] px-12 py-8"
+            style={{ backgroundColor: 'var(--card)', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
+            {/* 发件人 */}
+            <div className="flex items-center gap-4 pb-4">
+              <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
+              <button className="flex items-center gap-2 h-[41px] rounded-[8px] transition-opacity hover:opacity-80"
+                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', padding: '8px 16px' }}>
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                  style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
+                  {(selectedAccount?.name || 'G')[0].toUpperCase()}
+                </span>
+                <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>
+                  {selectedAccount ? selectedAccount.email : '选择账号'}
+                </span>
+                <ChevronDown className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-tertiary)' }} />
+              </button>
+            </div>
+
+            {/* 收件人 */}
+            <div className="flex items-center gap-4 pt-4 pb-4">
+              <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>收件人</span>
+              <div className="flex items-center gap-2 h-[41px] rounded-[8px] flex-1 px-4"
+                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
                 <input value={to} onChange={e => setTo(e.target.value)} placeholder="输入邮箱地址..."
-                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[var(--muted-foreground)]" style={{ color: 'var(--foreground)' }} />
+                  className="flex-1 min-w-0 outline-none text-[14px] bg-transparent placeholder:text-[var(--muted-foreground)]"
+                  style={{ color: 'var(--foreground)' }} />
+                {to && (
+                  <button onClick={() => setTo('')} className="shrink-0"><X className="w-4 h-4" style={{ color: 'var(--muted-foreground)' }} /></button>
+                )}
               </div>
-              <div className="flex items-center gap-4 py-3 border-b" style={{ borderColor: 'var(--muted)' }}>
-                <span className="text-sm w-12 shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>主题</span>
-                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="主题"
-                  className="flex-1 outline-none text-sm bg-transparent placeholder:text-[var(--muted-foreground)]" style={{ color: 'var(--foreground)' }} />
+              <div className="flex items-center gap-2 shrink-0">
+                {!showCc && <button onClick={() => setShowCc(true)} className="text-[13px] font-medium hover:opacity-70" style={{ color: '#6b8fa3' }}>抄送</button>}
+                {!showBcc && <button onClick={() => setShowBcc(true)} className="text-[13px] font-medium hover:opacity-70" style={{ color: '#6b8fa3' }}>密送</button>}
               </div>
             </div>
 
-            <div className="flex items-center gap-1 py-3 border-b" style={{ borderColor: 'var(--muted)' }}>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--accent)]">
-                <Bold className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-              </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--accent)]">
-                <Italic className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-              </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--accent)]">
-                <Link className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-              </button>
-              <div className="w-px h-5 bg-[var(--border)] mx-1" />
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--accent)]">
-                <Paperclip className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-              </button>
-            </div>
-
-            <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="写邮件..."
-              className="w-full h-64 outline-none text-sm bg-transparent resize-none placeholder:text-[var(--muted-foreground)]" style={{ color: 'var(--foreground)' }} />
-
-            {attachments.length > 0 && (
-              <div className="py-3 border-t" style={{ borderColor: 'var(--muted)' }}>
-                <div className="text-xs font-medium mb-2" style={{ color: 'var(--foreground-tertiary)' }}>附件 ({attachments.length})</div>
-                <div className="flex flex-wrap gap-2">
-                  {attachments.map((att, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
-                      <Paperclip className="w-3 h-3" style={{ color: 'var(--foreground-tertiary)' }} />
-                      <span className="max-w-[150px] truncate" style={{ color: 'var(--foreground)' }}>{att.name}</span>
-                      <span style={{ color: 'var(--muted-foreground)' }}>({(att.size / 1024).toFixed(0)}KB)</span>
-                      <button onClick={() => removeAttachment(i)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-[var(--danger-bg)]">
-                        <span style={{ color: 'var(--danger)' }}>✕</span>
-                      </button>
-                    </div>
-                  ))}
+            {/* 抄送 */}
+            {showCc && (
+              <div className="flex items-center gap-4 pt-4 pb-4">
+                <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>抄送</span>
+                <div className="flex items-center h-[41px] rounded-[8px] flex-1 px-4"
+                  style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
+                  <input value={cc} onChange={e => setCc(e.target.value)} placeholder="输入邮箱地址..."
+                    className="flex-1 min-w-0 outline-none text-[14px] bg-transparent placeholder:text-[var(--muted-foreground)]"
+                    style={{ color: 'var(--foreground)' }} />
+                  <button onClick={() => setShowCc(false)} className="shrink-0"><X className="w-4 h-4" style={{ color: 'var(--muted-foreground)' }} /></button>
                 </div>
               </div>
             )}
-            <input type="file" multiple accept="*/*" onChange={handleAttach} className="hidden" id="attach-input" />
 
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                <span>Shift + Enter 换行</span>
-                <span>·</span>
-                <span>Ctrl + Enter 发送</span>
+            {/* 密送 */}
+            {showBcc && (
+              <div className="flex items-center gap-4 pt-4 pb-4">
+                <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>密送</span>
+                <div className="flex items-center h-[41px] rounded-[8px] flex-1 px-4"
+                  style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
+                  <input value={bcc} onChange={e => setBcc(e.target.value)} placeholder="输入邮箱地址..."
+                    className="flex-1 min-w-0 outline-none text-[14px] bg-transparent placeholder:text-[var(--muted-foreground)]"
+                    style={{ color: 'var(--foreground)' }} />
+                  <button onClick={() => setShowBcc(false)} className="shrink-0"><X className="w-4 h-4" style={{ color: 'var(--muted-foreground)' }} /></button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="attach-input" className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[var(--accent)] cursor-pointer" style={{ color: 'var(--foreground-secondary)' }}>
-                  <Paperclip className="w-4 h-4" /> 添加附件
-                </label>
-                <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-secondary)' }}>
-                  <Trash2 className="w-4 h-4" /> 删除
-                </button>
+            )}
+
+            {/* 主题 */}
+            <div className="flex items-center gap-4 pt-4 pb-4">
+              <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>主题</span>
+              <div className="flex items-center h-[41px] rounded-[8px] flex-1 px-4"
+                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
+                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="输入邮件主题..."
+                  className="flex-1 min-w-0 outline-none text-[14px] bg-transparent placeholder:text-[var(--muted-foreground)]"
+                  style={{ color: 'var(--foreground)' }} />
               </div>
             </div>
+
+            {/* 工具栏 */}
+            <div className="flex items-center gap-1 pt-6 pb-3">
+              {[Bold, Italic, Underline].map((Icon, i) => (
+                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
+                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground)' }} />
+                </button>
+              ))}
+              <div className="w-[2px] h-5 mx-1" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+              {[Image, Emoji].map((Icon, i) => (
+                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
+                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} />
+                </button>
+              ))}
+              <div className="w-[2px] h-5 mx-1" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+              {[Link, Table, Code].map((Icon, i) => (
+                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
+                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} />
+                </button>
+              ))}
+            </div>
+
+            {/* 正文 */}
+            <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="开始撰写邮件正文..."
+              className="w-full h-[360px] p-6 rounded-[8px] outline-none text-[15px] resize-none placeholder:text-[var(--muted-foreground)]"
+              style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+
+            {/* 附件列表 */}
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-4">
+                {attachments.map((att, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[13px]"
+                    style={{ borderColor: 'rgba(229,217,196,1)', backgroundColor: 'var(--background)' }}>
+                    <Paperclip className="w-3.5 h-3.5" style={{ color: 'var(--foreground-tertiary)' }} />
+                    <span className="max-w-[150px] truncate" style={{ color: 'var(--foreground)' }}>{att.name}</span>
+                    <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>({(att.size / 1024).toFixed(0)}KB)</span>
+                    <button onClick={() => removeAttachment(i)} className="hover:opacity-70"><X className="w-3.5 h-3.5" style={{ color: 'var(--foreground-tertiary)' }} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 底部操作区 */}
+            <div className="flex items-center justify-between pt-6">
+              <div className="flex items-center gap-3">
+                <input ref={fileInputRef} type="file" multiple accept="*/*" onChange={handleFileChange} className="hidden" id="attach-input" />
+                <label htmlFor="attach-input"
+                  onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  className="flex items-center gap-2 h-8 px-4 rounded-[8px] cursor-pointer transition-all"
+                  style={{
+                    backgroundColor: dragOver ? 'var(--danger-bg)' : 'var(--muted)',
+                    border: dragOver ? '1.5px dashed var(--primary)' : 'none',
+                    color: 'var(--foreground-secondary)',
+                  }}>
+                  <Paperclip className="w-[18px] h-[18px]" /> 添加附件
+                </label>
+                <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 25MB，支持拖拽上传</span>
+              </div>
+              <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date(Date.now() + 3600000).toISOString().slice(0, 16))}
+                className="flex items-center gap-2 h-8 px-4 rounded-[8px] transition-opacity hover:opacity-80"
+                style={{ backgroundColor: scheduleAt ? 'var(--danger-bg)' : 'var(--muted)', color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }}>
+                <Clock className="w-4 h-4" /> {scheduleAt ? '取消定时' : '定时发送'}
+              </button>
+            </div>
+
+            {/* 定时时间选择 */}
+            {scheduleAt && (
+              <div className="flex items-center gap-3 pt-4">
+                <input id="schedule-input" type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)}
+                  className="px-3 h-9 rounded-lg text-sm outline-none"
+                  style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+                <button onClick={() => setScheduleAt('')} className="text-xs hover:opacity-70" style={{ color: 'var(--muted-foreground)' }}>取消定时</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </AppShell>
   )
 }
+
+export const dynamic = 'force-dynamic'

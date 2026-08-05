@@ -1,70 +1,104 @@
 'use client'
-import { Paperclip, Star } from '@/lib/icons'
+import { Check, Paperclip, Star } from '@/lib/icons'
 import type { Email } from '@/types'
 
-const avatarGradients: Record<string, string> = {
-  '#ea4335': 'from-red-400 to-red-600',
-  '#0078d4': 'from-blue-400 to-indigo-600',
-  '#12b7f5': 'from-cyan-400 to-sky-600',
-  '#e53e3e': 'from-red-500 to-rose-600',
+const categoryTag = (email: Email): { label: string; bg: string; color: string } | null => {
+  const s = (email.subject || email.from || '').toLowerCase()
+  if (s.includes('azure') || s.includes('账单')) return { label: '工作', bg: '#fdf2f2', color: '#c43d3d' }
+  if (s.includes('github')) return { label: '工作', bg: '#fdf2f2', color: '#c43d3d' }
+  if (s.includes('旅行') || s.includes('攻略')) return { label: '旅行', bg: '#fef9f0', color: '#c9a96e' }
+  if (s.includes('release') || s.includes('update')) return { label: '订阅', bg: '#edf5f6', color: '#6b8fa3' }
+  return null
 }
 
-const defaultGradients = [
-  'from-orange-400 to-red-500', 'from-blue-400 to-indigo-500',
-  'from-cyan-400 to-blue-500', 'from-red-400 to-pink-500',
-  'from-purple-400 to-pink-500', 'from-green-400 to-emerald-500',
-]
-
-function resolveBrand(val: string, fallback = '#3b82f6'): string {
-  return val?.startsWith('#') ? val : fallback
+function formatTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
+  const today = new Date()
+  const sameDay = today.toDateString() === date.toDateString()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  if (sameDay) return `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1)
+  if (yesterday.toDateString() === date.toDateString()) return '昨天'
+  const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 6)
+  if (date >= lastWeek && date < yesterday) {
+    const diff = Math.floor((new Date(yesterday).setHours(0,0,0,0) - date.setHours(0,0,0,0)) / 86400000) + 1
+    return `${diff}天前`
+  }
+  return `${pad(date.getMonth() + 1)}月${pad(date.getDate())}日`
 }
 
-export function MailItem({ email, brand, onSelect }: { email: Email; brand?: string; onSelect: (id: number) => void }) {
-  const date = new Date(email.date)
-  const isToday = new Date().toDateString() === date.toDateString()
-  const timeStr = isToday
-    ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-    : date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+const senderInitials = (name: string): string => {
+  const parts = (name || '').trim().split(/\s+/)
+  if (parts[0] && parts[1]) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return (name || '?')[0]?.toUpperCase() || '?'
+}
 
-  const barColor = resolveBrand(brand || '')
-  const gradient = avatarGradients[barColor] || defaultGradients[(email.id || 0) % defaultGradients.length]
-  const brandName = email.account_name || ''
+export function MailItem({ email, brand, selected = false, onSelect }: {
+  email: Email; brand?: string; selected?: boolean; onSelect: (id: number) => void
+}) {
+  const bc = (brand || email.account_brand || '#c43d3d')
+  const brandColor = bc.startsWith('#') ? bc : '#c43d3d'
+  const unread = email.is_read === false
+  const subjectWeight = selected || unread ? '600' : '500'
+  const senderWeight = selected || unread ? '600' : '500'
+  const timeStr = formatTime(email.date)
+  const tag = categoryTag(email)
 
   return (
     <div onClick={() => onSelect(email.id)}
-      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors duration-200 border-b border-transparent hover:border-[var(--border)] hover:bg-gray-50 dark:hover:bg-gray-900/30"
+      className="flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors"
+      style={{
+        backgroundColor: selected ? 'var(--muted)' : 'transparent',
+        borderLeft: selected ? '2.7px solid var(--primary)' : '2.7px solid transparent',
+      }}
     >
-      <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[10px] font-semibold shrink-0`}>
-        {(email.from?.[0] || '?').toUpperCase()}
+      {/* Checkbox */}
+      <div className="mt-0.5 shrink-0">
+        {selected ? (
+          <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
+            <Check className="w-3 h-3" style={{ color: '#fff' }} />
+          </div>
+        ) : (
+          <div className="w-5 h-5 rounded-md border" style={{ borderColor: 'var(--card-border)' }} />
+        )}
       </div>
+
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{email.from}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: brandColor }}>
+              {senderInitials(email.from)}
+            </div>
+            <span className="text-[14px] truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight }}>{email.from}</span>
+          </div>
+          <span className="text-[11px] shrink-0" style={{ color: 'var(--muted-foreground)' }}>{timeStr}</span>
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{email.subject || '(无主题)'}</span>
-          {email.is_starred && <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />}
-        </div>
-        <div className="text-xs truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{email.body_preview}</div>
-        <div className="flex items-center gap-1.5 mt-1.5">
-          {brandName && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md shrink-0"
-              style={{ backgroundColor: barColor + '1a', color: barColor }}
-            >
-              {brandName}
-            </span>
+
+        <div className="text-[14px] truncate mt-1" style={{ color: 'var(--foreground)', fontWeight: subjectWeight }}>{email.subject || '(无主题)'}</div>
+
+        <div className="text-[13px] leading-5 mt-0.5 line-clamp-2" style={{ color: 'var(--foreground-tertiary)' }}>{email.body_preview}</div>
+
+        <div className="flex items-center gap-2 mt-2">
+          {tag && (
+            <span className="h-[18px] px-2 rounded-md flex items-center text-[10px] font-medium" style={{ backgroundColor: tag.bg, color: tag.color }}>{tag.label}</span>
           )}
           {email.has_attachments && (
-            <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md shrink-0"
-              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}
-            >
-              <Paperclip className="w-2.5 h-2.5" /> 附件
+            <span className="flex items-center gap-0.5 text-[11px] text-[var(--muted-foreground)]">
+              <Paperclip className="w-3 h-3" /> 附件
             </span>
           )}
         </div>
       </div>
-      <div className="flex flex-col items-end justify-start gap-1 shrink-0 self-start pt-0.5">
-        <span className="text-xs whitespace-nowrap" style={{ color: 'var(--foreground-tertiary)' }}>{timeStr}</span>
+
+      {/* Right: star (selected) or unread dot */}
+      <div className="shrink-0 mt-1">
+        {selected ? (
+          <Star className="w-4 h-4" style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
+        ) : unread ? (
+          <span className="w-[9px] h-2 rounded-full block" style={{ backgroundColor: 'var(--primary)' }} />
+        ) : null}
       </div>
     </div>
   )

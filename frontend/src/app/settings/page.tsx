@@ -75,7 +75,7 @@ function AccountPanel() {
       </div>
 
       {showForm && (
-        <div className="p-5 rounded-xl border space-y-4" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
+        <div className="p-6 rounded-[16px]" style={{ border: '1px solid rgba(229,217,196,1)' }}>
           <div className="grid grid-cols-2 gap-3">
             {(['name', 'email', 'imap_host', 'smtp_host'] as const).map(f => (
               <input key={f} placeholder={f} value={(form as any)[f]} onChange={e => setForm({ ...form, [f]: e.target.value })}
@@ -117,7 +117,7 @@ function AccountPanel() {
             const syncMode = a.use_idle ? 'IDLE 实时推送' : 'Poll 5分钟轮询'
             const isExpanded = expandedId === a.id
             return (
-              <div key={a.id} className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--card-border)' }}>
+              <div key={a.id} className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
                 <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[var(--accent)] transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : a.id)}
                 >
@@ -126,31 +126,31 @@ function AccountPanel() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{a.name}</span>
+                      <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>{a.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>已同步</span>
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                    <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>{syncMode}</span>
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--muted)]" title="编辑">
+                    <span className="text-[13px] px-2 py-1 rounded-[6px]" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>{syncMode}</span>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]" title="编辑">
                       <Edit className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--danger-bg)]" title="删除">
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--danger-bg)]" title="删除">
                       <Trash2 className="w-4 h-4" style={{ color: 'var(--primary)' }} />
                     </button>
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="px-4 py-3 border-t space-y-2" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
+                    <div className="grid grid-cols-2 gap-2 text-[13px]">
                       {[
                         ['IMAP 服务器', `${a.imap_host}:${a.imap_port}`],
                         ['SMTP 服务器', `${a.smtp_host}:${a.smtp_port}`],
                         ['用户名', a.username],
                         ['同步方式', syncMode],
                       ].map(([label, val]) => (
-                        <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
+                        <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-[8px]" style={{ backgroundColor: 'var(--card)' }}>
                           <span style={{ color: 'var(--foreground-tertiary)' }}>{label}</span>
                           <span className="font-medium" style={{ color: 'var(--foreground)' }}>{val}</span>
                         </div>
@@ -190,9 +190,9 @@ function AppearancePanel() {
         <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
         <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>外观设置</h2>
       </div>
-      <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--card-border)' }}>
+      <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
         {/* Theme */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面主题风格</div>
@@ -215,7 +215,7 @@ function AppearancePanel() {
         </div>
 
         {/* Accent color */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题色</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>设置强调色</div>
@@ -236,7 +236,7 @@ function AppearancePanel() {
         </div>
 
         {/* Font size */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>字体</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整界面字体大小</div>
@@ -263,7 +263,7 @@ function AppearancePanel() {
         </div>
 
         {/* Density */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>密度</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整邮件列表显示密度</div>
@@ -286,7 +286,7 @@ function AppearancePanel() {
         </div>
 
         {/* Layout */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>布局</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面布局方式</div>
@@ -352,13 +352,13 @@ function StoragePanel() {
           <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
           <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>根目录</h3>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-xl border" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
+        <div className="flex items-center gap-3 p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
           <Folder className="w-5 h-5 shrink-0" style={{ color: 'var(--gold)' }} />
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>/mnt/nas/lzmail/archives/</div>
             <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件归档存储路径</div>
           </div>
-          <button className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium hover:bg-[var(--muted)] shrink-0" style={{ color: 'var(--foreground-tertiary)', border: '1px solid var(--card-border)' }}>
+            <button className="flex items-center gap-1 px-3 h-8 rounded-[8px] text-xs font-medium hover:bg-[var(--muted)] shrink-0" style={{ color: 'var(--foreground-tertiary)', border: '1px solid rgba(229,217,196,1)' }}>
             修改
           </button>
         </div>
@@ -369,7 +369,7 @@ function StoragePanel() {
           <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
           <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>目录结构</h3>
         </div>
-        <div className="p-4 rounded-xl border" style={{ borderColor: 'var(--card-border)', backgroundColor: '#ffffff' }}>
+        <div className="p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: '#ffffff' }}>
           <div className="font-mono text-sm space-y-1" style={{ color: 'var(--foreground-secondary)' }}>
             {[
               { indent: 0, icon: <ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: 'archives' },
@@ -397,13 +397,13 @@ function StoragePanel() {
         {loading ? (
           <div className="text-sm py-4 text-center" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
         ) : (
-          <div className="p-4 rounded-xl border" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--accent)' }}>
+          <div className="p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
             <div className="mb-3">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span style={{ color: 'var(--foreground-tertiary)' }}>{formatBytes(storageBytes)} / 50 GB</span>
                 <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{storagePct.toFixed(1)}%</span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, background: 'linear-gradient(to right, var(--gold), var(--primary))' }} />
               </div>
             </div>
@@ -429,8 +429,8 @@ function StoragePanel() {
         </div>
         <select
           onChange={e => api.settings.set({ auto_cleanup_days: e.target.value })}
-          className="text-sm border rounded-lg px-3 h-9 bg-transparent outline-none"
-          style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }}
+          className="text-[13px] border rounded-[8px] px-3 h-9 bg-transparent outline-none"
+          style={{ borderColor: 'rgba(229,217,196,1)', color: 'var(--foreground)' }}
         >
           <option value="30">30天</option>
           <option value="90">90天</option>
@@ -463,7 +463,7 @@ function AboutPanel() {
         <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
         <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>关于</h2>
       </div>
-      <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--card-border)' }}>
+      <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
         {/* Product info */}
         <div className="flex items-center gap-5 px-6 py-6">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
@@ -526,27 +526,28 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <div className="p-6" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+      <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* 页面标题 */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'var(--gold)' }} />
           <div>
-            <h1 className="text-[28px] font-bold" style={{ color: 'var(--foreground)', fontFamily: 'SourceHanSans-Bold, system-ui' }}>设置</h1>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理账号、外观与归档配置</p>
+            <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>设置</h1>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>管理账号、外观与归档配置</p>
           </div>
         </div>
 
         {/* Tab 导航 */}
-        <div className="flex gap-1 rounded-xl p-1 mb-6 inline-flex" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
+        <div className="flex gap-2 h-[40px] mb-8 inline-flex" style={{ backgroundColor: 'transparent' }}>
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = active === tab.key
             return (
               <button key={tab.key} onClick={() => setActive(tab.key)}
-                className="flex items-center gap-2 px-5 h-10 rounded-lg text-sm font-medium transition-all"
+                className="flex items-center gap-2 px-5 h-full rounded-[12px] text-[14px] font-medium transition-all"
                 style={{
-                  backgroundColor: isActive ? 'var(--primary)' : 'transparent',
-                  color: isActive ? '#ffffff' : 'var(--foreground-tertiary)',
+                  backgroundColor: isActive ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                  color: isActive ? '#ffffff' : 'rgba(107,91,79,1)',
+                  fontFamily: isActive ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                 }}
               >
                 <Icon className="w-4 h-4" />
@@ -557,10 +558,12 @@ export default function SettingsPage() {
         </div>
 
         {/* 内容区 */}
-        <div className="rounded-2xl border p-6" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <div className="rounded-[16px]" style={{ backgroundColor: 'var(--card)', padding: '32px 40px' }}>
           <Panel />
         </div>
       </div>
     </AppShell>
   )
 }
+
+export const dynamic = 'force-dynamic'

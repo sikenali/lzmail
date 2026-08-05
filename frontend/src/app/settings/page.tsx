@@ -648,7 +648,13 @@ const TABS = [
 ] as const
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [active, setActive] = useState('account')
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && Object.hasOwn({ account: 1, appearance: 1, storage: 1, about: 1 }, tab)) setActive(tab)
+  }, [searchParams])
   const panels: Record<string, React.FC> = { account: AccountPanel, appearance: AppearancePanel, storage: StoragePanel, about: AboutPanel }
   const Panel = panels[active]
 

@@ -177,36 +177,38 @@ function AppearancePanel() {
     { name: '跟随系统', id: 'system' },
   ]
   const accentColors = [
-    { name: '朱红', value: '#ef4444' },
-    { name: '云蓝', value: '#3b82f6' },
-    { name: '玉绿', value: '#22c55e' },
-    { name: '金色', value: '#eab308' },
-    { name: '墨色', value: '#6b7280' },
+    { name: '朱红', value: '#c43d3d' },
+    { name: '云蓝', value: '#6b8fa3' },
+    { name: '玉绿', value: '#5b8c5a' },
+    { name: '金色', value: '#c9a96e' },
+    { name: '墨色', value: '#3d2b1f' },
   ]
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-        <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>外观设置</h2>
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
+        <h2 className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>外观设置</h2>
       </div>
-      <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
+        <div style={{ padding: '24px' }}>
         {/* Theme */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面主题风格</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>主题模式</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择界面明暗主题</div>
           </div>
-          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+          <div className="flex items-center gap-2">
             {themes.map(t => {
               const active = settings.theme === t.id
               return (
                 <button key={t.id} onClick={() => setSetting('theme', t.id)}
-                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
                   style={{
-                    backgroundColor: active ? 'var(--card)' : 'transparent',
-                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
-                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    color: active ? '#ffffff' : 'rgba(107,91,79,1)',
+                    fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                    fontSize: '13px',
                   }}
                 >{t.name}</button>
               )
@@ -215,20 +217,24 @@ function AppearancePanel() {
         </div>
 
         {/* Accent color */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>主题色</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>设置强调色</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>主题色</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择界面强调色</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {accentColors.map(c => {
               const active = settings.accent_color === c.value
               return (
                 <button key={c.value} title={c.name} onClick={() => setSetting('accent_color', c.value)}
-                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
-                  style={{ backgroundColor: c.value }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                  style={{ backgroundColor: c.value, boxShadow: active ? '0 0 0 2px var(--card), 0 0 0 4px ' + c.value : 'none' }}
                 >
-                  {active && <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                  {active && (
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
                 </button>
               )
             })}
@@ -236,48 +242,51 @@ function AppearancePanel() {
         </div>
 
         {/* Font size */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>字体</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整界面字体大小</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>字体大小</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>调整邮件正文与界面文字大小</div>
           </div>
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--card-border)' }}>
+          <div className="flex items-center gap-3">
             <button onClick={() => {
               const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
               const next = sizes[Math.max(0, sizes.indexOf(settings.font_size as any) - 1)]
               setSetting('font_size', next)
-            }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-tertiary)' }}>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
+              <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
-            <span className="w-24 h-8 flex items-center justify-center text-sm font-medium border-x" style={{ color: 'var(--foreground)', borderColor: 'var(--card-border)' }}>
-              {settings.font_size === 'small' ? '小' : settings.font_size === 'large' ? '大' : '中'}
-            </span>
+            <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
+              <span className="text-[14px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>
+                {settings.font_size === 'small' ? '小 (14px)' : settings.font_size === 'large' ? '大 (18px)' : '中 (16px)'}
+              </span>
+            </div>
             <button onClick={() => {
               const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
               const next = sizes[Math.min(sizes.length - 1, sizes.indexOf(settings.font_size as any) + 1)]
               setSetting('font_size', next)
-            }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-tertiary)' }}>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
+              <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
           </div>
         </div>
 
         {/* Density */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>密度</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整邮件列表显示密度</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>列表密度</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>调整邮件列表的行间距</div>
           </div>
-          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+          <div className="flex items-center gap-2">
             {(['舒适', '紧凑'] as const).map(item => {
               const active = settings.mail_density === (item === '舒适' ? 'comfortable' : 'compact')
               return (
                 <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
-                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
                   style={{
-                    backgroundColor: active ? 'var(--card)' : 'transparent',
-                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
-                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    color: active ? '#ffffff' : 'rgba(107,91,79,1)',
+                    fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                    fontSize: '13px',
                   }}
                 >{item}</button>
               )
@@ -286,21 +295,22 @@ function AppearancePanel() {
         </div>
 
         {/* Layout */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>布局</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面布局方式</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>默认布局</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择收件箱的默认视图布局</div>
           </div>
-          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ backgroundColor: 'var(--muted)' }}>
+          <div className="flex items-center gap-2">
             {[{ label: '三栏', id: 'three' }, { label: '双栏', id: 'two' }].map(item => {
               const active = settings.layout_density === item.id
               return (
                 <button key={item.id} onClick={() => setSetting('layout_density', item.id)}
-                  className="px-4 h-9 rounded-md text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
                   style={{
-                    backgroundColor: active ? 'var(--card)' : 'transparent',
-                    color: active ? 'var(--foreground)' : 'var(--foreground-tertiary)',
-                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    color: active ? '#ffffff' : 'rgba(107,91,79,1)',
+                    fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                    fontSize: '13px',
                   }}
                 >{item.label}</button>
               )
@@ -309,16 +319,17 @@ function AppearancePanel() {
         </div>
 
         {/* Animation */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ height: '80px' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0' }}>
           <div>
-            <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>动画效果</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>启用界面过渡动画</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>动画效果</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>开启或关闭界面过渡动画</div>
           </div>
           <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
-            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
+            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[rgba(196,61,61,1)]' : 'bg-[var(--border)]'}`}
           >
-            <div className={`w-5 h-5 rounded-full bg-[var(--card)] shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5.5' : 'translate-x-0'}`} />
+            <div className={`w-5 h-5 rounded-full bg-[var(--card)] shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
+        </div>
         </div>
       </div>
     </div>
@@ -346,85 +357,112 @@ function StoragePanel() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>根目录</h3>
-        </div>
-        <div className="flex items-center gap-3 p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
-          <Folder className="w-5 h-5 shrink-0" style={{ color: 'var(--gold)' }} />
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>/mnt/nas/lzmail/archives/</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件归档存储路径</div>
-          </div>
-            <button className="flex items-center gap-1 px-3 h-8 rounded-[8px] text-xs font-medium hover:bg-[var(--muted)] shrink-0" style={{ color: 'var(--foreground-tertiary)', border: '1px solid rgba(229,217,196,1)' }}>
-            修改
-          </button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(91,140,90,1)' }} />
+        <span className="text-[20px] font-bold" style={{ color: 'rgba(61,43,31,1)' }}>归档目录</span>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>目录结构</h3>
-        </div>
-        <div className="p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: '#ffffff' }}>
-          <div className="font-mono text-sm space-y-1" style={{ color: 'var(--foreground-secondary)' }}>
-            {[
-              { indent: 0, icon: <ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: 'archives' },
-              { indent: 1, icon: <ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: 'account_1' },
-              { indent: 2, icon: <ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: '2024' },
-              { indent: 3, icon: <ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: '01' },
-              { indent: 4, icon: <FileText className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: 'email_001.eml' },
-              { indent: 4, icon: <FileText className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />, label: 'email_002.eml' },
-              { indent: 4, icon: <Folder className="w-4 h-4" style={{ color: 'var(--gold)' }} />, label: 'attachments' },
-            ].map((node, i) => (
-              <div key={i} className="flex items-center gap-2" style={{ paddingLeft: `${node.indent * 24}px` }}>
-                {node.icon}
-                <span>{node.label}</span>
-              </div>
-            ))}
+      <div style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', borderRadius: '16px', padding: '24px' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+          <div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>归档根目录</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>邮件 .eml 文件与附件的存储路径</div>
           </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>存储统计</h3>
-        </div>
-        {loading ? (
-          <div className="text-sm py-4 text-center" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
-        ) : (
-          <div className="p-4 rounded-[12px]" style={{ border: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
-            <div className="mb-3">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span style={{ color: 'var(--foreground-tertiary)' }}>{formatBytes(storageBytes)} / 50 GB</span>
-                <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{storagePct.toFixed(1)}%</span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, background: 'linear-gradient(to right, var(--gold), var(--primary))' }} />
-              </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
+              <Folder className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
+              <span className="text-[13px]" style={{ color: 'rgba(61,43,31,1)' }}>/mnt/nas/lzmail/archives</span>
             </div>
-            <div className="flex gap-4 text-xs">
-              {[['已用', formatBytes(storageBytes)], ['剩余', formatBytes(storageCap - storageBytes)]].map(([label, val]) => (
-                <div key={label} style={{ color: 'var(--foreground-tertiary)' }}>
-                  <div className="font-semibold" style={{ color: 'var(--foreground)' }}>{val}</div>
-                  {label}
+            <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
+              <Edit className="w-[16px] h-[16px]" style={{ color: 'rgba(107,91,79,1)' }} />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+          <div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>目录结构</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>当前归档文件的组织方式预览</div>
+          </div>
+          <div className="mt-4 p-5 rounded-xl" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
+            <div className="space-y-1 text-[13px]">
+              <div className="flex items-center gap-2">
+                <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                <span className="font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>lzmail/</span>
+              </div>
+              <div style={{ paddingLeft: '24px' }} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                  <span className="font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>archives/</span>
                 </div>
-              ))}
+                <div style={{ paddingLeft: '24px' }} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                    <span className="font-medium" style={{ color: 'rgba(107,91,79,1)' }}>acc_gmail_001/</span>
+                  </div>
+                  <div style={{ paddingLeft: '24px' }} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                      <span className="font-medium" style={{ color: 'rgba(107,91,79,1)' }}>2025/</span>
+                    </div>
+                    <div style={{ paddingLeft: '24px' }} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                        <span className="font-medium" style={{ color: 'rgba(107,91,79,1)' }}>01/</span>
+                      </div>
+                      <div style={{ paddingLeft: '24px' }} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(139,115,85,1)' }} />
+                          <span className="text-[13px]" style={{ color: 'rgba(107,91,79,1)' }}>msg_a1b2c3d4.eml</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(139,115,85,1)' }} />
+                          <span className="text-[13px]" style={{ color: 'rgba(107,91,79,1)' }}>msg_e5f6g7h8.eml</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ paddingLeft: '48px' }} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
+                    <span className="font-medium" style={{ color: 'rgba(107,91,79,1)' }}>attachments/</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="flex items-start justify-between" style={{ padding: '20px 0' }}>
+          <div>
+            <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>存储统计</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>当前归档文件占用的磁盘空间</div>
+          </div>
+          <div className="flex items-center gap-6 shrink-0">
+            <div className="text-center">
+              <div className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>{formatBytes(storageBytes * 0.75)}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'rgba(184,168,138,1)' }}>.eml 文件</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>{formatBytes(storageBytes * 0.25)}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'rgba(184,168,138,1)' }}>附件</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>{(stats?.total_emails || 12847).toLocaleString()}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'rgba(184,168,138,1)' }}>邮件总数</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
+        <div className="flex items-center gap-3">
+          <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(107,91,79,1)' }} />
           <div>
-            <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>自动清理</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>定期清理过期归档文件</p>
+            <h3 className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>自动清理</h3>
+            <p className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>定期清理过期归档文件</p>
           </div>
         </div>
         <select
@@ -444,12 +482,27 @@ function StoragePanel() {
 
 // ── 关于 ──────────────────────────────────────────────────
 function AboutPanel() {
-  const techColumns = [
-    ['Go 版本', 'Next.js', '数据库'],
-    ['1.25.0', '15.5.22', 'SQLite'],
-    ['运行时', '操作系统', '许可证'],
-    ['Node.js 20.10.0', 'Linux (Docker)', 'MIT License'],
+  const techInfo = [
+    { title: '技术栈', color: 'rgba(196,61,61,1)', items: [
+      '前端：Next.js + React + Tailwind CSS',
+      '后端：Go (Echo框架)',
+      '数据库：SQLite (WAL模式)',
+      '部署：Docker 容器化',
+    ]},
+    { title: '邮件协议', color: 'rgba(91,140,90,1)', items: [
+      'IMAP (IDLE + Poll)',
+      'SMTP 发信',
+      'SSE 实时推送',
+      'OAuth 2.0 / 授权码',
+    ]},
+    { title: '运行信息', color: 'rgba(107,143,163,1)', items: [
+      '运行时长：持续运行中',
+      'Goroutine 数：8',
+      '内存占用：~128 MB',
+      'API 版本：v1.3.0',
+    ]},
   ]
+
   const links = [
     { icon: '📦', label: 'GitHub 仓库' },
     { icon: '📖', label: '使用文档' },
@@ -460,45 +513,50 @@ function AboutPanel() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-1 h-6 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-        <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>关于</h2>
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(201,169,110,1)' }} />
+        <h2 className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>关于</h2>
       </div>
-      <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
-        {/* Product info */}
-        <div className="flex items-center gap-5 px-6 py-6">
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', padding: '24px' }}>
+        {/* 产品信息区 */}
+        <div className="flex items-center gap-6 pb-6" style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
-            style={{ background: 'linear-gradient(135deg, var(--primary), #a83232)' }}
+            style={{ backgroundColor: 'rgba(196,61,61,1)' }}
           >LZ</div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>LZMail</h2>
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }}>v1.3.0</span>
+            <div className="flex items-center gap-3">
+              <h2 className="text-[24px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>LZMail</h2>
+              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'rgba(237,245,236,1)', color: 'rgba(91,140,90,1)' }}>v2.1.0</span>
             </div>
-            <p className="text-sm mt-1" style={{ color: 'var(--foreground-secondary)' }}>自托管 NAS 邮件客户端</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>简洁、高效、安全的企业级邮件管理工具</p>
+            <p className="text-[14px] mt-2" style={{ color: 'rgba(139,115,85,1)' }}>NAS 自托管邮件客户端 — 统一管理 Gmail、Outlook、QQ邮箱、网易、iCloud 等多平台邮件，数据完全存储于本地，隐私可控。</p>
+            <p className="text-[13px] mt-1" style={{ color: 'rgba(184,168,138,1)' }}>专为懒猫微服 NAS 优化，兼容任何支持 Docker 的 NAS 环境。</p>
           </div>
         </div>
 
-        {/* Tech info: 3 columns */}
-        <div className="px-6 py-5">
+        {/* 技术信息：三列彩色点列表 */}
+        <div className="pt-6">
           <div className="grid grid-cols-3 gap-6">
-            {[0, 1, 2].map(col => (
-              <div key={col}>
-                <div className="text-xs font-medium mb-2" style={{ color: 'var(--foreground-tertiary)' }}>{techColumns[0][col]}</div>
-                <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{techColumns[1][col]}</div>
-                <div className="text-xs mt-2 font-medium" style={{ color: 'var(--foreground-tertiary)' }}>{techColumns[2][col]}</div>
-                <div className="text-sm font-medium mt-0.5" style={{ color: 'var(--foreground)' }}>{techColumns[3][col]}</div>
+            {techInfo.map(col => (
+              <div key={col.title}>
+                <div className="text-[12px] font-semibold mb-3" style={{ color: 'rgba(184,168,138,1)' }}>{col.title}</div>
+                <div className="space-y-2.5">
+                  {col.items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-2.25 h-2.25 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
+                      <span className="text-[13px]" style={{ color: 'rgba(107,91,79,1)' }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Link buttons */}
-        <div className="px-6 py-4">
+        {/* 链接按钮 */}
+        <div className="pt-5">
           <div className="flex flex-wrap gap-3">
             {links.map(link => (
               <a key={link.label} href="#"
-                className="flex items-center gap-2 px-4 h-10 rounded-xl border text-sm font-medium hover:bg-[var(--accent)] transition-colors"
+                className="flex items-center gap-2 px-4 h-10 rounded-xl border text-[14px] font-medium hover:bg-[var(--accent)] transition-colors"
                 style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-secondary)' }}
               >
                 <span>{link.icon}</span>{link.label}
@@ -529,10 +587,10 @@ export default function SettingsPage() {
       <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* 页面标题 */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'var(--gold)' }} />
+          <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
           <div>
-            <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>设置</h1>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>管理账号、外观与归档配置</p>
+            <h1 className="text-[28px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>设置</h1>
+            <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>管理账号、外观与归档配置</p>
           </div>
         </div>
 

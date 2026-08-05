@@ -104,10 +104,10 @@ export default function ComposePage() {
           {/* 页面标题区 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'var(--primary)' }} />
+              <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
               <div>
-                <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>写邮件</h1>
-                <p className="text-[13px] mt-1.5" style={{ color: 'var(--foreground-tertiary)' }}>新建邮件消息</p>
+                <h1 className="text-[28px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>写邮件</h1>
+                <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>新建邮件消息</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

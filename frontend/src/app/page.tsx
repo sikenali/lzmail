@@ -58,7 +58,7 @@ export default function Dashboard() {
   const storagePct = storageCap > 0 ? Math.round(((storageBytes / storageCap) * 100)) : 0
 
   const today = new Date()
-  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
+  const dateStr = `${today.getFullYear()}年${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',

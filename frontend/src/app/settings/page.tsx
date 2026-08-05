@@ -70,7 +70,7 @@ function AccountPanel() {
         <button onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90"
         >
-          <Plus className="w-4 h-4" /> 添加账号
+          <Plus className="w-4 h-4" /> 添加邮箱账号
         </button>
       </div>
 
@@ -79,19 +79,19 @@ function AccountPanel() {
           <div className="grid grid-cols-2 gap-3">
             {(['name', 'email', 'imap_host', 'smtp_host'] as const).map(f => (
               <input key={f} placeholder={f} value={(form as any)[f]} onChange={e => setForm({ ...form, [f]: e.target.value })}
-                className="border rounded-lg px-3 h-9 text-sm outline-none bg-white" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+                className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
             ))}
             {(['imap_port', 'smtp_port'] as const).map(f => (
               <div key={f} className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>{f === 'imap_port' ? 'IMAP' : 'SMTP'}</span>
                 <input type="number" value={(form as any)[f]} onChange={e => setForm({ ...form, [f]: Number(e.target.value) })}
-                  className="border rounded-lg px-3 h-9 text-sm outline-none bg-white w-20" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+                  className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] w-20" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
               </div>
             ))}
             <input placeholder="用户名" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
-              className="border rounded-lg px-3 h-9 text-sm outline-none bg-white col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+              className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
             <input type="password" placeholder="密码" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-              className="border rounded-lg px-3 h-9 text-sm outline-none bg-white col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+              className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="idle" checked={form.use_idle} onChange={e => setForm({ ...form, use_idle: e.target.checked })} className="accent-[var(--primary)]" />
@@ -317,7 +317,7 @@ function AppearancePanel() {
           <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
             className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
           >
-            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5.5' : 'translate-x-0'}`} />
+            <div className={`w-5 h-5 rounded-full bg-[var(--card)] shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5.5' : 'translate-x-0'}`} />
           </button>
         </div>
       </div>
@@ -514,8 +514,8 @@ function AboutPanel() {
 // ── 主页面 ────────────────────────────────────────────────
 const TABS = [
   { key: 'account',  label: '账号管理', icon: User },
-  { key: 'appearance', label: '外观',   icon: Palette },
-  { key: 'storage',  label: '归档',    icon: Archive },
+  { key: 'appearance', label: '外观设置', icon: Palette },
+  { key: 'storage',  label: '归档目录',    icon: Archive },
   { key: 'about',    label: '关于',    icon: Info },
 ] as const
 
@@ -532,12 +532,12 @@ export default function SettingsPage() {
           <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
           <div>
             <h1 className="text-[28px] font-bold" style={{ color: 'var(--foreground)', fontFamily: 'SourceHanSans-Bold, system-ui' }}>设置</h1>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>自定义你的 LZMail</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理账号、外观与归档配置</p>
           </div>
         </div>
 
         {/* Tab 导航 */}
-        <div className="flex gap-1 bg-white rounded-xl p-1 mb-6 inline-flex" style={{ border: '1px solid var(--card-border)' }}>
+        <div className="flex gap-1 rounded-xl p-1 mb-6 inline-flex" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = active === tab.key
@@ -557,7 +557,7 @@ export default function SettingsPage() {
         </div>
 
         {/* 内容区 */}
-        <div className="bg-white rounded-2xl border p-6" style={{ borderColor: 'var(--card-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <Panel />
         </div>
       </div>

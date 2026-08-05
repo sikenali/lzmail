@@ -50,7 +50,7 @@ export default function ContactsPage() {
             <div className="w-[5px] h-8 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
             <div>
               <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>联系人</h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理你的联系人</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理您的联系人列表</p>
             </div>
           </div>
           <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 h-10 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90">

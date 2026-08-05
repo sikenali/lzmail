@@ -87,7 +87,10 @@ export default function ComposePage() {
             <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--accent)]">
               <ArrowLeft className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
             </button>
-            <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>新邮件</span>
+            <div>
+              <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>写邮件</span>
+              <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>新建邮件消息</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-medium hover:bg-[var(--accent)]" style={{ color: 'var(--foreground-secondary)' }}>

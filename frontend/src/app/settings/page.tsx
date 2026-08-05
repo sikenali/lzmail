@@ -8,7 +8,11 @@ import {
   User, Palette, Archive, Info,
   Plus, Trash2, RefreshCw, Check, Edit,
   Folder, FileText, ChevronDown,
-  Minus, ExternalLink
+  Minus, ExternalLink,
+  Sun, Moon, Monitor,
+  CheckCircle as CheckCircleIcon,
+  Grid2x2, Columns2,
+  GitRepository, BookRead, ChatSmile3, AlarmWarning,
 } from '@/lib/icons'
 
 // ── 账号管理 ──────────────────────────────────────────────
@@ -59,16 +63,20 @@ function AccountPanel() {
   }
 
   const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e' }
+  const getSyncBadge = (a: Account) => {
+    if (a.use_idle) return { label: 'IDLE · 实时', color: '#5b8c5a', bg: '#edf5ec', dotColor: '#5b8c5a' }
+    return { label: 'IDLE · 同步中', color: '#c9a96e', bg: '#faf3e8', dotColor: '#c9a96e' }
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>账号管理</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理你的邮箱账号和同步设置</p>
+          <h2 className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>账号管理</h2>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>管理你的邮箱账号和同步设置</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90"
+          className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-xl text-[13px] font-medium hover:opacity-90"
         >
           <Plus className="w-4 h-4" /> 添加邮箱账号
         </button>
@@ -93,11 +101,11 @@ function AccountPanel() {
             <input type="password" placeholder="密码" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
               className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-3">
             <input type="checkbox" id="idle" checked={form.use_idle} onChange={e => setForm({ ...form, use_idle: e.target.checked })} className="accent-[var(--primary)]" />
             <label htmlFor="idle" className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>启用 IMAP IDLE（实时推送）</label>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-3">
             <button onClick={handleCreate} className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">
               {editingId ? '保存修改' : '保存'}
             </button>
@@ -111,48 +119,72 @@ function AccountPanel() {
       ) : accounts.length === 0 ? (
         <div className="text-center text-sm py-12" style={{ color: 'var(--muted-foreground)' }}>暂无账号，点击「添加账号」配置</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {accounts.map(a => {
             const ac = brandColorMap[a.name?.toLowerCase()] || a.brand_color || '#6366f1'
-            const syncMode = a.use_idle ? 'IDLE 实时推送' : 'Poll 5分钟轮询'
+            const sync = getSyncBadge(a)
             const isExpanded = expandedId === a.id
             return (
-              <div key={a.id} className="rounded-[12px] overflow-hidden" style={{ border: '1px solid rgba(229,217,196,1)' }}>
-                <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[var(--accent)] transition-colors"
+              <div key={a.id}
+                className="rounded-[16px] overflow-hidden transition-shadow"
+                style={{
+                  border: '0.7px solid rgba(229,217,196,1)',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 2px 12px rgba(139,115,85,0.06)',
+                }}
+              >
+                {/* Card header */}
+                <div className="px-6 py-6 flex items-center justify-between"
                   onClick={() => setExpandedId(isExpanded ? null : a.id)}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: ac }}>
-                    {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>{a.name}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>已同步</span>
+                  {/* Left: avatar + info */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[18px] font-bold shrink-0" style={{ backgroundColor: ac }}>
+                      {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
                     </div>
-                    <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                    <div>
+                      <div className="text-[16px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>{a.name}</div>
+                      <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>{a.email}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[13px] px-2 py-1 rounded-[6px]" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>{syncMode}</span>
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]" title="编辑">
-                      <Edit className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
+                  {/* Right: sync badge + buttons */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-[8px]" style={{ backgroundColor: sync.bg }}>
+                      <div className="w-2.25 h-2.25 rounded-full shrink-0" style={{ backgroundColor: sync.dotColor }} />
+                      <span className="text-[12px] font-medium" style={{ color: sync.color }}>{sync.label}</span>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)]"
+                      title="编辑"
+                      style={{ backgroundColor: 'rgba(243,237,227,1)' }}
+                    >
+                      <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--danger-bg)]" title="删除">
-                      <Trash2 className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[rgba(253,242,242,1)]"
+                      title="删除"
+                      style={{ backgroundColor: 'rgba(253,242,242,1)' }}
+                    >
+                      <Trash2 className="w-[18px] h-[18px]" style={{ color: 'rgba(196,61,61,1)' }} />
                     </button>
                   </div>
                 </div>
+                {/* Expanded details */}
                 {isExpanded && (
-                  <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(229,217,196,1)', backgroundColor: 'var(--accent)' }}>
-                    <div className="grid grid-cols-2 gap-2 text-[13px]">
-                      {[
-                        ['IMAP 服务器', `${a.imap_host}:${a.imap_port}`],
-                        ['SMTP 服务器', `${a.smtp_host}:${a.smtp_port}`],
-                        ['用户名', a.username],
-                        ['同步方式', syncMode],
-                      ].map(([label, val]) => (
-                        <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-[8px]" style={{ backgroundColor: 'var(--card)' }}>
-                          <span style={{ color: 'var(--foreground-tertiary)' }}>{label}</span>
-                          <span className="font-medium" style={{ color: 'var(--foreground)' }}>{val}</span>
+                  <div className="px-6 pb-6 pt-4" style={{ borderTop: '1px solid rgba(229,217,196,1)' }}>
+                    <div className="grid grid-cols-4 gap-3">
+                      {([
+                        { label: '认证方式', value: a.auth_type === 'password' ? '授权码' : 'OAuth 2.0' },
+                        { label: 'IMAP 服务器', value: `${a.imap_host}:${a.imap_port}` },
+                        { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
+                        { label: '已同步邮件', value: '5,832 封' },
+                      ] as const).map(item => (
+                        <div key={item.label}
+                          className="rounded-[12px] p-4"
+                          style={{ backgroundColor: 'rgba(251,247,240,1)' }}
+                        >
+                          <div className="text-[11px]" style={{ color: 'rgba(184,168,138,1)' }}>{item.label}</div>
+                          <div className="text-[14px] font-medium mt-1" style={{ color: 'rgba(61,43,31,1)' }}>{item.value}</div>
                         </div>
                       ))}
                     </div>
@@ -161,6 +193,27 @@ function AccountPanel() {
               </div>
             )
           })}
+
+          {/* Add account card */}
+          <div
+            className="rounded-[16px] cursor-pointer transition-all hover:opacity-80"
+            style={{
+              border: '2px dashed rgba(201,169,110,1)',
+              backgroundColor: 'rgba(254,249,240,1)',
+              padding: '24px',
+            }}
+            onClick={() => setShowForm(true)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(201,169,110,1)' }}>
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="text-[16px] font-semibold" style={{ color: 'rgba(201,169,110,1)' }}>添加邮箱账号</div>
+                <div className="text-[13px] mt-0.5" style={{ color: 'rgba(184,168,138,1)' }}>支持 Gmail、Outlook、QQ邮箱、网易、iCloud 等</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -172,9 +225,9 @@ function AppearancePanel() {
   const { settings, setSetting } = useSettings()
 
   const themes = [
-    { name: '浅色', id: 'light' },
-    { name: '深色', id: 'dark' },
-    { name: '跟随系统', id: 'system' },
+    { name: '浅色', id: 'light', icon: Sun },
+    { name: '深色', id: 'dark', icon: Moon },
+    { name: '跟随系统', id: 'system', icon: Monitor },
   ]
   const accentColors = [
     { name: '朱红', value: '#c43d3d' },
@@ -183,6 +236,12 @@ function AppearancePanel() {
     { name: '金色', value: '#c9a96e' },
     { name: '墨色', value: '#3d2b1f' },
   ]
+
+  const sizeLabels: Record<string, string> = { small: '小 (14px)', medium: '中 (16px)', large: '大 (18px)' }
+  const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
+
+  const btnBase = 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]'
+  const btnActive = 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px] font-semibold'
 
   return (
     <div className="space-y-4">
@@ -198,19 +257,22 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>主题模式</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择界面明暗主题</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center" style={{ gap: '8px' }}>
             {themes.map(t => {
+              const Icon = t.icon
               const active = settings.theme === t.id
               return (
                 <button key={t.id} onClick={() => setSetting('theme', t.id)}
-                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
+                  className={btnBase}
                   style={{
                     backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
                     color: active ? '#ffffff' : 'rgba(107,91,79,1)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
-                    fontSize: '13px',
                   }}
-                >{t.name}</button>
+                >
+                  <Icon className="w-4 h-4" />
+                  {t.name}
+                </button>
               )
             })}
           </div>
@@ -222,18 +284,16 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>主题色</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择界面强调色</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: '12px' }}>
             {accentColors.map(c => {
               const active = settings.accent_color === c.value
               return (
                 <button key={c.value} title={c.name} onClick={() => setSetting('accent_color', c.value)}
                   className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-                  style={{ backgroundColor: c.value, boxShadow: active ? '0 0 0 2px var(--card), 0 0 0 4px ' + c.value : 'none' }}
+                  style={{ backgroundColor: c.value, minWidth: 36, width: 36, height: 36 }}
                 >
                   {active && (
-                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+                    <CheckCircleIcon className="w-4 h-4 text-white" />
                   )}
                 </button>
               )
@@ -247,25 +307,25 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>字体大小</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>调整邮件正文与界面文字大小</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: '12px' }}>
             <button onClick={() => {
-              const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
-              const next = sizes[Math.max(0, sizes.indexOf(settings.font_size as any) - 1)]
+              const idx = sizes.indexOf(settings.font_size as any)
+              const next = sizes[Math.max(0, idx - 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
-              <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <Minus className="w-4 h-4" />
             </button>
-            <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
+            <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)', minWidth: 95, textAlign: 'center' }}>
               <span className="text-[14px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>
-                {settings.font_size === 'small' ? '小 (14px)' : settings.font_size === 'large' ? '大 (18px)' : '中 (16px)'}
+                {sizeLabels[settings.font_size || 'medium']}
               </span>
             </div>
             <button onClick={() => {
-              const sizes: Array<'small'|'medium'|'large'> = ['small', 'medium', 'large']
-              const next = sizes[Math.min(sizes.length - 1, sizes.indexOf(settings.font_size as any) + 1)]
+              const idx = sizes.indexOf(settings.font_size as any)
+              const next = sizes[Math.min(sizes.length - 1, idx + 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
-              <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -276,17 +336,16 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>列表密度</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>调整邮件列表的行间距</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center" style={{ gap: '8px' }}>
             {(['舒适', '紧凑'] as const).map(item => {
               const active = settings.mail_density === (item === '舒适' ? 'comfortable' : 'compact')
               return (
                 <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
-                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
+                  className={active ? btnActive : btnBase}
                   style={{
                     backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
                     color: active ? '#ffffff' : 'rgba(107,91,79,1)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
-                    fontSize: '13px',
                   }}
                 >{item}</button>
               )
@@ -300,19 +359,21 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>默认布局</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择收件箱的默认视图布局</div>
           </div>
-          <div className="flex items-center gap-2">
-            {[{ label: '三栏', id: 'three' }, { label: '双栏', id: 'two' }].map(item => {
+          <div className="flex items-center" style={{ gap: '8px' }}>
+            {[{ label: '三栏', id: 'three', icon: Grid2x2 }, { label: '双栏', id: 'two', icon: Columns2 }].map(item => {
               const active = settings.layout_density === item.id
               return (
                 <button key={item.id} onClick={() => setSetting('layout_density', item.id)}
-                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all"
+                  className={btnBase}
                   style={{
                     backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
                     color: active ? '#ffffff' : 'rgba(107,91,79,1)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
-                    fontSize: '13px',
                   }}
-                >{item.label}</button>
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </button>
               )
             })}
           </div>
@@ -325,9 +386,9 @@ function AppearancePanel() {
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>开启或关闭界面过渡动画</div>
           </div>
           <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
-            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[rgba(196,61,61,1)]' : 'bg-[var(--border)]'}`}
+            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[rgba(91,140,90,1)]' : 'bg-[var(--border)]'}`}
           >
-            <div className={`w-5 h-5 rounded-full bg-[var(--card)] shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
+            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
         </div>
@@ -504,11 +565,11 @@ function AboutPanel() {
   ]
 
   const links = [
-    { icon: '📦', label: 'GitHub 仓库' },
-    { icon: '📖', label: '使用文档' },
-    { icon: '💬', label: '反馈建议' },
-    { icon: '🔔', label: '更新日志' },
+    { icon: GitRepository, label: 'GitHub' },
+    { icon: BookRead, label: '使用文档' },
+    { icon: ChatSmile3, label: '反馈问题' },
   ]
+  const updateLink = { icon: AlarmWarning, label: '检查更新' }
 
   return (
     <div className="space-y-4">
@@ -552,16 +613,24 @@ function AboutPanel() {
         </div>
 
         {/* 链接按钮 */}
-        <div className="pt-5">
-          <div className="flex flex-wrap gap-3">
+        <div className="pt-4">
+          <div className="flex items-center" style={{ gap: '16px' }}>
             {links.map(link => (
               <a key={link.label} href="#"
-                className="flex items-center gap-2 px-4 h-10 rounded-xl border text-[14px] font-medium hover:bg-[var(--accent)] transition-colors"
-                style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-secondary)' }}
+                className="flex items-center gap-2 rounded-lg transition-all"
+                style={{ backgroundColor: 'rgba(243,237,227,1)', padding: '8px 16px', gap: '8px' }}
               >
-                <span>{link.icon}</span>{link.label}
+                <link.icon className="w-[18px] h-[18px]" style={{ color: 'rgba(61,43,31,1)' }} />
+                <span className="text-[13px] font-medium" style={{ color: 'rgba(61,43,31,1)' }}>{link.label}</span>
               </a>
             ))}
+            <a href="#"
+              className="flex items-center gap-2 rounded-lg transition-all"
+              style={{ backgroundColor: 'rgba(253,242,242,1)', padding: '8px 16px', gap: '8px' }}
+            >
+              <updateLink.icon className="w-[18px] h-[18px]" style={{ color: 'rgba(196,61,61,1)' }} />
+              <span className="text-[13px] font-medium" style={{ color: 'rgba(196,61,61,1)' }}>{updateLink.label}</span>
+            </a>
           </div>
         </div>
       </div>

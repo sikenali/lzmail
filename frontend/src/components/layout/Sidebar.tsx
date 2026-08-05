@@ -1,18 +1,18 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Mail, Star, Clock, Send, FileText, AlertTriangle, Plus, Settings, Contact } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, PenNib } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
 const navItems = [
   { icon: LayoutDashboard, label: '仪表盘', href: '/', badge: 3 },
-  { icon: Mail, label: '收件箱', href: '/mail', badge: 27 },
+  { icon: Inbox, label: '收件箱', href: '/mail', badge: 27 },
   { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED' },
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=SENT' },
   { icon: FileText, label: '草稿箱', href: '/mail?folder=DRAFTS', badge: 5, badgeStyle: 'gold' },
   { icon: Contact, label: '联系人', href: '/contacts' },
-  { icon: AlertTriangle, label: '垃圾邮件', href: '/mail?folder=SPAM' },
+  { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
   { icon: Settings, label: '设置', href: '/settings' },
 ]
 
@@ -51,9 +51,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'rgba(196,61,61,1)' }}
         >
-          <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current" strokeWidth="1.8" style={{ color: '#ffffff' }}>
-            <path d="M3 5h2V3a1 1 0 00-1-1H4a1 1 0 00-1 1v2zm16 0h2V3a1 1 0 00-1-1h-1a1 1 0 00-1 1v2zM5 19H3v2a1 1 0 001 1h1a1 1 0 001-1v-2zm14 0h2v2a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2zM12 3L5 9l1.5 1.5L12 6l5.5 4.5L19 9 12 3zM5 15l7 7 7-7-1.5-1.5L12 19l-5.5-5.5L5 15z"/>
-          </svg>
+          <PenNib className="w-[18px] h-[18px]" style={{ color: '#ffffff' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>

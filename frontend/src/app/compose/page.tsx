@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X } from '@/lib/icons'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account } from '@/types'
@@ -16,6 +17,8 @@ export default function ComposePage() {
   const [bcc, setBcc] = useState('')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [editorReady, setEditorReady] = useState(false)
+  const editorRef = useRef<any>(null)
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
   const [attachments, setAttachments] = useState<Array<{ name: string, size: number }>>([])
@@ -43,8 +46,8 @@ export default function ComposePage() {
         to,
         cc: [cc, bcc].filter(Boolean).join(','),
         subject,
-        body_text: body,
-        body_html: '',
+        body_text: editorRef.current?.getText() || body,
+        body_html: editorRef.current?.getHTML() || body,
       }
       if (scheduleAt) data.schedule_at = scheduleAt
       await api.compose(data)
@@ -63,7 +66,7 @@ export default function ComposePage() {
     try {
       await api.compose({
         account_id: accountId,
-        to, cc: '', subject, body_text: body, body_html: '',
+        to, cc: '', subject, body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
       })
       toast.success('草稿已保存')
     } catch (err: any) {
@@ -200,31 +203,14 @@ export default function ComposePage() {
               </div>
             </div>
 
-            {/* 工具栏 */}
-            <div className="flex items-center gap-1 pt-6 pb-3">
-              {[Bold, Italic, Underline].map((Icon, i) => (
-                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
-                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground)' }} />
-                </button>
-              ))}
-              <div className="w-[2px] h-5 mx-1" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
-              {[Image, Emoji].map((Icon, i) => (
-                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
-                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} />
-                </button>
-              ))}
-              <div className="w-[2px] h-5 mx-1" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
-              {[Link, Table, Code].map((Icon, i) => (
-                <button key={i} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
-                  <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} />
-                </button>
-              ))}
-            </div>
-
             {/* 正文 */}
-            <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="开始撰写邮件正文..."
-              className="w-full h-[360px] p-6 rounded-[8px] outline-none text-[15px] resize-none placeholder:text-[var(--muted-foreground)]"
-              style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+            <RichTextEditor
+              ref={editorRef}
+              value={body}
+              onChange={setBody}
+              placeholder="开始撰写邮件正文..."
+              className="h-[360px]"
+            />
 
             {/* 附件列表 */}
             {attachments.length > 0 && (

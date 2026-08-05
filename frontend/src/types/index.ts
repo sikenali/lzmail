@@ -73,6 +73,7 @@ export interface ComposePayload {
   account_id: number
   to: string
   cc: string
+  bcc: string
   subject: string
   body_text: string
   body_html: string

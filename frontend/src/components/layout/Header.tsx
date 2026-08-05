@@ -49,7 +49,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
           <div className="flex items-center gap-2 px-3 h-8 rounded-lg" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success-bg)' : syncStatus === 'error' ? 'var(--danger-bg)' : 'var(--accent)' }}>
             <div className="w-[9px] h-2 rounded-full" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
             <span className="text-xs font-medium" style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
-              {syncStatus === 'ok' ? '同步中' : syncStatus === 'error' ? '同步失败' : '同步中'}
+              {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : '同步中'}
             </span>
           </div>
         )}

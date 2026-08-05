@@ -130,7 +130,7 @@ function AccountPanel() {
                 className="rounded-[16px] overflow-hidden transition-shadow"
                 style={{
                   border: '0.7px solid rgba(229,217,196,1)',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'var(--card)',
                   boxShadow: '0 2px 12px rgba(139,115,85,0.06)',
                 }}
               >
@@ -250,7 +250,7 @@ function AppearancePanel() {
         <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>外观设置</h2>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
         <div style={{ padding: '24px' }}>
         {/* Theme */}
         <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
@@ -425,7 +425,7 @@ function StoragePanel() {
         <span className="text-[20px] font-bold" style={{ color: 'rgba(61,43,31,1)' }}>归档目录</span>
       </div>
 
-      <div style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', borderRadius: '16px', padding: '24px' }}>
+      <div style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', borderRadius: '16px', padding: '24px' }}>
         <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>归档根目录</div>
@@ -578,7 +578,7 @@ function AboutPanel() {
         <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(201,169,110,1)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>关于</h2>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', padding: '24px' }}>
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', padding: '24px' }}>
         {/* 产品信息区 */}
         <div className="flex items-center gap-6 pb-6" style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}>
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"

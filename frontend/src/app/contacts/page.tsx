@@ -1,9 +1,22 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
-import { api } from '@/lib/api'
-import { Search, Plus, MoreVertical, ChevronDown, Mail as MailIcon, X } from '@/lib/icons'
+import { Plus, MoreVertical, ChevronDown, Mail as MailIcon, X } from '@/lib/icons'
 import type { Contact } from '@/types'
+
+// MOCK 假数据（上线前删除）
+const MOCK_CONTACTS: Contact[] = [
+  { id: 1, name: '陈小明', email: 'chenxm@company.com', account_id: 1, created_at: '', updated_at: '' },
+  { id: 2, name: '李华', email: 'lihua@partner.com', account_id: 1, created_at: '', updated_at: '' },
+  { id: 3, name: '王芳', email: 'wangfang@gmail.com', account_id: 2, created_at: '', updated_at: '' },
+  { id: 4, name: '张伟', email: 'zhangwei@outlook.com', account_id: 2, created_at: '', updated_at: '' },
+  { id: 5, name: '刘洋', email: 'liuyang@icloud.com', account_id: 1, created_at: '', updated_at: '' },
+  { id: 6, name: '赵丽', email: 'zhaoli@qq.com', account_id: 2, created_at: '', updated_at: '' },
+  { id: 7, name: '孙鹏', email: 'sunpeng@163.com', account_id: 1, created_at: '', updated_at: '' },
+  { id: 8, name: '周杰', email: 'zhoujie@gmail.com', account_id: 2, created_at: '', updated_at: '' },
+  { id: 9, name: '吴敏', email: 'wumin@company.com', account_id: 1, created_at: '', updated_at: '' },
+  { id: 10, name: '郑浩', email: 'zhenghao@outlook.com', account_id: 2, created_at: '', updated_at: '' },
+]
 
 const gradients = [
   'from-orange-400 to-red-500', 'from-blue-400 to-indigo-500', 'from-cyan-400 to-blue-500',
@@ -12,25 +25,18 @@ const gradients = [
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'grid' | 'table'>('table')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newContact, setNewContact] = useState({ name: '', email: '' })
 
   useEffect(() => {
-    api.contacts.list().then(list => setContacts(list || [])).catch(() => {}).finally(() => setLoading(false))
+    // MOCK 假数据（上线前删除）
+    setContacts(MOCK_CONTACTS)
+    setLoading(false)
   }, [])
 
-  const [filtered, setFiltered] = useState<Contact[]>([])
-
-  useEffect(() => {
-    if (!search.trim()) {
-      setFiltered(contacts)
-      return
-    }
-    api.contacts.search(search).then(list => setFiltered(list || [])).catch(() => setFiltered(contacts))
-  }, [search, contacts])
+  const filtered = contacts
 
   const grouped: Record<string, Contact[]> = {}
   for (const c of filtered) {
@@ -59,16 +65,8 @@ export default function ContactsPage() {
           </button>
         </div>
 
-        {/* Search + view toggle */}
+        {/* View toggle */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: 'rgba(139,115,85,1)' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full h-[40px] pl-12 pr-4 bg-[rgba(243,237,227,1)] rounded-[8px] outline-none text-[14px] placeholder:text-[var(--muted-foreground)]"
-              style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
-              placeholder="搜索联系人..."
-            />
-          </div>
           <div className="flex items-center gap-1 bg-[var(--card)] rounded-[8px] p-0.5" style={{ border: '1px solid rgba(229,217,196,1)' }}>
             <button onClick={() => setView('grid')} className={`px-3 h-8 rounded-[8px] text-[13px] font-medium transition-colors ${view === 'grid' ? 'bg-[var(--primary)] text-white' : 'text-[var(--foreground-tertiary)] hover:bg-[var(--muted)]'}`}>
               卡片
@@ -98,10 +96,11 @@ export default function ContactsPage() {
                   <button onClick={() => setShowAddForm(false)} className="px-4 h-9 rounded-[8px] text-[14px] hover:bg-[var(--muted)]" style={{ border: '1px solid rgba(229,217,196,1)', color: 'var(--foreground-tertiary)' }}>取消</button>
                   <button onClick={async () => {
                     if (!newContact.email) return
-                    await api.contacts.create(newContact)
+                    // MOCK 假数据（上线前删除）
+                    const newId = Math.max(...contacts.map(c => c.id), 0) + 1
+                    setContacts(prev => [...prev, { id: newId, name: newContact.name, email: newContact.email, account_id: 1, created_at: '', updated_at: '' }])
                     setShowAddForm(false)
                     setNewContact({ name: '', email: '' })
-                    window.location.reload()
                   }} className="px-4 h-9 bg-[var(--primary)] text-white rounded-[8px] text-[14px] font-medium hover:opacity-90">保存</button>
                 </div>
               </div>

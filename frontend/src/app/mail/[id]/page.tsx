@@ -51,6 +51,7 @@ export default function MailPage() {
         account_id: detail.email.account_id,
         to: detail.email.from,
         cc: '',
+        bcc: '',
         subject: 'Re: ' + (detail.email.subject || ''),
         body_text: replyText,
         body_html: '',

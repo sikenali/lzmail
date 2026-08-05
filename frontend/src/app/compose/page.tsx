@@ -44,7 +44,8 @@ export default function ComposePage() {
       const data: any = {
         account_id: accountId,
         to,
-        cc: [cc, bcc].filter(Boolean).join(','),
+        cc,
+        bcc,
         subject,
         body_text: editorRef.current?.getText() || body,
         body_html: editorRef.current?.getHTML() || body,
@@ -66,7 +67,7 @@ export default function ComposePage() {
     try {
       await api.compose({
         account_id: accountId,
-        to, cc: '', subject, body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
+        to, cc, bcc, subject, body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
       })
       toast.success('草稿已保存')
     } catch (err: any) {

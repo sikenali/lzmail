@@ -79,6 +79,29 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         </div>
       </div>
 
+  <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
+
+      <div className="space-y-1" style={{ paddingTop: 16 }}>
+        {[
+          { icon: Contact, label: '联系人', href: '/contacts' },
+          { icon: Settings, label: '设置', href: '/settings' },
+        ].map(item => {
+          const active = isActive(item.href)
+          return (
+            <a key={item.href} href={item.href}
+              className="flex items-center gap-3 rounded-[8px] transition-colors"
+              style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
+            >
+              <item.icon className="w-[22px] h-[22px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+              <span className="flex-1 text-[14px]" style={{
+                color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
+                fontWeight: active ? '600' : '500',
+              }}>{item.label}</span>
+            </a>
+          )
+        })}
+      </div>
+
       <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
 
       <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>

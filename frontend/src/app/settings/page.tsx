@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
@@ -669,7 +670,7 @@ export default function SettingsPage() {
             const Icon = tab.icon
             const isActive = active === tab.key
             return (
-              <button key={tab.key} onClick={() => setActive(tab.key)}
+              <button key={tab.key} onClick={() => { setActive(tab.key); router.replace(`/settings?tab=${tab.key}`) }}
                 className="flex items-center gap-2 px-5 h-full rounded-[12px] text-[14px] font-medium transition-all"
                 style={{
                   backgroundColor: isActive ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',

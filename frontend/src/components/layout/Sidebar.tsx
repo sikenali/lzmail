@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, FlowChart } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
@@ -126,8 +127,10 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               </div>
             )
           })}
-          <div className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
+          <a href="#"
+            className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
             style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
+            onClick={(e) => { e.preventDefault(); router.push('/settings?tab=account') }}
           >
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
               style={{ border: '0.7px dashed rgba(201,169,110,1)' }}
@@ -135,7 +138,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
             </div>
             <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>
-          </div>
+          </a>
         </div>
       </div>
     </div>

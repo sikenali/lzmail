@@ -271,7 +271,7 @@ function AppearancePanel() {
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: isActive ? '#ffffff' : 'rgba(107,91,79,1)' }} />
+                  <Icon className="w-4 h-4" style={{ color: active ? '#ffffff' : 'rgba(107,91,79,1)' }} />
                   {t.name}
                 </button>
               )

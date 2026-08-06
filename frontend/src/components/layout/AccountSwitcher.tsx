@@ -6,6 +6,17 @@ import type { Account } from '@/types'
 
 const brandGradient = 'linear-gradient(135deg, #3b82f6, #4f46e5)'
 
+function AuthBadge({ account }: { account: Account }) {
+  if (account.auth_method !== 'oauth2') return null
+  const color = account.provider === 'gmail' ? '#ea4335' : '#0078d4'
+  return (
+    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0"
+      style={{ backgroundColor: `${color}18`, color }}>
+      OAuth
+    </span>
+  )
+}
+
 export function AccountSwitcher({
   current,
   onSwitch,
@@ -37,7 +48,7 @@ export function AccountSwitcher({
             {activeAccount?.email || '未配置账号'}
           </div>
           <div className="text-[10px] truncate" style={{ color: 'var(--muted-foreground)' }}>
-            {activeAccount ? '已同步 · 2分钟前' : '点击添加邮箱账号'}
+            {activeAccount ? (activeAccount.auth_method === 'oauth2' ? 'OAuth 2.0 · 已授权' : '已同步 · 2分钟前') : '点击添加邮箱账号'}
           </div>
         </div>
         {accounts.length > 1 && (
@@ -61,7 +72,8 @@ export function AccountSwitcher({
               <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold"
                 style={{ backgroundColor: a.brand_color || '#6366f1' }}
               >{(a.name || a.email)?.[0]?.toUpperCase() || '?'}</div>
-              <span className="truncate">{a.email}</span>
+              <span className="truncate flex-1 text-left">{a.email}</span>
+              <AuthBadge account={a} />
             </button>
           ))}
         </div>

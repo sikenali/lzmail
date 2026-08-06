@@ -434,7 +434,7 @@ function AccountPanel() {
                   <div className="px-5 pb-4 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
                     <div className="grid grid-cols-4 gap-3">
                       {[
-                        { label: '认证方式', value: a.auth_type === 'password' ? '授权码' : 'OAuth 2.0' },
+                        { label: '认证方式', value: a.auth_method === 'oauth2' ? 'OAuth 2.0' : '授权码' },
                         { label: 'IMAP 服务器', value: `${a.imap_host}:${a.imap_port}` },
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
                         { label: '同步状态', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },

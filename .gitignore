@@ -4,6 +4,7 @@
 archives/
 backend/lzmail
 data/
+logs/
 frontend/tsconfig.tsbuildinfo
 node_modules/
 scratch/

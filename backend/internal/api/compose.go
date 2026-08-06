@@ -30,6 +30,7 @@ type ComposeRequest struct {
 	AccountID   int64               `json:"account_id"`
 	To          string              `json:"to"`
 	Cc          string              `json:"cc"`
+	Bcc         string              `json:"bcc"`
 	Subject     string              `json:"subject"`
 	BodyText    string              `json:"body_text"`
 	BodyHTML    string              `json:"body_html"`
@@ -43,6 +44,7 @@ type scheduledJob struct {
 	accountID   int64
 	to          string
 	cc          string
+	bcc         string
 	subject     string
 	bodyText    string
 	bodyHTML    string
@@ -107,6 +109,12 @@ func executeJob(job *scheduledJob) {
 	}
 
 	recipients := splitEmails(job.to)
+	if job.cc != "" {
+		recipients = append(recipients, splitEmails(job.cc)...)
+	}
+	if job.bcc != "" {
+		recipients = append(recipients, splitEmails(job.bcc)...)
+	}
 	if err := sendMail(addr, auth, account.Email, recipients, msg); err != nil {
 		log.Printf("[send] scheduled job %d failed: %v", job.accountID, err)
 		return
@@ -333,6 +341,12 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 	}
 
 	recipients := splitEmails(req.To)
+	if req.Cc != "" {
+		recipients = append(recipients, splitEmails(req.Cc)...)
+	}
+	if req.Bcc != "" {
+		recipients = append(recipients, splitEmails(req.Bcc)...)
+	}
 
 	sendDate := time.Now()
 	if req.ScheduleAt != nil && req.ScheduleAt.After(time.Now()) {
@@ -342,6 +356,7 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 			accountID: req.AccountID,
 			to:        req.To,
 			cc:        req.Cc,
+			bcc:       req.Bcc,
 			subject:   req.Subject,
 			bodyText:  req.BodyText,
 			bodyHTML:  req.BodyHTML,

@@ -1,17 +1,28 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account } from '@/types'
 
 export default function ComposePage() {
+  return (
+    <Suspense fallback={null}>
+      <ComposePageInner />
+    </Suspense>
+  )
+}
+
+function ComposePageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [accountId, setAccountId] = useState(0)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [accountsLoaded, setAccountsLoaded] = useState(false)
   const [to, setTo] = useState('')
   const [cc, setCc] = useState('')
   const [bcc, setBcc] = useState('')
@@ -21,7 +32,7 @@ export default function ComposePage() {
   const editorRef = useRef<any>(null)
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
-  const [attachments, setAttachments] = useState<Array<{ name: string, size: number }>>([])
+  const [attachments, setAttachments] = useState<Array<{ id?: number; name: string; size: number; path?: string; uploading?: boolean }>>([])
   const [scheduleAt, setScheduleAt] = useState('')
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
@@ -29,16 +40,27 @@ export default function ComposePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    const prefillTo = searchParams.get('to')
+    const prefillSubject = searchParams.get('subject')
+    const prefillBody = searchParams.get('body')
+    if (prefillTo) setTo(prefillTo)
+    if (prefillSubject) setSubject(prefillSubject)
+    if (prefillBody) setBody(prefillBody)
+  }, [searchParams])
+
+  useEffect(() => {
     api.accounts.list().then(list => {
       const accounts = list || []
       setAccounts(accounts)
       if (accounts.length > 0) setAccountId(accounts[0].id)
-    }).catch(() => {})
+    }).catch(() => {}).finally(() => setAccountsLoaded(true))
   }, [])
 
   const handleSend = async () => {
     if (!to) { toast.error('请输入收件人'); return }
     if (!accountId) { toast.error('请选择发件账号'); return }
+    const pending = attachments.find(a => a.uploading)
+    if (pending) { toast.error('附件仍在上传中，请稍候'); return }
     setSending(true)
     try {
       const data: any = {
@@ -51,6 +73,9 @@ export default function ComposePage() {
         body_html: editorRef.current?.getHTML() || body,
       }
       if (scheduleAt) data.schedule_at = scheduleAt
+      if (attachments.length > 0) {
+        data.attachments = attachments.map(a => ({ filename: a.name, path: a.path }))
+      }
       await api.compose(data)
       toast.success('邮件已发送')
       setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
@@ -63,12 +88,18 @@ export default function ComposePage() {
 
   const handleSaveDraft = async () => {
     if (sending || savingDraft) return
+    if (!accountId) { toast.error('请选择发件账号'); return }
     setSavingDraft(true)
     try {
-      await api.compose({
+      const data: any = {
         account_id: accountId,
         to, cc, bcc, subject, body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
-      })
+        draft: true,
+      }
+      if (attachments.length > 0) {
+        data.attachments = attachments.map(a => ({ filename: a.name, path: a.path }))
+      }
+      await api.compose(data)
       toast.success('草稿已保存')
     } catch (err: any) {
       toast.error(err?.message || '保存失败')
@@ -76,12 +107,22 @@ export default function ComposePage() {
     setSavingDraft(false)
   }
 
-  const handleAttach = (files: FileList | null) => {
+  const handleAttach = async (files: FileList | null) => {
     if (!files) return
-    Array.from(files).forEach(f => {
-      if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name} 超过25MB限制`); return }
-      setAttachments(prev => [...prev, { name: f.name, size: f.size }])
-    })
+    for (const f of Array.from(files)) {
+      if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name} 超过25MB限制`); continue }
+      const tmpId = Date.now() + Math.random()
+      setAttachments(prev => [...prev, { name: f.name, size: f.size, uploading: true }])
+      try {
+        const uploaded = await api.uploadAttachment(f)
+        setAttachments(prev => prev.map(a =>
+          a.name === f.name && a.uploading ? { id: uploaded.id, name: uploaded.filename, size: uploaded.size, path: uploaded.path, uploading: false } : a
+        ))
+      } catch (e: any) {
+        toast.error(`${f.name} 上传失败：${e.message || ''}`)
+        setAttachments(prev => prev.filter(a => !(a.name === f.name && a.uploading)))
+      }
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,9 +173,10 @@ export default function ComposePage() {
           <div className="mt-8 rounded-[16px] px-12 py-8"
             style={{ backgroundColor: 'var(--card)', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
             {/* 发件人 */}
-            <div className="flex items-center gap-4 pb-4">
+            <div className="flex items-center gap-4 pb-4 relative">
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
-              <button className="flex items-center gap-2 h-[41px] rounded-[8px] transition-opacity hover:opacity-80"
+              <button onClick={() => accounts.length > 0 && setAccountOpen(o => !o)}
+                className="flex items-center gap-2 h-[41px] rounded-[8px] transition-opacity hover:opacity-80"
                 style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', padding: '8px 16px' }}>
                 <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                   style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
@@ -143,8 +185,27 @@ export default function ComposePage() {
                 <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>
                   {selectedAccount ? selectedAccount.email : '选择账号'}
                 </span>
-                <ChevronDown className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-tertiary)' }} />
+                <ChevronDown className={`w-[18px] h-[18px] transition-transform ${accountOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
               </button>
+              {accountOpen && accounts.length > 0 && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setAccountOpen(false)} />
+                  <div className="absolute left-[73px] top-full z-50 mt-1 rounded-[12px] py-1 shadow-lg"
+                    style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: 220 }}>
+                    {accounts.map(a => (
+                      <button key={a.id} onClick={() => { setAccountId(a.id); setAccountOpen(false) }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-[var(--muted)]"
+                        style={{ color: 'var(--foreground)' }}>
+                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                          style={{ backgroundColor: a.brand_color || 'var(--gmail)' }}>
+                          {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
+                        </span>
+                        <span className="truncate text-[13px]">{a.email}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 收件人 */}
@@ -221,7 +282,11 @@ export default function ComposePage() {
                     style={{ borderColor: 'rgba(229,217,196,1)', backgroundColor: 'var(--background)' }}>
                     <Paperclip className="w-3.5 h-3.5" style={{ color: 'var(--foreground-tertiary)' }} />
                     <span className="max-w-[150px] truncate" style={{ color: 'var(--foreground)' }}>{att.name}</span>
-                    <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>({(att.size / 1024).toFixed(0)}KB)</span>
+                    {att.uploading ? (
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>上传中...</span>
+                    ) : (
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>({(att.size / 1024).toFixed(0)}KB)</span>
+                    )}
                     <button onClick={() => removeAttachment(i)} className="hover:opacity-70"><X className="w-3.5 h-3.5" style={{ color: 'var(--foreground-tertiary)' }} /></button>
                   </div>
                 ))}

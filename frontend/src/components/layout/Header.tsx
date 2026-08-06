@@ -3,16 +3,31 @@ import { Search, Settings } from '@/lib/icons'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
+import { useSSE } from '@/hooks/useSSE'
 
 export function Header({ onCompose }: { onCompose: () => void }) {
   const router = useRouter()
   const pathname = usePathname()
   const [searchFocused, setSearchFocused] = useState(false)
+  const [searchQ, setSearchQ] = useState('')
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
+
+  useSSE(undefined, undefined, (status) => {
+    if (status === 'syncing') setSyncStatus('syncing')
+    else if (status === 'error') setSyncStatus('error')
+    else setSyncStatus('ok')
+  })
 
   const showSearch = pathname === '/' || pathname === '/mail' || pathname === '/contacts' || pathname.startsWith('/mail/')
   const showSync = pathname !== '/contacts'
   const showSettings = pathname !== '/settings'
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = searchQ.trim()
+    if (!q) return
+    router.push(`/mail?q=${encodeURIComponent(q)}`)
+  }
 
   return (
     <div className="flex items-center justify-between h-16 px-8 shrink-0" style={{ backgroundColor: 'var(--background)' }}>
@@ -31,9 +46,11 @@ export function Header({ onCompose }: { onCompose: () => void }) {
 
       <div className="flex items-center gap-4">
         {showSearch && (
-          <div className="relative w-[320px]">
+          <form onSubmit={submitSearch} className="relative w-[320px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: 'var(--foreground-tertiary)' }} />
             <input
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
               className="w-full h-10 pl-11 pr-4 rounded-lg outline-none text-sm"
               style={{
                 backgroundColor: 'var(--muted)',
@@ -44,7 +61,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
             />
-          </div>
+          </form>
         )}
 
         {showSync && (

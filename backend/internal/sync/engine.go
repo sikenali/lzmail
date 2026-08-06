@@ -51,3 +51,24 @@ func (e *Engine) StartAll(accounts []models.Account) {
 		e.AddAccount(&accounts[i])
 	}
 }
+
+func (e *Engine) RefreshAll() {
+	e.mu.Lock()
+	syncers := make(map[int64]*Syncer, len(e.syncers))
+	for id, s := range e.syncers {
+		syncers[id] = s
+	}
+	e.mu.Unlock()
+	for _, s := range syncers {
+		go s.ForceSync()
+	}
+}
+
+func (e *Engine) RefreshAccount(accountID int64) {
+	e.mu.Lock()
+	s, ok := e.syncers[accountID]
+	e.mu.Unlock()
+	if ok {
+		go s.ForceSync()
+	}
+}

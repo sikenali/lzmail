@@ -45,6 +45,17 @@ func (s *Syncer) Start() {
 	go s.run()
 }
 
+// ForceSync triggers an immediate sync of all folders in the background.
+// It is safe to run concurrently with the periodic sync loop.
+func (s *Syncer) ForceSync() {
+	select {
+	case <-s.stopCh:
+		return
+	default:
+	}
+	s.syncAllFolders()
+}
+
 func (s *Syncer) Stop() {
 	close(s.stopCh)
 	<-s.doneCh
@@ -127,10 +138,12 @@ func (s *Syncer) idleSync() error {
 }
 
 func (s *Syncer) syncAllFolders() {
+	s.publishSync("syncing")
 	folders, err := s.listFolders()
 	if err != nil {
 		log.Printf("[sync] account %s list folders failed: %v", s.account.Email, err)
 		folders = []string{"INBOX"}
+		s.publishSync("error")
 	}
 
 	for _, folder := range folders {
@@ -144,6 +157,14 @@ func (s *Syncer) syncAllFolders() {
 		}
 		s.syncFolder(folder)
 	}
+	s.publishSync("ok")
+}
+
+func (s *Syncer) publishSync(status string) {
+	if s.sseHub == nil {
+		return
+	}
+	s.sseHub.Publish("sync:status", fmt.Sprintf(`{"account_id":%d,"status":%q}`, s.account.ID, status))
 }
 
 func (s *Syncer) listFolders() ([]string, error) {

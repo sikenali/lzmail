@@ -56,10 +56,25 @@ export const api = {
 
   compose: (data: ComposePayload) =>
     fetchJSON<{ status: string }>('/api/v1/compose', { method: 'POST', body: JSON.stringify(data) }),
+  uploadAttachment: async (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch(`${API_BASE}/api/v1/compose/attachments`, { method: 'POST', body: form })
+    if (!res.ok) {
+      const body = await res.text()
+      let msg = `HTTP ${res.status}`
+      try { const j = JSON.parse(body); msg = j.error || msg } catch {}
+      throw new Error(msg)
+    }
+    return res.json() as Promise<{ id: number; filename: string; mime_type: string; size: number; path: string }>
+  },
 
   contacts: {
     list: () => fetchJSON<Contact[]>('/api/v1/contacts'),
     create: (data: Partial<Contact>) => fetchJSON<Contact>('/api/v1/contacts', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Partial<Contact>) =>
+      fetchJSON<Contact>(`/api/v1/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: number) => fetchJSON<void>(`/api/v1/contacts/${id}`, { method: 'DELETE' }),
     search: (q: string) => fetchJSON<Contact[]>('/api/v1/contacts/search?q=' + encodeURIComponent(q)),
   },
 
@@ -67,6 +82,11 @@ export const api = {
     get: () => fetchJSON<Record<string, string>>('/api/v1/settings'),
     set: (data: Record<string, string>) =>
       fetchJSON<{ status: string }>('/api/v1/settings', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  sync: {
+    all: () => fetchJSON<{ status: string }>('/api/v1/sync', { method: 'POST' }),
+    account: (id: number) => fetchJSON<{ status: string }>(`/api/v1/sync?account_id=${id}`, { method: 'POST' }),
   },
 
   events: {

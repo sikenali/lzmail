@@ -81,4 +81,6 @@ export interface ComposePayload {
   body_text: string
   body_html: string
   schedule_at?: string
+  draft?: boolean
+  attachments?: Array<{ filename: string; path: string }>
 }

@@ -93,13 +93,21 @@ type Handler struct {
 	settings   *store.SettingsStore
 	sseHub     *sse.Hub
 	archiveDir string
+	syncEngine SyncEngine
 }
 
 var AccountStoreInstance interface{ GetByID(int64) (*models.Account, error) }
 var EmailStoreInstance interface{ InsertSent(*models.Email) error }
 
-func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string) *Handler {
-	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, sseHub: hub, archiveDir: archiveDir}
+type SyncEngine interface {
+	AddAccount(*models.Account)
+	RemoveAccount(int64)
+	RefreshAll()
+	RefreshAccount(int64)
+}
+
+func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string, syncEngine SyncEngine) *Handler {
+	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, sseHub: hub, archiveDir: archiveDir, syncEngine: syncEngine}
 	AccountStoreInstance = as
 	EmailStoreInstance = es
 	return h
@@ -128,10 +136,14 @@ func (h *Handler) Register(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /api/v1/contacts", h.handleListContacts)
 	mux.HandleFunc("POST /api/v1/contacts", h.handleCreateContact)
+	mux.HandleFunc("PATCH /api/v1/contacts/{id}", h.handleUpdateContact)
+	mux.HandleFunc("DELETE /api/v1/contacts/{id}", h.handleDeleteContact)
 	mux.HandleFunc("GET /api/v1/contacts/search", h.handleSearchContacts)
 
 	mux.HandleFunc("GET /api/v1/settings", h.handleGetSettings)
 	mux.HandleFunc("POST /api/v1/settings", h.handleUpdateSettings)
+
+	mux.HandleFunc("POST /api/v1/sync", rateLimitMiddleware(listLimiter, h.handleSync))
 
 	mux.HandleFunc("GET /api/v1/events", h.handleSSE)
 

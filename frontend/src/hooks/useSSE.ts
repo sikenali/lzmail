@@ -14,13 +14,15 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
+export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyncStatus?: (status: string, accountId: string) => void) {
   const eventSourceRef = useRef<EventSource | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onMailNewRef = useRef(onMailNew)
   const onMailUpdatedRef = useRef(onMailUpdated)
+  const onSyncStatusRef = useRef(onSyncStatus)
   onMailNewRef.current = onMailNew
   onMailUpdatedRef.current = onMailUpdated
+  onSyncStatusRef.current = onSyncStatus
 
   useEffect(() => {
     let stopped = false
@@ -36,7 +38,12 @@ export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void) {
         es.addEventListener('mail:new', () => onMailNewRef.current?.())
         es.addEventListener('mail:updated', () => onMailUpdatedRef.current?.())
         es.addEventListener('mail:sent', () => onMailNewRef.current?.())
-        es.addEventListener('sync:status', (e) => console.log('sync:', e.data))
+        es.addEventListener('sync:status', (e) => {
+          try {
+            const data = JSON.parse(e.data)
+            onSyncStatusRef.current?.(data.status, String(data.account_id ?? ''))
+          } catch {}
+        })
 
         es.onerror = () => {
           es.close()

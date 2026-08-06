@@ -61,3 +61,14 @@ func (s *ContactStore) Create(c *models.Contact) error {
 	c.ID = id
 	return nil
 }
+
+func (s *ContactStore) Update(c *models.Contact) error {
+	_, err := s.db.Exec(`UPDATE contacts SET name = ?, email = ?, account_id = ?, updated_at = datetime('now') WHERE id = ?`,
+		c.Name, c.Email, c.AccountID, c.ID)
+	return err
+}
+
+func (s *ContactStore) Delete(id int64) error {
+	_, err := s.db.Exec(`DELETE FROM contacts WHERE id = ?`, id)
+	return err
+}

@@ -21,14 +21,21 @@ import (
 	"github.com/lzmail/backend/internal/models"
 )
 
+type ComposeAttachment struct {
+	Filename string `json:"filename"`
+	Path     string `json:"path"`
+}
+
 type ComposeRequest struct {
-	AccountID  int64      `json:"account_id"`
-	To         string     `json:"to"`
-	Cc         string     `json:"cc"`
-	Subject    string     `json:"subject"`
-	BodyText   string     `json:"body_text"`
-	BodyHTML   string     `json:"body_html"`
-	ScheduleAt *time.Time `json:"schedule_at,omitempty"`
+	AccountID   int64               `json:"account_id"`
+	To          string              `json:"to"`
+	Cc          string              `json:"cc"`
+	Subject     string              `json:"subject"`
+	BodyText    string              `json:"body_text"`
+	BodyHTML    string              `json:"body_html"`
+	ScheduleAt  *time.Time          `json:"schedule_at,omitempty"`
+	Draft       bool                `json:"draft,omitempty"`
+	Attachments []ComposeAttachment `json:"attachments,omitempty"`
 }
 
 type scheduledJob struct {
@@ -39,6 +46,7 @@ type scheduledJob struct {
 	subject     string
 	bodyText    string
 	bodyHTML    string
+	attachments []ComposeAttachment
 	sendDate    time.Time
 	sent        bool
 }
@@ -86,7 +94,7 @@ func executeJob(job *scheduledJob) {
 		return
 	}
 
-	msg := buildMessage(account.Email, job.to, job.cc, job.subject, job.bodyText, job.bodyHTML)
+	msg := buildMessage(account.Email, job.to, job.cc, job.subject, job.bodyText, job.bodyHTML, job.attachments)
 
 	addr := fmt.Sprintf("%s:%d", account.SMTPHost, account.SMTPPort)
 	host := account.SMTPHost
@@ -110,7 +118,7 @@ func init() {
 	go processScheduledJobs()
 }
 
-func buildMessage(from, to, cc, subject, bodyText, bodyHTML string) []byte {
+func buildMessage(from, to, cc, subject, bodyText, bodyHTML string, attachments []ComposeAttachment) []byte {
 	headers := make(map[string]string)
 	headers["From"] = from
 	headers["To"] = to
@@ -122,10 +130,62 @@ func buildMessage(from, to, cc, subject, bodyText, bodyHTML string) []byte {
 		headers["Cc"] = cc
 	}
 
+	var msg strings.Builder
+
+	if len(attachments) == 0 {
+		return buildSinglePart(headers, bodyText, bodyHTML)
+	}
+
+	// With attachments: multipart/mixed wrapping an alternative part + attachments.
+	svcBoundary := fmt.Sprintf("=_%d", time.Now().UnixNano())
+	altBoundary := fmt.Sprintf("=_alt_%d", time.Now().UnixNano())
+	headers["Content-Type"] = fmt.Sprintf(`multipart/mixed; boundary="%s"`, svcBoundary)
+
+	for k, v := range headers {
+		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	}
+	msg.WriteString("\r\n")
+	msg.WriteString(fmt.Sprintf("--%s\r\n", svcBoundary))
+	msg.WriteString("Content-Type: multipart/alternative; boundary=\"" + altBoundary + "\"\r\n\r\n")
+
+	if bodyText != "" {
+		msg.WriteString(fmt.Sprintf("--%s\r\n", altBoundary))
+		msg.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
+		msg.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		msg.WriteString(encodeBase64(bodyText))
+		msg.WriteString("\r\n\r\n")
+	}
+
+	if bodyHTML != "" {
+		msg.WriteString(fmt.Sprintf("--%s\r\n", altBoundary))
+		msg.WriteString("Content-Type: text/html; charset=utf-8\r\n")
+		msg.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		msg.WriteString(encodeBase64(bodyHTML))
+		msg.WriteString("\r\n\r\n")
+	}
+	msg.WriteString(fmt.Sprintf("--%s--\r\n", altBoundary))
+	msg.WriteString("\r\n")
+
+	for _, att := range attachments {
+		msg.WriteString(fmt.Sprintf("--%s\r\n", svcBoundary))
+		msg.WriteString(fmt.Sprintf("Content-Type: application/octet-stream; name=\"%s\"\r\n", encodeHeader(att.Filename)))
+		msg.WriteString(fmt.Sprintf("Content-Disposition: attachment; filename=\"%s\"\r\n", att.Filename))
+		msg.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		b, err := os.ReadFile(att.Path)
+		if err == nil && len(b) > 0 {
+			msg.WriteString(encodeBase64(string(b)))
+		}
+		msg.WriteString("\r\n\r\n")
+	}
+	msg.WriteString(fmt.Sprintf("--%s--\r\n", svcBoundary))
+	return []byte(msg.String())
+}
+
+func buildSinglePart(headers map[string]string, bodyText, bodyHTML string) []byte {
+	var msg strings.Builder
 	boundary := fmt.Sprintf("=_%d", time.Now().UnixNano())
 	headers["Content-Type"] = fmt.Sprintf(`multipart/alternative; boundary="%s"`, boundary)
 
-	var msg strings.Builder
 	for k, v := range headers {
 		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
 	}
@@ -235,7 +295,32 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := buildMessage(account.Email, req.To, req.Cc, req.Subject, req.BodyText, req.BodyHTML)
+	insertRecord := func(folder string, when time.Time) {
+		h.emails.InsertSent(&models.Email{
+			AccountID: req.AccountID,
+			UID:       uint32(time.Now().UnixNano() % 0xFFFFFFFF),
+			Folder:    folder,
+			Subject:   req.Subject,
+			From:      account.Email,
+			To:        req.To,
+			Date:      when,
+			IsRead:    true,
+			IsStarred: false,
+			MessageID: fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
+		})
+	}
+
+	// Save as draft: persist locally, do NOT send over SMTP.
+	if req.Draft {
+		insertRecord("Drafts", time.Now())
+		if h.sseHub != nil {
+			h.sseHub.Publish("mail:updated", `{"draft":"saved"}`)
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "draft_saved"})
+		return
+	}
+
+	msg := buildMessage(account.Email, req.To, req.Cc, req.Subject, req.BodyText, req.BodyHTML, req.Attachments)
 
 	addr := fmt.Sprintf("%s:%d", account.SMTPHost, account.SMTPPort)
 	host := account.SMTPHost
@@ -261,21 +346,11 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 			bodyText:  req.BodyText,
 			bodyHTML:  req.BodyHTML,
 			sendDate:  *req.ScheduleAt,
+			attachments: req.Attachments,
 		}
 		scheduledJobsMu.Unlock()
 
-		h.emails.InsertSent(&models.Email{
-			AccountID: req.AccountID,
-			UID:       uint32(time.Now().UnixNano() % 0xFFFFFFFF),
-			Folder:    "Drafts",
-			Subject:   req.Subject,
-			From:      account.Email,
-			To:        req.To,
-			Date:      *req.ScheduleAt,
-			IsRead:    true,
-			IsStarred: false,
-			MessageID: fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
-		})
+		insertRecord("Drafts", *req.ScheduleAt)
 
 		writeJSON(w, http.StatusOK, map[string]string{"status": "scheduled", "send_at": req.ScheduleAt.Format(time.RFC3339)})
 		return
@@ -286,18 +361,7 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.emails.InsertSent(&models.Email{
-		AccountID:  req.AccountID,
-		UID:        uint32(time.Now().Unix()),
-		Folder:     "Sent",
-		Subject:    req.Subject,
-		From:       account.Email,
-		To:         req.To,
-		Date:       sendDate,
-		IsRead:     true,
-		IsStarred:  false,
-		MessageID:  fmt.Sprintf("<%d.%s>", sendDate.UnixNano(), account.Email),
-	})
+	insertRecord("Sent", sendDate)
 
 	if h.sseHub != nil {
 		d, _ := json.Marshal(map[string]string{"to": req.To, "subject": req.Subject})

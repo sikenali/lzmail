@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import type { EmailDetail } from '@/types'
@@ -23,6 +23,7 @@ export default function MailPage() {
   const [detail, setDetail] = useState<EmailDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [replyText, setReplyText] = useState('')
+  const replyBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const numId = parseInt(id)
@@ -61,6 +62,16 @@ export default function MailPage() {
     } catch (e: any) {
       toast.error(e.message || '发送失败')
     }
+  }
+
+  const focusReply = () => {
+    if (detail && !detail.email.from) return
+    replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  const forward = () => {
+    if (!detail) return
+    router.push(`/compose?subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}&body=${encodeURIComponent(replyText || '')}`)
   }
 
   if (loading) {
@@ -124,8 +135,8 @@ export default function MailPage() {
                   <span className="text-sm text-[var(--muted-foreground)] ml-2">&lt;{email.from}&gt;</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Reply className="w-3.5 h-3.5" /> 回复</button>
-                  <button className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Forward className="w-3.5 h-3.5" /> 转发</button>
+                  <button onClick={focusReply} className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Reply className="w-3.5 h-3.5" /> 回复</button>
+                  <button onClick={forward} className="flex items-center gap-2 px-3 h-8 border rounded-[8px] text-sm text-[var(--foreground-tertiary)] hover:bg-[var(--accent)]" style={{ borderColor: 'rgba(229,217,196,1)' }}><Forward className="w-3.5 h-3.5" /> 转发</button>
                 </div>
               </div>
               <div className="text-xs text-[var(--muted-foreground)] mt-1">
@@ -169,7 +180,7 @@ export default function MailPage() {
             </div>
           )}
 
-          <div className="border rounded-xl" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+          <div ref={replyBoxRef} className="border rounded-xl" style={{ borderColor: 'rgba(229,217,196,1)' }}>
             <div className="px-4 py-3 border-b text-sm text-[var(--foreground-tertiary)]" style={{ borderColor: 'rgba(229,217,196,1)' }}>快捷回复</div>
             <div className="p-4">
               <textarea

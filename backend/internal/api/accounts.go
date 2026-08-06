@@ -81,6 +81,9 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if h.syncEngine != nil {
+		h.syncEngine.AddAccount(a)
+	}
 	writeJSON(w, http.StatusCreated, a)
 }
 
@@ -111,11 +114,18 @@ func (h *Handler) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if h.syncEngine != nil {
+		h.syncEngine.RemoveAccount(existing.ID)
+		h.syncEngine.AddAccount(existing)
+	}
 	writeJSON(w, http.StatusOK, existing)
 }
 
 func (h *Handler) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if h.syncEngine != nil {
+		h.syncEngine.RemoveAccount(id)
+	}
 	if err := h.accounts.Delete(id); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

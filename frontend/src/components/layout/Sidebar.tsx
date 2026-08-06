@@ -10,8 +10,8 @@ const navItems = [
   { icon: Inbox, label: '收件箱', href: '/mail', badge: 27 },
   { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED' },
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
-  { icon: Send, label: '已发送', href: '/mail?folder=SENT' },
-  { icon: FileText, label: '草稿箱', href: '/mail?folder=DRAFTS', badge: 5, badgeStyle: 'gold' },
+  { icon: Send, label: '已发送', href: '/mail?folder=Sent' },
+  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badge: 5, badgeStyle: 'gold' },
   { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
 

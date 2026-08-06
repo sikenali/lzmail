@@ -263,23 +263,32 @@ function AccountPanel() {
             {editingId ? '编辑账号' : '新建账号'}
           </div>
 
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <div className="flex items-center gap-3 mb-4">
             <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>邮箱服务商：</span>
-            {(Object.keys(PROVIDER_LABELS) as ProviderKey[]).map(key => {
-              const isActive = provider === key || (provider === 'auto' && detectProvider(form.email) === key)
-              return (
-                <button key={key}
-                  onClick={() => key === 'auto' || key === 'other' ? setProvider(key) : applyProviderHosts(key)}
-                  className="h-7 px-3 rounded-[8px] text-xs transition-colors"
-                  style={{
-                    backgroundColor: isActive ? 'var(--primary)' : 'var(--muted)',
-                    color: isActive ? '#ffffff' : 'var(--foreground-secondary)',
-                  }}
-                >
-                  {PROVIDER_LABELS[key]}
-                </button>
-              )
-            })}
+            <CustomSelect
+              value={provider}
+              width={140}
+              onChange={(v) => {
+                const key = v as ProviderKey
+                if (key === 'auto' || key === 'other') setProvider(key)
+                else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
+              }}
+              options={[
+                { value: 'auto', label: '自动识别' },
+                { value: 'gmail', label: 'Gmail' },
+                { value: 'outlook', label: 'Outlook / Hotmail' },
+                { value: 'qq', label: 'QQ邮箱' },
+                { value: 'netease', label: '网易 163' },
+                { value: 'icloud', label: 'iCloud' },
+                { value: 'other', label: '其他/自定义' },
+              ]}
+            />
+            {activeProvider && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
+                style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)' }}>
+                <span className="font-semibold" style={{ color: activeProvider.brand }}>{activeProvider.label}</span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

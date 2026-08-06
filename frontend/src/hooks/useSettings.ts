@@ -47,6 +47,13 @@ export function useSettings() {
     }
   }
 
+  const applyAccentColor = (color: string) => {
+    document.documentElement.style.setProperty('--primary', color)
+    // Derive light variant
+    document.documentElement.style.setProperty('--primary-light', color + '15')
+    localStorage.setItem('lzmail_accent_color', color)
+  }
+
   useEffect(() => {
     if (loaded.current) return
     loaded.current = true
@@ -63,10 +70,16 @@ export function useSettings() {
       // Apply theme from settings or fallback
       const themeToApply = (s?.theme || defaults.theme) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
+      // Apply accent color
+      const accentColor = s?.accent_color || defaults.accent_color
+      applyAccentColor(accentColor)
     }).catch(() => {
       setSettings(defaults)
       // Use saved theme or system preference on error
       applyTheme(initialTheme)
+      // Apply saved accent color
+      const savedAccent = localStorage.getItem('lzmail_accent_color')
+      if (savedAccent) applyAccentColor(savedAccent)
     })
     setLoading(false)
   }, [])
@@ -75,10 +88,12 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }))
     api.settings.set({ [key]: value }).catch(() => {})
     
-    // If theme changed, apply it immediately and save to localStorage
     if (key === 'theme') {
       applyTheme(value)
       localStorage.setItem('lzmail_theme', value)
+    }
+    if (key === 'accent_color') {
+      applyAccentColor(value)
     }
   }, [])
 

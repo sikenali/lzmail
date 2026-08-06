@@ -14,6 +14,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Grid2x2, Columns2,
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
+  LayoutRow, CollapseVertical,
 } from '@/lib/icons'
 
 // ── 账号管理 ──────────────────────────────────────────────
@@ -294,7 +295,7 @@ function AppearancePanel() {
                   style={{ backgroundColor: c.value }}
                 >
                   {active && (
-                    <CheckCircleIcon className="w-5 h-5 shrink-0 text-white" />
+                    <Check className="w-4 h-4 shrink-0 text-white" />
                   )}
                 </button>
               )
@@ -338,8 +339,9 @@ function AppearancePanel() {
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>调整邮件列表的行间距</div>
           </div>
           <div className="flex items-center" style={{ gap: '8px' }}>
-            {(['舒适', '紧凑'] as const).map(item => {
+            {(['舒适', '紧凑'] as const).map((item, idx) => {
               const active = settings.mail_density === (item === '舒适' ? 'comfortable' : 'compact')
+              const DensityIcon = idx === 0 ? LayoutRow : CollapseVertical
               return (
                 <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
                   className={active ? btnActive : btnBase}
@@ -348,7 +350,10 @@ function AppearancePanel() {
                     color: active ? '#ffffff' : 'rgba(107,91,79,1)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
-                >{item}</button>
+                >
+                  <DensityIcon className="w-3.5 h-3.5 shrink-0" />
+                  {item}
+                </button>
               )
             })}
           </div>

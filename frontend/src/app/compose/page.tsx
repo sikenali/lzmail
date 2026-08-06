@@ -4,13 +4,14 @@ import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, AlarmWarning, Send, X, Plus, ChevronDown } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account, Contact } from '@/types'
 import ContactPicker from '@/components/compose/ContactPicker'
 
 export default function ComposePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [accountId, setAccountId] = useState(0)
   const [to, setTo] = useState('')
@@ -43,6 +44,14 @@ export default function ComposePage() {
     if (!accountId) { toast.error('请选择发件账号'); return }
     setSending(true)
     try {
+      // 上传附件（如果有）
+      const uploadedAttachments = []
+      for (const att of attachments) {
+        if (att.file) {
+          const uploaded = await api.uploadAttachment(att.file)
+          uploadedAttachments.push({ filename: uploaded.filename, path: uploaded.path })
+        }
+      }
       const data: any = {
         account_id: accountId,
         to,
@@ -51,6 +60,7 @@ export default function ComposePage() {
         subject,
         body_text: editorRef.current?.getText() || body,
         body_html: editorRef.current?.getHTML() || body,
+        attachments: uploadedAttachments,
       }
       if (scheduleAt) data.schedule_at = scheduleAt
       await api.compose(data)

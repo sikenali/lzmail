@@ -9,8 +9,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { Skeleton } from '@/components/Skeleton'
-// MOCK 假数据（上线前删除）：import { MOCK_EMAILS, MOCK_DETAIL } from '@/lib/mockMailData'
-import { MOCK_EMAILS, MOCK_DETAIL } from '@/lib/mockMailData'
 
 function MailPageInner() {
   const router = useRouter()
@@ -164,7 +162,11 @@ function MailPageInner() {
   const handleSelect = useCallback(async (id: number) => {
     setSelectedId(id)
     const d = await loadDetail(id)
-    if (d) api.mails.markRead(id).catch(() => {})
+    if (d) {
+      api.mails.markRead(id).catch(() => {})
+      // 同步更新本地列表的 is_read 状态
+      setEmails(prev => prev.map(e => e.id === id ? { ...e, is_read: true } : e))
+    }
   }, [loadDetail])
 
   const resetDetail = () => {
@@ -315,12 +317,21 @@ function MailPageInner() {
                                const d = String(now.getDate()).padStart(2, '0')
                                const todayStr = `${y}-${m}-${d}`
                                const setDates = (f: string, t: string) => {
-                                 if (f === 'yesterday' || f === todayStr) setFromDate(todayStr)
-                                 else if (f === '7d') { const d = new Date(); d.setDate(d.getDate() - 7); setFromDate(formatDateISO(d)); setToDate(todayStr) }
-                                 else if (f === '30d') { const d = new Date(); d.setDate(d.getDate() - 30); setFromDate(formatDateISO(d)); setToDate(todayStr) }
-                                 else if (f === 'thisMonth') { const d = new Date(); d.setDate(1); setFromDate(formatDateISO(d)); setToDate(todayStr) }
-                                 else { setFromDate(f); setFromDate(t) }
+                               if (f === 'yesterday') {
+                                 const d = new Date(); d.setDate(d.getDate() - 1)
+                                 setFromDate(formatDateISO(d)); setToDate(formatDateISO(d))
+                               } else if (f === todayStr) {
+                                 setFromDate(todayStr); setToDate(todayStr)
+                               } else if (f === '7d') {
+                                 const d = new Date(); d.setDate(d.getDate() - 7); setFromDate(formatDateISO(d)); setToDate(todayStr)
+                               } else if (f === '30d') {
+                                 const d = new Date(); d.setDate(d.getDate() - 30); setFromDate(formatDateISO(d)); setToDate(todayStr)
+                               } else if (f === 'thisMonth') {
+                                 const d = new Date(); d.setDate(1); setFromDate(formatDateISO(d)); setToDate(todayStr)
+                               } else {
+                                 setFromDate(f); setToDate(t)
                                }
+                             }
                                setDates(from, to)
                                setDateFilterOpen(false)
                                setRefresh(n => n + 1)

@@ -28,6 +28,7 @@ const emptyForm = { name: '', email: '', phone: '', company: '', title: '' }
 export default function ContactsPage() {
   const router = useRouter()
   const { settings } = useSettings()
+  const [accounts, setAccounts] = useState<{ id: number; email: string }[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQ, setSearchQ] = useState('')
@@ -46,7 +47,12 @@ export default function ContactsPage() {
     } catch { setContacts([]) }
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    api.accounts.list().then(list => {
+      if (list && list.length > 0) setAccounts(list)
+    }).catch(() => {})
+    load()
+  }, [])
 
   // 搜索防抖
   let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -77,20 +83,17 @@ export default function ContactsPage() {
     const extra = { phone: form.phone, company: form.company, title: form.title }
     try {
       if (editingId) {
-        await api.contacts.update(editingId, { name: form.name, email: form.email })
+        await api.contacts.update(editingId, { name: form.name, email: form.email, ...extra })
         setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, ...extra } : c))
       } else {
-        const created = await api.contacts.create({ name: form.name, email: form.email, account_id: 1 })
+        const accountId = accounts.length > 0 ? accounts[0].id : 1
+        const created = await api.contacts.create({ name: form.name, email: form.email, account_id: accountId, ...extra })
         setContacts(prev => [...prev, { ...created, ...extra, id: created.id }])
       }
     } catch (e: any) {
-      // MOCK 假数据（上线前删除）：后端不可用时仅本地更新
       alert(e.message || '保存失败')
       if (editingId) {
         setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, ...extra } : c))
-      } else {
-        const newId = Math.max(...contacts.map(c => c.id), 0) + 1
-        setContacts(prev => [...prev, { id: newId, name: form.name, email: form.email, ...extra, account_id: 1, created_at: '', updated_at: '' }])
       }
     } finally {
       setSaving(false)

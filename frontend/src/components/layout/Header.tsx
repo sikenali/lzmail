@@ -18,22 +18,9 @@ export function Header({ onCompose }: { onCompose: () => void }) {
     <div className="flex items-center justify-between h-16 px-8 shrink-0" style={{ backgroundColor: 'var(--background)' }}>
       <div className="flex items-center gap-4 shrink-0" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
-          <svg viewBox="0 0 24 24" className="w-[22px] h-[22px] fill-none stroke-current" strokeWidth="1.8" style={{ color: 'var(--primary-foreground)' }}>
-            {/* Cat ears */}
-            <path d="M5 10L3 3l4 3" />
-            <path d="M19 10l2-7-4 3" />
-            {/* Cat head */}
-            <path d="M4 9a8 8 0 0 0 16 0" />
-            {/* Cat body */}
-            <path d="M5 15c0 4 2 7 7 7s7-3 7-7" />
-            {/* Tail */}
-            <path d="M19 18c2-1 3-4 2-6" />
-            {/* Envelope held by cat */}
-            <rect x="9" y="13" width="6" height="4" rx="0.5" />
-            <polyline points="9,13 12,16 15,13" />
-            {/* @ symbol as path */}
-            <circle cx="12" cy="15" r="1.2" />
-            <path d="M11 14.5c0.3-0.5 0.8-0.5 1 0s0 1-0.5 1.2" />
+          <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px', color: 'var(--primary-foreground)' }}>
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="currentColor" />
+            <polyline points="22,6 12,13 2,6" fill="none" stroke="var(--background)" strokeWidth="2" />
           </svg>
         </div>
         <div className="flex flex-col gap-0.5">

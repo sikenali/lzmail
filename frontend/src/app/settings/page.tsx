@@ -67,6 +67,69 @@ function CustomSelect({
 }
 
 // ── 账号管理 ──────────────────────────────────────────────
+type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease' | 'icloud' | 'other'
+
+const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
+  label: string; brand: string;
+  domains: string[];
+  imapHost: string; imapPort: number; smtpHost: string; smtpPort: number;
+  nameHint: string; emailHint: string; usernameHint: string; passwordTip: string; guide: string;
+}> = {
+  gmail: {
+    label: 'Gmail', brand: '#ea4335',
+    domains: ['gmail.com', 'googlemail.com'],
+    imapHost: 'imap.gmail.com', imapPort: 993, smtpHost: 'smtp.gmail.com', smtpPort: 587,
+    nameHint: 'Gmail 账号', emailHint: 'xxx@gmail.com',
+    usernameHint: '完整 Gmail 邮箱地址', passwordTip: '应用专用密码（16位）',
+    guide: 'Gmail 需开启「两步验证」，再到 Google 账号 → 安全 → 应用专用密码生成 16 位密码，输入该应用密码而非登录密码。',
+  },
+  outlook: {
+    label: 'Outlook', brand: '#0078d4',
+    domains: ['outlook.com', 'hotmail.com', 'live.com', 'msn.com'],
+    imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp-mail.outlook.com', smtpPort: 587,
+    nameHint: 'Outlook / Hotmail 账号', emailHint: 'xxx@outlook.com',
+    usernameHint: '使用完整邮箱地址', passwordTip: '微软账号密码或应用密码',
+    guide: 'Outlook 即可使用微软账号密码；若开启双重验证，请在账号安全设置中创建应用密码后使用。',
+  },
+  qq: {
+    label: 'QQ邮箱', brand: '#12b7f5',
+    domains: ['qq.com'],
+    imapHost: 'imap.qq.com', imapPort: 993, smtpHost: 'smtp.qq.com', smtpPort: 465,
+    nameHint: 'QQ 邮箱账号', emailHint: 'xxx@qq.com',
+    usernameHint: 'QQ 邮箱完整地址', passwordTip: '授权码（非QQ密码）',
+    guide: '进入 QQ 邮箱 → 设置 → 账户，开启「IMAP/SMTP 服务」后生成授权码，此处填写授权码而非 QQ 登录密码。',
+  },
+  netease: {
+    label: '网易163', brand: '#e53e3e',
+    domains: ['163.com', '126.com', 'yeah.net', 'vip.163.com'],
+    imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465,
+    nameHint: '网易邮箱账号', emailHint: 'xxx@163.com',
+    usernameHint: '网易邮箱完整地址', passwordTip: '客户端授权码（非登录密码）',
+    guide: '网易邮箱在 设置 → POP3/SMTP/IMAP 中开启服务，生成专属客户端授权码后在此输入，勿使用登录密码。',
+  },
+  icloud: {
+    label: 'iCloud', brand: '#7c9a5f',
+    domains: ['icloud.com', 'me.com'],
+    imapHost: 'imap.mail.me.com', imapPort: 993, smtpHost: 'smtp.mail.me.com', smtpPort: 587,
+    nameHint: 'iCloud 账号', emailHint: 'xxx@icloud.com',
+    usernameHint: 'iCloud 完整邮箱地址', passwordTip: 'App 专用密码',
+    guide: 'iCloud 需在 appleid.apple.com → 登录与安全 → App 专用密码 生成专用密码，再用它而非 iCloud 登录密码。',
+  },
+}
+
+const PROVIDER_LABELS: Record<ProviderKey, string> = {
+  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易163', icloud: 'iCloud', other: '自定义',
+}
+
+function detectProvider(email: string): ProviderKey {
+  const domain = (email || '').split('@')[1]?.toLowerCase().trim() || ''
+  if (!domain) return 'auto'
+  for (const [key, p] of Object.entries(PROVIDER_CONFIG)) {
+    if (p.domains.includes(domain)) return key as ProviderKey
+  }
+  return 'other'
+}
+
 function AccountPanel() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,6 +141,37 @@ function AccountPanel() {
     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
   })
   const [saving, setSaving] = useState(false)
+  const [provider, setProvider] = useState<ProviderKey>('auto')
+
+  const configFor = (key: ProviderKey) =>
+    key === 'auto' || key === 'other' ? null : PROVIDER_CONFIG[key]
+
+  const activeProvider = configFor(provider === 'auto' ? detectProvider(form.email) : provider)
+
+  const resetForm = () => {
+    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
+    setProvider('auto')
+  }
+
+  const applyProviderHosts = (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
+    const p = PROVIDER_CONFIG[key]
+    setProvider(key)
+    setForm(f => ({
+      ...f,
+      imap_host: p.imapHost, imap_port: p.imapPort,
+      smtp_host: p.smtpHost, smtp_port: p.smtpPort,
+    }))
+  }
+
+  const handleEmailChange = (v: string) => {
+    const detected = detectProvider(v)
+    if (detected !== 'auto' && detected !== 'other' && provider === 'auto') {
+      applyProviderHosts(detected)
+      setForm(f => ({ ...f, email: v, name: f.name || PROVIDER_CONFIG[detected].nameHint }))
+    } else {
+      setForm(f => ({ ...f, email: v }))
+    }
+  }
 
   const load = () => {
     setLoading(true)
@@ -96,7 +190,7 @@ function AccountPanel() {
       })
       setShowForm(false)
       setEditingId(null)
-      setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
+      resetForm()
       load()
     } catch (e: any) { alert(e.message) }
     finally { setSaving(false) }
@@ -116,6 +210,7 @@ function AccountPanel() {
       imap_port: a.imap_port, smtp_host: a.smtp_host, smtp_port: a.smtp_port,
       username: a.username, password: '', use_idle: a.use_idle,
     })
+    setProvider(detectProvider(a.email))
     setShowForm(true)
     setEditingId(a.id)
   }
@@ -139,7 +234,7 @@ function AccountPanel() {
   const handleCancel = () => {
     setShowForm(false)
     setEditingId(null)
-    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
+    resetForm()
   }
 
   const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e' }
@@ -155,7 +250,7 @@ function AccountPanel() {
           <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
           <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
         </div>
-        <button onClick={() => { setShowForm(true); setEditingId(null) }}
+        <button onClick={() => { resetForm(); setShowForm(true); setEditingId(null) }}
           className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-[13px] font-medium hover:opacity-90"
         >
           <Plus className="w-4 h-4" /> 添加账号
@@ -167,30 +262,59 @@ function AccountPanel() {
           <div className="text-[14px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
             {editingId ? '编辑账号' : '新建账号'}
           </div>
+
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>邮箱服务商：</span>
+            {(Object.keys(PROVIDER_LABELS) as ProviderKey[]).map(key => {
+              const isActive = provider === key || (provider === 'auto' && detectProvider(form.email) === key)
+              return (
+                <button key={key}
+                  onClick={() => key === 'auto' || key === 'other' ? setProvider(key) : applyProviderHosts(key)}
+                  className="h-7 px-3 rounded-[8px] text-xs transition-colors"
+                  style={{
+                    backgroundColor: isActive ? 'var(--primary)' : 'var(--muted)',
+                    color: isActive ? '#ffffff' : 'var(--foreground-secondary)',
+                  }}
+                >
+                  {PROVIDER_LABELS[key]}
+                </button>
+              )
+            })}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <input placeholder="账号名称（如：Gmail）" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+            <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
-            <input placeholder="邮箱地址" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+            <input placeholder={activeProvider ? `邮箱：${activeProvider.emailHint}` : '邮箱：例如 xxx@example.com'} value={form.email} onChange={e => handleEmailChange(e.target.value)}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
-            <input placeholder="IMAP 服务器" value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
+            <input placeholder={activeProvider ? `IMAP：${activeProvider.imapHost}` : 'IMAP 服务器（如 imap.qq.com）'} value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
             <div className="flex items-center gap-2">
               <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>IMAP 端口</span>
               <input type="number" value={form.imap_port} onChange={e => setForm({ ...form, imap_port: Number(e.target.value) })}
                 className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-20" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
             </div>
-            <input placeholder="SMTP 服务器" value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
+            <input placeholder={activeProvider ? `SMTP：${activeProvider.smtpHost}` : 'SMTP 服务器（如 smtp.qq.com）'} value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
             <div className="flex items-center gap-2">
               <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>SMTP 端口</span>
               <input type="number" value={form.smtp_port} onChange={e => setForm({ ...form, smtp_port: Number(e.target.value) })}
                 className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-20" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
             </div>
-            <input placeholder="用户名 / 邮箱地址" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
+            <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
-            <input type="password" placeholder={editingId ? '留空则不修改密码' : '密码 / 授权码'} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+            <input type="password" placeholder={editingId ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
           </div>
+
+          {activeProvider && (
+            <div className="mt-3 px-3 py-2.5 rounded-lg text-xs leading-5 flex items-start gap-2"
+              style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>
+              <span className="shrink-0 font-semibold" style={{ color: activeProvider.brand }}>{activeProvider.label}</span>
+              <span>{activeProvider.guide}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mt-3">
             <input type="checkbox" id="idle" checked={form.use_idle} onChange={e => setForm({ ...form, use_idle: e.target.checked })} className="accent-[var(--primary)]" />
             <label htmlFor="idle" className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>启用 IMAP IDLE（实时推送）</label>

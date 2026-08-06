@@ -18,9 +18,9 @@ export function Header({ onCompose }: { onCompose: () => void }) {
     <div className="flex items-center justify-between h-16 px-8 shrink-0" style={{ backgroundColor: 'var(--background)' }}>
       <div className="flex items-center gap-4 shrink-0" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
-          <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px', color: 'var(--primary-foreground)' }}>
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="currentColor" />
-            <polyline points="22,6 12,13 2,6" fill="none" stroke="var(--background)" strokeWidth="2" />
+          <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px' }}>
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="#ffffff" />
+            <polyline points="22,6 12,13 2,6" fill="none" stroke="#c43d3d" strokeWidth="2" />
           </svg>
         </div>
         <div className="flex flex-col gap-0.5">

@@ -187,7 +187,7 @@ export default function MailPage() {
                   <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><Paperclip className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
                 </div>
                 <button onClick={handleReply} className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
-                  <Send className="w-4 h-4" /> 发送
+                  <Send className="w-4 h-4" style={{ color: '#ffffff' }} /> 发送
                 </button>
               </div>
             </div>

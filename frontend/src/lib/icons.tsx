@@ -4,7 +4,7 @@ import React from 'react'
 function icon(name: string) {
   return React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
     function Icon({ className, style, ...props }, ref) {
-      return <i ref={ref} className={`${name} ${className || ''}`} style={style} {...props} />
+      return <i ref={ref} className={`${name} ${className || ''}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...style }} {...props} />
     }
   )
 }

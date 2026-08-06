@@ -118,7 +118,7 @@ export default function ComposePage() {
               <button onClick={handleSaveDraft} disabled={savingDraft}
                 className="flex items-center gap-2 h-[47px] px-5 rounded-[12px] text-[14px] font-medium transition-opacity hover:opacity-80 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)', border: '0.7px solid rgba(229,217,196,1)' }}>
-                <Paperclip className="w-[18px] h-[18px]" /> {savingDraft ? '保存中...' : '存草稿'}
+                <Paperclip className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /> {savingDraft ? '保存中...' : '存草稿'}
               </button>
               <button onClick={handleSend} disabled={sending}
                 className="flex items-center gap-2 h-[47px] px-6 rounded-[12px] text-[14px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"

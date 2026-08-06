@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
@@ -7,24 +7,66 @@ import { api } from '@/lib/api'
 import type { Account, MailStats } from '@/types'
 import {
   User, Palette, Archive, Info,
-  Plus, Trash2, RefreshCw, Check, Edit,
+  Plus, Trash2, Check, Edit,
   Folder, FileText, ChevronDown,
-  Minus, ExternalLink,
+  Minus,
   Sun, Moon, Monitor,
-  CheckCircle as CheckCircleIcon,
-  Grid2x2, Columns2, Layout3,
+  Grid2x2, Columns2,
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
   LayoutRow, CollapseVertical,
 } from '@/lib/icons'
 
-// ── 账号管理 ──────────────────────────────────────────────
-// MOCK 假数据（上线前删除）
-const MOCK_ACCOUNTS: Account[] = [
-  { id: 1, name: 'Gmail', email: 'jingle@gmail.com', imap_host: 'imap.gmail.com', imap_port: 993, smtp_host: 'smtp.gmail.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: true, brand_color: '#ea4335', created_at: '', updated_at: '' },
-  { id: 2, name: 'Outlook', email: 'jingle@outlook.com', imap_host: 'outlook.office365.com', imap_port: 993, smtp_host: 'smtp.office365.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: true, brand_color: '#0078d4', created_at: '', updated_at: '' },
-  { id: 3, name: 'QQ', email: 'jingle@qq.com', imap_host: 'imap.qq.com', imap_port: 993, smtp_host: 'smtp.qq.com', smtp_port: 587, auth_type: 'password', username: 'jingle', use_idle: false, brand_color: '#12b7f5', created_at: '', updated_at: '' },
-]
+// ── Custom Select Component ─────────────────────────────────────
+function CustomSelect({
+  value, options, onChange, width = 120,
+}: {
+  value: string
+  options: Array<{ value: string; label: string }>
+  onChange: (v: string) => void
+  width?: number
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const selected = options.find(o => o.value === value)
+  return (
+    <div ref={ref} className="relative" style={{ width }}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 w-full h-9 px-3 rounded-lg text-sm outline-none transition-colors hover:bg-[var(--muted)]"
+        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+      >
+        <span className="flex-1 text-left truncate">{selected?.label || value}</span>
+        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 w-full rounded-lg overflow-hidden shadow-lg"
+          style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: width }}
+        >
+          {options.map(opt => (
+            <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
+              className="w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)]"
+              style={{ color: opt.value === value ? 'var(--primary)' : 'var(--foreground)' }}
+            >
+              {opt.value === value && <Check className="w-3.5 h-3.5 inline mr-2 shrink-0" style={{ color: 'var(--primary)' }} />}
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 账号管理 ──────────────────────────────────────────────
 function AccountPanel() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,25 +77,39 @@ function AccountPanel() {
     name: '', email: '', imap_host: '', imap_port: 993,
     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
   })
+  const [saving, setSaving] = useState(false)
 
   const load = () => {
-    // MOCK 假数据（上线前删除）
-    setAccounts(MOCK_ACCOUNTS)
-    setLoading(false)
+    setLoading(true)
+    api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}).finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [])
 
   const handleCreate = async () => {
+    if (!form.email || !form.imap_host || !form.smtp_host) { alert('请填写必填项'); return }
+    setSaving(true)
     try {
+      await api.accounts.create({
+        name: form.name, email: form.email, imap_host: form.imap_host,
+        imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
+        username: form.username, password: form.password, use_idle: form.use_idle,
+      })
       setShowForm(false)
+      setEditingId(null)
       setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
       load()
     } catch (e: any) { alert(e.message) }
+    finally { setSaving(false) }
   }
+
   const handleDelete = async (id: number) => {
-    if (!confirm('确定删除此账号？')) return
-    setAccounts(prev => prev.filter(a => a.id !== id))
+    if (!confirm('确定删除此账号？删除后相关邮件数据也将一并清除。')) return
+    try {
+      await api.accounts.delete(id)
+      load()
+    } catch (e: any) { alert(e.message) }
   }
+
   const handleEdit = (a: Account) => {
     setForm({
       name: a.name || '', email: a.email, imap_host: a.imap_host,
@@ -64,47 +120,87 @@ function AccountPanel() {
     setEditingId(a.id)
   }
 
+  const handleSaveEdit = async () => {
+    if (!editingId || !form.email || !form.imap_host || !form.smtp_host) { alert('请填写必填项'); return }
+    setSaving(true)
+    try {
+      await api.accounts.update(editingId, {
+        name: form.name, email: form.email, imap_host: form.imap_host,
+        imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
+        username: form.username, password: form.password || undefined, use_idle: form.use_idle,
+      })
+      setShowForm(false)
+      setEditingId(null)
+      load()
+    } catch (e: any) { alert(e.message) }
+    finally { setSaving(false) }
+  }
+
+  const handleCancel = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
+  }
+
   const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e' }
   const getSyncBadge = (a: Account) => {
-    if (a.use_idle) return { label: 'IDLE · 实时', color: '#5b8c5a', bg: '#edf5ec', dotColor: '#5b8c5a' }
-    return { label: 'IDLE · 同步中', color: '#c9a96e', bg: '#faf3e8', dotColor: '#c9a96e' }
+    if (a.use_idle) return { label: 'IDLE · 实时', color: 'var(--success)', bg: 'var(--success-bg)', dotColor: 'var(--success)' }
+    return { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
-        <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
+          <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
+        </div>
+        <button onClick={() => { setShowForm(true); setEditingId(null) }}
+          className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-[13px] font-medium hover:opacity-90"
+        >
+          <Plus className="w-4 h-4" /> 添加账号
+        </button>
       </div>
 
       {showForm && (
-        <div className="p-6 rounded-[16px]" style={{ border: '1px solid rgba(229,217,196,1)' }}>
+        <div className="p-6 rounded-[16px]" style={{ border: '1px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
+          <div className="text-[14px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+            {editingId ? '编辑账号' : '新建账号'}
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            {(['name', 'email', 'imap_host', 'smtp_host'] as const).map(f => (
-              <input key={f} placeholder={f} value={(form as any)[f]} onChange={e => setForm({ ...form, [f]: e.target.value })}
-                className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-            ))}
-            {(['imap_port', 'smtp_port'] as const).map(f => (
-              <div key={f} className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>{f === 'imap_port' ? 'IMAP' : 'SMTP'}</span>
-                <input type="number" value={(form as any)[f]} onChange={e => setForm({ ...form, [f]: Number(e.target.value) })}
-                  className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] w-20" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-              </div>
-            ))}
-            <input placeholder="用户名" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
-              className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
-            <input type="password" placeholder="密码" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-              className="border rounded-lg px-3 h-9 text-sm outline-none bg-[var(--card)] col-span-1" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)' }} />
+            <input placeholder="账号名称（如：Gmail）" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <input placeholder="邮箱地址" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <input placeholder="IMAP 服务器" value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <div className="flex items-center gap-2">
+              <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>IMAP 端口</span>
+              <input type="number" value={form.imap_port} onChange={e => setForm({ ...form, imap_port: Number(e.target.value) })}
+                className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-20" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            </div>
+            <input placeholder="SMTP 服务器" value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <div className="flex items-center gap-2">
+              <span className="text-xs shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>SMTP 端口</span>
+              <input type="number" value={form.smtp_port} onChange={e => setForm({ ...form, smtp_port: Number(e.target.value) })}
+                className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-20" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            </div>
+            <input placeholder="用户名 / 邮箱地址" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <input type="password" placeholder={editingId ? '留空则不修改密码' : '密码 / 授权码'} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
           </div>
           <div className="flex items-center gap-2 mt-3">
             <input type="checkbox" id="idle" checked={form.use_idle} onChange={e => setForm({ ...form, use_idle: e.target.checked })} className="accent-[var(--primary)]" />
             <label htmlFor="idle" className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>启用 IMAP IDLE（实时推送）</label>
           </div>
-          <div className="flex gap-2 mt-3">
-            <button onClick={handleCreate} className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90">
-              {editingId ? '保存修改' : '保存'}
+          <div className="flex gap-2 mt-4 justify-end">
+            <button onClick={handleCancel} className="px-4 h-9 rounded-lg text-sm hover:bg-[var(--muted)]" style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
+            <button onClick={editingId ? handleSaveEdit : handleCreate} disabled={saving}
+              className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+              {saving ? '保存中...' : (editingId ? '保存修改' : '保存')}
             </button>
-            <button onClick={() => { setShowForm(false); setEditingId(null) }} className="px-4 h-9 border rounded-lg text-sm hover:bg-[var(--muted)]" style={{ borderColor: 'var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
           </div>
         </div>
       )}
@@ -112,74 +208,59 @@ function AccountPanel() {
       {loading ? (
         <div className="text-center text-sm py-8" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
       ) : accounts.length === 0 ? (
-        <div className="text-center text-sm py-12" style={{ color: 'var(--muted-foreground)' }}>暂无账号，点击「添加账号」配置</div>
+        <div className="text-center py-12 rounded-[16px]" style={{ border: '0.7px dashed var(--card-border)', backgroundColor: 'var(--card)' }}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'var(--gold-bg)' }}>
+            <Plus className="w-6 h-6" style={{ color: 'var(--gold)' }} />
+          </div>
+          <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>暂无邮箱账号</div>
+          <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>点击右上角「添加账号」配置你的邮箱</div>
+        </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-3">
           {accounts.map(a => {
-            const ac = brandColorMap[a.name?.toLowerCase()] || a.brand_color || '#6366f1'
+            const ac = brandColorMap[a.name?.toLowerCase()] || a.brand_color || 'var(--primary)'
             const sync = getSyncBadge(a)
             const isExpanded = expandedId === a.id
             return (
-              <div key={a.id}
-                className="rounded-[16px] overflow-hidden transition-shadow"
-                style={{
-                  border: '0.7px solid rgba(229,217,196,1)',
-                  backgroundColor: 'var(--card)',
-                  boxShadow: '0 2px 12px rgba(139,115,85,0.06)',
-                }}
-              >
-                {/* Card header */}
-                <div className="px-6 py-6 flex items-center justify-between"
-                  onClick={() => setExpandedId(isExpanded ? null : a.id)}
-                >
-                  {/* Left: avatar + info */}
+              <div key={a.id} className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
+                <div className="px-5 py-4 flex items-center justify-between cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : a.id)}>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[18px] font-bold shrink-0" style={{ backgroundColor: ac }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: ac }}>
                       {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-[16px] font-semibold" style={{ color: 'var(--foreground)' }}>{a.name}</div>
-                      <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                      <div className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
+                      <div className="text-[12px]" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
                     </div>
                   </div>
-                  {/* Right: sync badge + buttons */}
                   <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-[8px]" style={{ backgroundColor: sync.bg }}>
-                      <div className="w-2.25 h-2.25 rounded-full shrink-0" style={{ backgroundColor: sync.dotColor }} />
-                      <span className="text-[12px] font-medium" style={{ color: sync.color }}>{sync.label}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium" style={{ backgroundColor: sync.bg, color: sync.color }}>
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sync.dotColor }} />
+                      {sync.label}
                     </div>
                     <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)]"
-                      title="编辑"
-                      style={{ backgroundColor: 'rgba(243,237,227,1)' }}
-                    >
-                      <Edit className="w-[18px] h-[18px] shrink-0" />
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)] transition-colors" title="编辑">
+                      <Edit className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[rgba(253,242,242,1)]"
-                      title="删除"
-                      style={{ backgroundColor: 'rgba(253,242,242,1)' }}
-                    >
-                      <Trash2 className="w-[18px] h-[18px] shrink-0" />
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--danger-bg)] transition-colors" title="删除">
+                      <Trash2 className="w-4 h-4" style={{ color: 'var(--danger)' }} />
                     </button>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
                   </div>
                 </div>
-                {/* Expanded details */}
                 {isExpanded && (
-                  <div className="px-6 pb-6 pt-4" style={{ borderTop: '1px solid rgba(229,217,196,1)' }}>
+                  <div className="px-5 pb-4 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
                     <div className="grid grid-cols-4 gap-3">
-                      {([
+                      {[
                         { label: '认证方式', value: a.auth_type === 'password' ? '授权码' : 'OAuth 2.0' },
                         { label: 'IMAP 服务器', value: `${a.imap_host}:${a.imap_port}` },
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
-                        { label: '已同步邮件', value: '5,832 封' },
-                      ] as const).map(item => (
-                        <div key={item.label}
-                          className="rounded-[12px] p-4"
-                          style={{ backgroundColor: 'rgba(251,247,240,1)' }}
-                        >
-                          <div className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{item.label}</div>
-                          <div className="text-[14px] font-medium mt-1" style={{ color: 'var(--foreground)' }}>{item.value}</div>
+                        { label: '同步状态', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },
+                      ].map(item => (
+                        <div key={item.label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--accent)' }}>
+                          <div className="text-[11px]" style={{ color: 'var(--foreground-tertiary)' }}>{item.label}</div>
+                          <div className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--foreground)' }}>{item.value}</div>
                         </div>
                       ))}
                     </div>
@@ -188,27 +269,6 @@ function AccountPanel() {
               </div>
             )
           })}
-
-          {/* Add account card */}
-          <div
-            className="rounded-[16px] cursor-pointer transition-all hover:opacity-80"
-            style={{
-              border: '2px dashed var(--gold)',
-              backgroundColor: 'rgba(254,249,240,1)',
-              padding: '24px',
-            }}
-            onClick={() => setShowForm(true)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--gold)' }}>
-                <Plus className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="text-[16px] font-semibold" style={{ color: 'var(--gold)' }}>添加邮箱账号</div>
-                <div className="text-[13px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>支持 Gmail、Outlook、QQ邮箱、网易、iCloud 等</div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -241,13 +301,13 @@ function AppearancePanel() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>外观设置</h2>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)' }}>
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <div style={{ padding: '24px' }}>
         {/* Theme */}
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>主题模式</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面明暗主题</div>
@@ -260,7 +320,7 @@ function AppearancePanel() {
                 <button key={t.id} onClick={() => setSetting('theme', t.id)}
                   className={btnBase}
                   style={{
-                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    backgroundColor: active ? 'var(--primary)' : 'var(--muted)',
                     color: active ? '#ffffff' : 'var(--foreground-secondary)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
@@ -274,7 +334,7 @@ function AppearancePanel() {
         </div>
 
         {/* Accent color */}
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>主题色</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择界面强调色</div>
@@ -297,7 +357,7 @@ function AppearancePanel() {
         </div>
 
         {/* Font size */}
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>字体大小</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整邮件正文与界面文字大小</div>
@@ -307,10 +367,10 @@ function AppearancePanel() {
               const idx = sizes.indexOf(settings.font_size as any)
               const next = sizes[Math.max(0, idx - 1)]
               setSetting('font_size', next)
-            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'var(--foreground-secondary)' }}>
+            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
               <Minus className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
             </button>
-            <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)', minWidth: 95, textAlign: 'center' }}>
+            <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--accent)', minWidth: 95, textAlign: 'center' }}>
               <span className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
                 {sizeLabels[settings.font_size || 'medium']}
               </span>
@@ -319,14 +379,14 @@ function AppearancePanel() {
               const idx = sizes.indexOf(settings.font_size as any)
               const next = sizes[Math.min(sizes.length - 1, idx + 1)]
               setSetting('font_size', next)
-            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'var(--foreground-secondary)' }}>
+            }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
               <Plus className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
             </button>
           </div>
         </div>
 
         {/* Density */}
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>列表密度</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>调整邮件列表的行间距</div>
@@ -339,7 +399,7 @@ function AppearancePanel() {
                 <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
                   className={active ? 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px] font-semibold' : 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]'}
                   style={{
-                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    backgroundColor: active ? 'var(--primary)' : 'var(--muted)',
                     color: active ? '#ffffff' : 'var(--foreground-secondary)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
@@ -353,7 +413,7 @@ function AppearancePanel() {
         </div>
 
         {/* Layout */}
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>默认布局</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择收件箱的默认视图布局</div>
@@ -365,7 +425,7 @@ function AppearancePanel() {
                 <button key={item.id} onClick={() => setSetting('layout_density', item.id)}
                   className={btnBase}
                   style={{
-                    backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                    backgroundColor: active ? 'var(--primary)' : 'var(--muted)',
                     color: active ? '#ffffff' : 'var(--foreground-secondary)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
@@ -400,14 +460,15 @@ function AppearancePanel() {
 function StoragePanel() {
   const [stats, setStats] = useState<MailStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const { settings, setSetting } = useSettings()
 
   useEffect(() => {
     api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const storageBytes = stats?.storage_bytes || 0
-  const storageCap = 50 * 1024 * 1024 * 1024
-  const storagePct = Math.min((storageBytes / storageCap) * 100, 100)
+  const storageBytes = stats?.storage_bytes ?? 0
+  const totalEmails = stats?.total_emails ?? 0
+  const storageCap = (stats as any)?.storage_limit || 50 * 1024 * 1024 * 1024
 
   function formatBytes(b: number): string {
     if (b === 0) return '0 B'
@@ -416,125 +477,74 @@ function StoragePanel() {
     return (b / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i]
   }
 
+  const cleanupDays = parseInt(settings.auto_cleanup_days || '30')
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'rgba(91,140,90,1)' }} />
-        <span className="text-[20px] font-bold" style={{ color: 'var(--foreground)' }}>归档目录</span>
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--success)' }} />
+        <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>归档目录</h2>
       </div>
 
-      <div style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', borderRadius: '16px', padding: '24px' }}>
-        <div className="flex items-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
+      <div className="rounded-[16px]" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        {/* Archive path */}
+        <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--card-border)' }}>
           <div>
             <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>归档根目录</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml 文件与附件的存储路径</div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
-              <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'var(--gold)' }} />
-              <span className="text-[13px]" style={{ color: 'var(--foreground)' }}>/mnt/nas/lzmail/archives</span>
-            </div>
-            <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
-              <Edit className="w-[18px] h-[18px] shrink-0" style={{ color: 'var(--foreground-secondary)' }} />
-            </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)' }}>
+            <Folder className="w-4 h-4" style={{ color: 'var(--gold)' }} />
+            <span className="text-[13px] font-mono" style={{ color: 'var(--foreground)' }}>/mnt/nas/lzmail/archives</span>
           </div>
         </div>
 
-        <div style={{ padding: '20px 0', borderBottom: '1px solid rgba(229,217,196,1)' }}>
-          <div>
-            <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>目录结构</div>
-            <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>当前归档文件的组织方式预览</div>
-          </div>
-          <div className="mt-4 p-5 rounded-xl" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
-            <div className="space-y-1 text-[13px]">
-              <div className="flex items-center gap-2">
-                <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'var(--gold)' }} />
-                <span className="font-semibold" style={{ color: 'var(--foreground)' }}>lzmail/</span>
+        {/* Storage stats */}
+        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+          <div className="text-[15px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>存储统计</div>
+          <div className="flex items-center gap-8">
+            <div className="text-center">
+              <div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.75)}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.25)}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>附件</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{totalEmails.toLocaleString()}</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件总数</div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span style={{ color: 'var(--foreground-tertiary)' }}>已使用</span>
+                <span style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span>
               </div>
-              <div style={{ paddingLeft: '24px' }} className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'var(--gold)' }} />
-                  <span className="font-semibold" style={{ color: 'var(--foreground)' }}>archives/</span>
-                </div>
-                <div style={{ paddingLeft: '24px' }} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--gold)' }} />
-                    <span className="font-medium" style={{ color: 'var(--foreground-secondary)' }}>acc_gmail_001/</span>
-                  </div>
-                  <div style={{ paddingLeft: '24px' }} className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--gold)' }} />
-                      <span className="font-medium" style={{ color: 'var(--foreground-secondary)' }}>2025/</span>
-                    </div>
-                    <div style={{ paddingLeft: '24px' }} className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--gold)' }} />
-                        <span className="font-medium" style={{ color: 'var(--foreground-secondary)' }}>01/</span>
-                      </div>
-                      <div style={{ paddingLeft: '24px' }} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--foreground-tertiary)' }} />
-                          <span className="text-[13px]" style={{ color: 'var(--foreground-secondary)' }}>msg_a1b2c3d4.eml</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--foreground-tertiary)' }} />
-                          <span className="text-[13px]" style={{ color: 'var(--foreground-secondary)' }}>msg_e5f6g7h8.eml</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ paddingLeft: '48px' }} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Folder className="w-[16px] h-[16px] shrink-0" style={{ color: 'var(--gold)' }} />
-                    <span className="font-medium" style={{ color: 'var(--foreground-secondary)' }}>attachments/</span>
-                  </div>
-                </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((storageBytes / storageCap) * 100, 100)}%`, backgroundColor: 'var(--gold)' }} />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-start justify-between" style={{ padding: '20px 0' }}>
+        {/* Auto cleanup */}
+        <div className="px-6 py-5 flex items-center justify-between">
           <div>
-            <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>存储统计</div>
-            <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>当前归档文件占用的磁盘空间</div>
+            <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>自动清理</div>
+            <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>定期清理过期归档文件</div>
           </div>
-          <div className="flex items-center gap-6 shrink-0">
-            <div className="text-center">
-              <div className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.75)}</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--muted-foreground)' }}>.eml 文件</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.25)}</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--muted-foreground)' }}>附件</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>{(stats?.total_emails || 12847).toLocaleString()}</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--muted-foreground)' }}>邮件总数</div>
-            </div>
-          </div>
+          <CustomSelect
+            value={String(cleanupDays)}
+            width={140}
+            onChange={(v) => setSetting('auto_cleanup_days', v)}
+            options={[
+              { value: '0', label: '永不清理' },
+              { value: '30', label: '30 天' },
+              { value: '90', label: '90 天' },
+              { value: '180', label: '180 天' },
+            ]}
+          />
         </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--foreground-secondary)' }} />
-          <div>
-            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>自动清理</h3>
-            <p className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>定期清理过期归档文件</p>
-          </div>
-        </div>
-        <select
-          onChange={e => api.settings.set({ auto_cleanup_days: e.target.value })}
-          className="text-[13px] border rounded-[8px] px-3 h-9 bg-transparent outline-none"
-          style={{ borderColor: 'rgba(229,217,196,1)', color: 'var(--foreground)' }}
-        >
-          <option value="30">30天</option>
-          <option value="90">90天</option>
-          <option value="180">180天</option>
-          <option value="0">永不清理</option>
-        </select>
       </div>
     </div>
   )
@@ -543,19 +553,19 @@ function StoragePanel() {
 // ── 关于 ──────────────────────────────────────────────────
 function AboutPanel() {
   const techInfo = [
-    { title: '技术栈', color: 'rgba(196,61,61,1)', items: [
+    { title: '技术栈', color: 'var(--primary)', items: [
       '前端：Next.js + React + Tailwind CSS',
       '后端：Go (Echo框架)',
       '数据库：SQLite (WAL模式)',
       '部署：Docker 容器化',
     ]},
-    { title: '邮件协议', color: 'rgba(91,140,90,1)', items: [
+    { title: '邮件协议', color: 'var(--success)', items: [
       'IMAP (IDLE + Poll)',
       'SMTP 发信',
       'SSE 实时推送',
       'OAuth 2.0 / 授权码',
     ]},
-    { title: '运行信息', color: 'rgba(107,143,163,1)', items: [
+    { title: '运行信息', color: 'var(--teal)', items: [
       '运行时长：持续运行中',
       'Goroutine 数：8',
       '内存占用：~128 MB',
@@ -576,16 +586,16 @@ function AboutPanel() {
         <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--gold)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>关于</h2>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(139,115,85,0.06)', padding: '24px' }}>
+      <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '24px' }}>
         {/* 产品信息区 */}
-        <div className="flex items-center gap-6 pb-6" style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}>
+        <div className="flex items-center gap-6 pb-6" style={{ borderBottom: '1px solid var(--card-border)' }}>
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
-            style={{ backgroundColor: 'rgba(196,61,61,1)' }}
+            style={{ backgroundColor: 'var(--primary)' }}
           >LZ</div>
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-[24px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>LZMail</h2>
-              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'rgba(237,245,236,1)', color: 'rgba(91,140,90,1)' }}>v2.1.0</span>
+              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>v2.1.0</span>
             </div>
             <p className="text-[14px] mt-2" style={{ color: 'var(--foreground-tertiary)' }}>NAS 自托管邮件客户端 — 统一管理 Gmail、Outlook、QQ邮箱、网易、iCloud 等多平台邮件，数据完全存储于本地，隐私可控。</p>
             <p className="text-[13px] mt-1" style={{ color: 'var(--muted-foreground)' }}>专为懒猫微服 NAS 优化，兼容任何支持 Docker 的 NAS 环境。</p>
@@ -617,7 +627,7 @@ function AboutPanel() {
             {links.map(link => (
               <a key={link.label} href="#"
                 className="flex items-center gap-2 rounded-lg transition-all"
-                style={{ backgroundColor: 'rgba(243,237,227,1)', padding: '8px 16px', gap: '8px' }}
+                style={{ backgroundColor: 'var(--muted)', padding: '8px 16px', gap: '8px' }}
               >
                 <link.icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground)' }} />
                 <span className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{link.label}</span>
@@ -625,10 +635,10 @@ function AboutPanel() {
             ))}
             <a href="#"
               className="flex items-center gap-2 rounded-lg transition-all"
-              style={{ backgroundColor: 'rgba(253,242,242,1)', padding: '8px 16px', gap: '8px' }}
+              style={{ backgroundColor: 'var(--danger-bg)', padding: '8px 16px', gap: '8px' }}
             >
-              <updateLink.icon className="w-[18px] h-[18px]" style={{ color: 'rgba(196,61,61,1)' }} />
-              <span className="text-[13px] font-medium" style={{ color: 'rgba(196,61,61,1)' }}>{updateLink.label}</span>
+              <updateLink.icon className="w-[18px] h-[18px]" style={{ color: 'var(--primary)' }} />
+              <span className="text-[13px] font-medium" style={{ color: 'var(--primary)' }}>{updateLink.label}</span>
             </a>
           </div>
         </div>
@@ -645,7 +655,7 @@ const TABS = [
   { key: 'about',    label: '关于',    icon: Info },
 ] as const
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [active, setActive] = useState('account')
@@ -661,7 +671,7 @@ export default function SettingsPage() {
       <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* 页面标题 */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
+          <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'var(--primary)' }} />
           <div>
             <h1 className="text-[28px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>设置</h1>
             <p className="text-[13px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>管理账号、外观与归档配置</p>
@@ -677,7 +687,7 @@ export default function SettingsPage() {
               <button key={tab.key} onClick={() => { setActive(tab.key); router.replace(`/settings?tab=${tab.key}`) }}
                 className="flex items-center gap-2 px-5 h-full rounded-[12px] text-[14px] font-medium transition-all"
                 style={{
-                  backgroundColor: isActive ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
+                  backgroundColor: isActive ? 'var(--primary)' : 'var(--muted)',
                   color: isActive ? '#ffffff' : 'var(--foreground-secondary)',
                   fontFamily: isActive ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                 }}
@@ -695,6 +705,14 @@ export default function SettingsPage() {
         </div>
       </div>
     </AppShell>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>加载中...</div></div>}>
+      <SettingsPageInner />
+    </Suspense>
   )
 }
 

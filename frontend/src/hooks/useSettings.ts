@@ -49,9 +49,14 @@ export function useSettings() {
 
   const applyAccentColor = (color: string) => {
     document.documentElement.style.setProperty('--primary', color)
-    // Derive light variant
     document.documentElement.style.setProperty('--primary-light', color + '15')
     localStorage.setItem('lzmail_accent_color', color)
+  }
+
+  const applyFontSize = (size: string) => {
+    const sizes: Record<string, string> = { small: '14px', medium: '16px', large: '18px' }
+    document.documentElement.style.fontSize = sizes[size] || '16px'
+    localStorage.setItem('lzmail_font_size', size)
   }
 
   useEffect(() => {
@@ -111,6 +116,9 @@ export function useSettings() {
     }
     if (key === 'accent_color') {
       applyAccentColor(value)
+    }
+    if (key === 'font_size') {
+      applyFontSize(value)
     }
     if (key === 'animations') {
       if (value === 'false') {

@@ -18,12 +18,15 @@ function MailPageInner() {
   const [emails, setEmails] = useState<Email[]>([])
   const [loading, setLoading] = useState(false)
   const [folder, setFolder] = useState(searchParams?.get('folder') || 'INBOX')
-  const [searchQ, setSearchQ] = useState('')
+  const [searchQ, setSearchQ] = useState(searchParams?.get('q') || '')
   const debouncedSearch = useDebounce(searchQ, 300)
   const [refresh, setRefresh] = useState(0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [detail, setDetail] = useState<EmailDetail | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [folderMoveOpen, setFolderMoveOpen] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [sortAsc, setSortAsc] = useState(false)
 
   useSSE(() => setRefresh(n => n + 1))
 
@@ -40,11 +43,12 @@ function MailPageInner() {
 
   useEffect(() => { loadEmails() }, [loadEmails, refresh])
 
-  const loadDetail = useCallback(async (id: number) => {
+  const loadDetail = useCallback(async (id: number): Promise<EmailDetail | null> => {
     try {
       const d = await api.mails.get(id)
       setDetail(d)
-    } catch { setDetail(null) }
+      return d
+    } catch { setDetail(null); return null }
   }, [])
 
   const filterTabs = [
@@ -56,13 +60,51 @@ function MailPageInner() {
 
   const handleSelect = useCallback(async (id: number) => {
     setSelectedId(id)
-    await loadDetail(id)
+    const d = await loadDetail(id)
+    if (d) api.mails.markRead(id).catch(() => {})
   }, [loadDetail])
+
+  const resetDetail = () => {
+    setSelectedId(null)
+    setDetail(null)
+    setReplyText('')
+  }
+
+  const handleMove = async (folder: string) => {
+    if (!selectedId) return
+    await api.mails.move(selectedId, folder).catch(() => {})
+    setFolderMoveOpen(false)
+    resetDetail()
+    setRefresh(n => n + 1)
+  }
+
+  const handleMarkRead = async () => {
+    if (!selectedId) return
+    await api.mails.markRead(selectedId).catch(() => {})
+    resetDetail()
+    setRefresh(n => n + 1)
+  }
+
+  const handleReply = async () => {
+    if (!detail || !replyText.trim()) return
+    try {
+      await api.compose({
+        account_id: detail.email.account_id,
+        to: detail.email.from,
+        cc: '',
+        bcc: '',
+        subject: 'Re: ' + (detail.email.subject || ''),
+        body_text: replyText,
+        body_html: '',
+      })
+      setReplyText('')
+    } catch { }
+  }
 
   const handleArchive = async () => {
     if (!selectedId) return
     await api.mails.move(selectedId, 'Archive').catch(() => {})
-    setSelectedId(null); setDetail(null)
+    resetDetail()
     setRefresh(n => n + 1)
   }
 
@@ -73,9 +115,14 @@ function MailPageInner() {
   const handleDelete = async () => {
     if (!selectedId) return
     await api.mails.delete(selectedId).catch(() => {})
-    setSelectedId(null); setDetail(null)
+    resetDetail()
     setRefresh(n => n + 1)
     router.refresh()
+  }
+
+  const handleRefresh = () => {
+    api.sync.all().catch(() => {})
+    setRefresh(n => n + 1)
   }
 
   const handleNext = () => {
@@ -90,25 +137,30 @@ function MailPageInner() {
     if (idx > 0) handleSelect(emails[idx - 1].id)
   }
 
+  const sortedEmails = [...emails].sort((a, b) => {
+    const r = new Date(b.date).getTime() - new Date(a.date).getTime()
+    return sortAsc ? -r : r
+  })
+
   return (
     <AppShell>
       <div className="flex h-full">
         {/* Email list */}
-        <div className="w-[420px] border-r shrink-0 flex flex-col" style={{ backgroundColor: 'var(--background)', borderColor: 'rgba(229,217,196,1)' }}>
+        <div className="w-[420px] border-r shrink-0 flex flex-col" style={{ backgroundColor: 'var(--background)', borderColor: 'var(--card-border)' }}>
           {/* Toolbar */}
-          <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+          <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-[16px] font-bold" style={{ color: 'var(--foreground)' }}>
                   {filterTabs.find(t => t.value === folder)?.label || '收件箱'}
                 </span>
-                <div className="flex items-center gap-1 h-7 px-2 rounded-[6px]" style={{ backgroundColor: 'rgba(243,237,227,1)', padding: '4px 8px' }}>
-                  <span className="text-[11px] font-medium" style={{ color: 'rgba(107,91,79,1)' }}>全部账号</span>
-                  <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(107,91,79,1)' }} />
+                <div className="flex items-center gap-1 h-7 px-2 rounded-[6px]" style={{ backgroundColor: 'var(--muted)', padding: '4px 8px' }}>
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--foreground-secondary)' }}>全部账号</span>
+                  <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--foreground-secondary)' }} />
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                 <button onClick={() => setRefresh(n => n + 1)} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                 <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
                  </button>
                  <button className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
@@ -126,18 +178,18 @@ function MailPageInner() {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-1 px-4 py-2.5 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+          <div className="flex gap-1 px-4 py-2.5 border-b" style={{ borderColor: 'var(--card-border)' }}>
             {filterTabs.map((t) => (
               <button key={t.value} onClick={() => { setFolder(t.value); setSearchQ('') }}
                 className={`px-3 h-7 rounded-[6px] text-xs whitespace-nowrap transition-colors ${folder === t.value ? 'font-medium' : ''}`}
                 style={{
-                  backgroundColor: folder === t.value ? 'rgba(243,237,227,1)' : 'transparent',
-                  color: folder === t.value ? 'rgba(107,91,79,1)' : 'var(--foreground-tertiary)',
+                  backgroundColor: folder === t.value ? 'var(--muted)' : 'transparent',
+                  color: folder === t.value ? 'var(--foreground-secondary)' : 'var(--foreground-tertiary)',
                 }}
               >{t.label}</button>
             ))}
-            <button className="ml-auto flex items-center gap-1 px-2 text-xs text-[var(--muted-foreground)] hover:bg-[var(--muted)] rounded-[8px]">
-              排序 <ChevronDown className="w-3 h-3" />
+            <button onClick={() => setSortAsc(a => !a)} className="ml-auto flex items-center gap-1 px-2 text-xs text-[var(--muted-foreground)] hover:bg-[var(--muted)] rounded-[8px]">
+              排序 {sortAsc ? '↑' : '↓'} <ChevronDown className="w-3 h-3" />
             </button>
           </div>
 
@@ -156,8 +208,8 @@ function MailPageInner() {
             ) : emails.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-sm" style={{ color: 'var(--muted-foreground)' }}>暂无邮件</div>
             ) : (
-              emails.map((email) => (
-                <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'rgba(229,217,196,1)' }}>
+              sortedEmails.map((email) => (
+                <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
                   <MailItem email={email} brand={(email as any).account_brand} selected={selectedId === email.id} onSelect={handleSelect} />
                 </div>
               ))
@@ -173,24 +225,44 @@ function MailPageInner() {
               <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
-                  <button onClick={handleArchive} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Archive className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                  <button onClick={handleDeleteRequest} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Trash2 className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                  <button onClick={() => { setSelectedId(null); setDetail(null); }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                  <button className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Clock className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                  <button onClick={handleArchive} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Archive className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  <button onClick={handleDeleteRequest} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Trash2 className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  <button onClick={() => { setSelectedId(null); setDetail(null); }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  <button onClick={() => handleMove('DEFERRED')} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Clock className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   </div>
                   <div className="w-px h-6 bg-[rgba(229,217,196,1)]" />
-                  <div className="flex items-center gap-1">
-                  <button className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                  <button className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                  <div className="flex items-center gap-1 relative">
+                  <button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  <button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  {folderMoveOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setFolderMoveOpen(false)} />
+                      <div className="absolute left-0 top-full z-50 mt-1 rounded-[10px] py-1 shadow-lg"
+                        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: 140 }}>
+                        {[
+                          { value: 'Archive', label: '归档' },
+                          { value: 'DEFERRED', label: '稍后处理' },
+                          { value: 'Drafts', label: '草稿箱' },
+                          { value: 'INBOX', label: '收件箱' },
+                        ].map(f => (
+                          <button key={f.value} onClick={() => handleMove(f.value)}
+                            className="w-full px-3 py-2 text-left text-[13px] hover:bg-[var(--muted)]"
+                            style={{ color: 'var(--foreground)' }}>
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 pt-1">
-                  <span className="text-xs" style={{ color: 'rgba(184,168,138,1)' }}>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                     第 {selectedId ? (emails.findIndex(e => e.id === selectedId) + 1) : 0} 封，共 {emails.length} 封
                   </span>
                   <div className="flex items-center gap-1">
-                    <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronUp className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                    <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronDown className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                    <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><ChevronUp className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                    <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   </div>
                 </div>
               </div>
@@ -200,12 +272,12 @@ function MailPageInner() {
                 <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)' }}>{detail.email.subject || '(无主题)'}</h1>
                 <div className="flex items-center gap-2 shrink-0 pt-1">
                    <span className="h-5 px-3 rounded-[6px] text-[11px] font-medium flex items-center" style={{ backgroundColor: '#fdf2f2', color: '#c43d3d' }}>工作</span>
-                   {detail.email.is_starred && <Star className="w-5 h-5" style={{ color: 'rgba(201,169,110,1)' }} />}
+                   {detail.email.is_starred && <Star className="w-5 h-5" style={{ color: 'var(--gold)' }} />}
                 </div>
               </div>
 
               {/* From info */}
-              <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
+              <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold shrink-0"
                   style={{ backgroundColor: (detail.email as any).account_brand || '#ea4335' }}
                 >
@@ -268,6 +340,8 @@ function MailPageInner() {
                 <textarea
                   placeholder="输入回复内容..."
                   rows={3}
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
                   className="w-full outline-none text-[14px] bg-transparent resize-none placeholder:text-[var(--muted-foreground)]"
                   style={{ color: 'var(--foreground)' }}
                 />
@@ -279,7 +353,8 @@ function MailPageInner() {
                       </button>
                     ))}
                   </div>
-                  <button className="flex items-center gap-2 px-4 h-9 rounded-lg font-medium transition-opacity hover:opacity-90"
+                  <button onClick={handleReply} disabled={!replyText.trim()}
+                    className="flex items-center gap-2 px-4 h-9 rounded-lg font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
                     <Send className="w-4 h-4" /> 发送
                   </button>

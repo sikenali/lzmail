@@ -49,7 +49,7 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
     <div onClick={() => onSelect(email.id)}
       className="flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors"
       style={{
-        backgroundColor: selected ? 'rgba(243,237,227,1)' : 'transparent',
+        backgroundColor: selected ? 'var(--muted)' : 'transparent',
         borderLeft: selected ? '2.7px solid var(--primary)' : '2.7px solid transparent',
       }}
     >

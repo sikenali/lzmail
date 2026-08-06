@@ -1,10 +1,10 @@
 'use client'
-import { Suspense, useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useRef, useState, useCallback } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download } from '@/lib/icons'
+import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download, Calendar } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -30,16 +30,35 @@ function MailPageInner() {
 
   useSSE(() => setRefresh(n => n + 1))
 
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dateFilterRef.current && !dateFilterRef.current.contains(e.target as Node)) {
+        setDateFilterOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const formatDate = (d: string) => {
+    if (!d) return ''
+    const dt = new Date(d)
+    const y = dt.getFullYear()
+    const m = String(dt.getMonth() + 1).padStart(2, '0')
+    const day = String(dt.getDate()).padStart(2, '0')
+    return `${y}年${m}月${day}日`
+  }
+
   const loadEmails = useCallback(async () => {
     setLoading(true)
     try {
       const data = debouncedSearch
         ? await api.mails.search(debouncedSearch)
-        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder)
+        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, 50, 0, fromDate || undefined, toDate || undefined)
       setEmails(data || [])
     } catch { setEmails([]) }
     setLoading(false)
-  }, [folder, debouncedSearch])
+  }, [folder, debouncedSearch, fromDate, toDate])
 
   useEffect(() => { loadEmails() }, [loadEmails, refresh])
 
@@ -163,6 +182,41 @@ function MailPageInner() {
                  <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
                  </button>
+                 <div ref={dateFilterRef} className="relative">
+                   <button onClick={() => setDateFilterOpen(v => !v)} className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80" style={{ backgroundColor: fromDate || toDate ? 'rgba(196,61,61,0.08)' : 'var(--muted)', borderColor: (fromDate || toDate) ? 'rgba(196,61,61,0.3)' : 'transparent', borderWidth: fromDate || toDate ? '1px' : '0', borderStyle: 'solid' }}>
+                     <Calendar className="w-4 h-4" style={{ color: (fromDate || toDate) ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
+                     <span className="text-[12px] font-medium" style={{ color: (fromDate || toDate) ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }}>
+                       {fromDate || toDate ? formatDate(fromDate || '') + (toDate ? ' ~ ' + formatDate(toDate) : '') : '日期'}
+                     </span>
+                     <ChevronDown className="w-3 h-3" style={{ color: 'var(--foreground-tertiary)' }} />
+                   </button>
+                   {dateFilterOpen && (
+                     <div className="absolute z-50 top-full mt-1 right-0 rounded-[12px] overflow-hidden" style={{ backgroundColor: '#ffffff', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: 12, minWidth: 220 }}>
+                       <div className="space-y-2">
+                         <div className="flex items-center gap-2">
+                           <span className="text-[12px] font-medium" style={{ color: 'var(--foreground-secondary)', whiteSpace: 'nowrap' }}>开始日期</span>
+                           <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+                             className="flex-1 h-[32px] px-3 rounded-[6px] outline-none text-[13px]"
+                             style={{ backgroundColor: 'var(--muted)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <span className="text-[12px] font-medium" style={{ color: 'var(--foreground-secondary)', whiteSpace: 'nowrap' }}>结束日期</span>
+                           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+                             className="flex-1 h-[32px] px-3 rounded-[6px] outline-none text-[13px]"
+                             style={{ backgroundColor: 'var(--muted)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+                         </div>
+                         <div className="flex gap-2 pt-1">
+                           <button onClick={() => { setFromDate(''); setToDate(''); setDateFilterOpen(false) }} className="flex-1 h-[30px] rounded-[6px] text-[12px] font-medium transition-opacity hover:opacity-80" style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground-tertiary)' }}>
+                             清除
+                           </button>
+                           <button onClick={() => { setDateFilterOpen(false); setRefresh(n => n + 1) }} className="flex-1 h-[30px] rounded-[6px] text-[12px] font-medium transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(196,61,61,1)', color: '#ffffff' }}>
+                             确定
+                           </button>
+                         </div>
+                       </div>
+                     </div>
+                   )}
+                 </div>
                  <button className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                    <Filter className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
                  </button>

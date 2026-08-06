@@ -24,32 +24,60 @@ func scanEmail(scanner interface {
 	return e, err
 }
 
-func buildListQuery(folder string) (string, []any) {
+func buildListQuery(folder string, fromDate, toDate string) (string, []any) {
 	where := ""
 	args := []any{}
 	switch folder {
 	case "UNSEEN":
-		where = " WHERE e.is_read = 0"
+		where += " AND e.is_read = 0"
 	case "STARRED":
-		where = " WHERE e.is_starred = 1"
+		where += " AND e.is_starred = 1"
 	case "HASATTACH":
-		where = " WHERE e.has_attachments = 1"
+		where += " AND e.has_attachments = 1"
 	case "ALL", "":
-		where = ""
+		break
 	default:
-		where = " WHERE e.folder = ?"
+		where += " AND e.folder = ?"
 		args = append(args, folder)
+	}
+	if fromDate != "" {
+		if where != "" {
+			where += " AND e.date >= ?"
+		} else {
+			where += " WHERE e.date >= ?"
+		}
+		args = append(args, fromDate)
+	}
+	if toDate != "" {
+		endOfDay := toDate + " 23:59:59"
+		if where != "" {
+			where += " AND e.date <= ?"
+		} else {
+			where += " WHERE e.date <= ?"
+		}
+		args = append(args, endOfDay)
+	}
+	if fromLen := len(args); fromLen == 0 {
+		return where, args
+	}
+	// prepend WHERE if needed
+	if where == "" {
+		return "", args
+	}
+	// add WHERE prefix if first clause starts with AND
+	if len(where) > 0 && where[0:1] == "A" {
+		where = " WHERE " + where[6:]
 	}
 	return where, args
 }
 
-func (s *EmailStore) List(accountID int64, folder string, limit, offset int) ([]models.Email, error) {
-	fq, fargs := buildListQuery(folder)
+func (s *EmailStore) List(accountID int64, folder string, fromDate, toDate string, limit, offset int) ([]models.Email, error) {
+	fq, fargs := buildListQuery(folder, fromDate, toDate)
 	args := append([]any{accountID}, fargs...)
 	args = append(args, limit, offset)
 	rows, err := s.db.Query(
 		`SELECT `+emailSelectCols+`
-		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id WHERE e.account_id = ?`+fq+` ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id`+fq+` ORDER BY e.date DESC LIMIT ? OFFSET ?`,
 		args...)
 	if err != nil {
 		return nil, err
@@ -66,8 +94,8 @@ func (s *EmailStore) List(accountID int64, folder string, limit, offset int) ([]
 	return emails, nil
 }
 
-func (s *EmailStore) ListAll(folder string, limit, offset int) ([]models.Email, error) {
-	fq, fargs := buildListQuery(folder)
+func (s *EmailStore) ListAll(folder string, fromDate, toDate string, limit, offset int) ([]models.Email, error) {
+	fq, fargs := buildListQuery(folder, fromDate, toDate)
 	args := append(fargs, limit, offset)
 	rows, err := s.db.Query(
 		`SELECT `+emailSelectCols+`

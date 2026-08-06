@@ -12,6 +12,8 @@ import (
 func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
 	accountID, _ := strconv.ParseInt(r.URL.Query().Get("account_id"), 10, 64)
 	folder := r.URL.Query().Get("folder")
+	fromDate := r.URL.Query().Get("from_date")
+	toDate := r.URL.Query().Get("to_date")
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit == 0 {
 		limit = 50
@@ -28,9 +30,9 @@ func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if accountID > 0 {
-		emails, err = h.emails.List(accountID, folder, limit, offset)
+		emails, err = h.emails.List(accountID, folder, fromDate, toDate, limit, offset)
 	} else {
-		emails, err = h.emails.ListAll(folder, limit, offset)
+		emails, err = h.emails.ListAll(folder, fromDate, toDate, limit, offset)
 	}
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})

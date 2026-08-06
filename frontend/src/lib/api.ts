@@ -32,12 +32,14 @@ export const api = {
   },
 
   mails: {
-    list: (accountId?: number, folder = 'INBOX', limit = 50, offset = 0) => {
+    list: (accountId?: number, folder = 'INBOX', limit = 50, offset = 0, fromDate?: string, toDate?: string) => {
       const params = new URLSearchParams()
       if (accountId) params.set('account_id', String(accountId))
       params.set('folder', folder)
       params.set('limit', String(limit))
       params.set('offset', String(offset))
+      if (fromDate) params.set('from_date', fromDate)
+      if (toDate) params.set('to_date', toDate)
       return fetchJSON<Email[]>(`/api/v1/mails?${params}`)
     },
     get: (id: number) => fetchJSON<EmailDetail>(`/api/v1/mails/${id}`),

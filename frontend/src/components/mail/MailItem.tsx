@@ -49,18 +49,18 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
     <div onClick={() => onSelect(email.id)}
       className="flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors"
       style={{
-        backgroundColor: selected ? 'var(--muted)' : 'transparent',
+        backgroundColor: selected ? 'rgba(243,237,227,1)' : 'transparent',
         borderLeft: selected ? '2.7px solid var(--primary)' : '2.7px solid transparent',
       }}
     >
       {/* Checkbox */}
       <div className="mt-0.5 shrink-0">
         {selected ? (
-          <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
             <Check className="w-3 h-3" style={{ color: '#fff' }} />
           </div>
         ) : (
-          <div className="w-5 h-5 rounded-md border" style={{ borderColor: 'var(--card-border)' }} />
+          <div className="w-5 h-5 rounded-full border" style={{ borderColor: 'var(--card-border)' }} />
         )}
       </div>
 

@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, ChevronDown, Archive, Trash2, CheckCircle, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download } from '@/lib/icons'
+import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -175,7 +175,7 @@ function MailPageInner() {
                   <div className="flex items-center gap-1">
                   <button onClick={handleArchive} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Archive className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
                   <button onClick={handleDeleteRequest} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Trash2 className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                  <button onClick={() => { setSelectedId(null); setDetail(null); }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><CheckCircle className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                  <button onClick={() => { setSelectedId(null); setDetail(null); }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
                   <button className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><Clock className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} /></button>
                   </div>
                   <div className="w-px h-6 bg-[rgba(229,217,196,1)]" />
@@ -189,8 +189,8 @@ function MailPageInner() {
                     第 {selectedId ? (emails.findIndex(e => e.id === selectedId) + 1) : 0} 封，共 {emails.length} 封
                   </span>
                   <div className="flex items-center gap-1">
-                    <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronDown className="w-4 h-4 -rotate-90" style={{ color: 'rgba(107,91,79,1)' }} /></button>
-                    <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronDown className="w-4 h-4 rotate-90" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                    <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronUp className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} /></button>
+                    <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(243,237,227,1)' }}><ChevronDown className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} /></button>
                   </div>
                 </div>
               </div>

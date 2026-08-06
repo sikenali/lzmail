@@ -99,7 +99,7 @@ function ContactCard({ contact }: { contact: Contact }) {
             fontWeight: 500,
           }}
         >
-          <SendPlane className="w-[14px] h-[14px]" style={{ color: style.text }} />
+          <Send className="w-[14px] h-[14px]" style={{ color: style.text }} />
           发邮件
         </button>
       </div>

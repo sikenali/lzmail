@@ -175,6 +175,32 @@ type MailStats struct {
 	StorageLimit  int64  `json:"storage_limit"`
 }
 
+type FolderCounts struct {
+	InboxUnread int `json:"inbox_unread"`
+	Drafts      int `json:"drafts"`
+	Starred     int `json:"starred"`
+	Sent        int `json:"sent"`
+	Trash       int `json:"trash"`
+	Unread      int `json:"unread"`
+}
+
+func (s *EmailStore) Counts() (*FolderCounts, error) {
+	var c FolderCounts
+	err := s.db.QueryRow(`
+		SELECT
+			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'INBOX' AND is_read = 0), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Drafts'), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE is_starred = 1), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Sent'), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Trash'), 0),
+			COALESCE((SELECT COUNT(*) FROM emails WHERE is_read = 0), 0)
+	`).Scan(&c.InboxUnread, &c.Drafts, &c.Starred, &c.Sent, &c.Trash, &c.Unread)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
 func (s *EmailStore) Stats() (*MailStats, error) {
 	var st MailStats
 	err := s.db.QueryRow(`

@@ -46,6 +46,7 @@ export const api = {
     search: (q: string, limit = 50, offset = 0) =>
       fetchJSON<Email[]>(`/api/v1/mails/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
     stats: () => fetchJSON<MailStats>('/api/v1/mails/stats'),
+    counts: () => fetchJSON<{ inbox_unread: number; drafts: number; starred: number; sent: number; trash: number; unread: number }>('/api/v1/mails/counts'),
     trend: (days = 7) => fetchJSON<Array<{date: string; receive: number; send: number}>>(`/api/v1/mails/trend?days=${days}`),
     markRead: (id: number) => fetchJSON<{ status: string }>(`/api/v1/mails/${id}/read`, { method: 'POST' }),
     move: (id: number, folder: string) => fetchJSON<{ status: string }>(`/api/v1/mails/${id}`, { method: 'PATCH', body: JSON.stringify({ folder }) }),
@@ -94,6 +95,7 @@ export const api = {
   sync: {
     all: () => fetchJSON<{ status: string }>('/api/v1/sync', { method: 'POST' }),
     account: (id: number) => fetchJSON<{ status: string }>(`/api/v1/sync?account_id=${id}`, { method: 'POST' }),
+    status: () => fetchJSON<Record<string, string>>('/api/v1/sync/status'),
   },
 
   events: {

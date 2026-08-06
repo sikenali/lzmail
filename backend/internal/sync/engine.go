@@ -72,3 +72,13 @@ func (e *Engine) RefreshAccount(accountID int64) {
 		go s.ForceSync()
 	}
 }
+
+func (e *Engine) Statuses() map[int64]string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	statuses := make(map[int64]string, len(e.syncers))
+	for id, s := range e.syncers {
+		statuses[id] = s.Status()
+	}
+	return statuses
+}

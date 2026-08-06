@@ -37,10 +37,18 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [recentEmails, setRecentEmails] = useState<Email[]>([])
   const [trendData, setTrendData] = useState<Array<{date: string; receive: number; send: number}>>([])
+  const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   const [refresh, setRefresh] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  useSSE(() => setRefresh(n => n + 1))
+  useSSE(
+    () => setRefresh(n => n + 1),
+    undefined,
+    (status, accountId) => {
+      if (!accountId) return
+      setSyncStatus(prev => ({ ...prev, [Number(accountId)]: status }))
+    },
+  )
 
   useEffect(() => {
     Promise.all([
@@ -48,6 +56,7 @@ export default function Dashboard() {
       api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}),
       api.mails.list(undefined, 'INBOX', 5, 0).then(d => setRecentEmails(d ?? [])).catch(() => {}),
       api.mails.trend(7).then(d => setTrendData(d ?? [])).catch(() => {}),
+      api.sync.status().then(d => setSyncStatus(d ?? {})).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [refresh])
 
@@ -191,9 +200,13 @@ export default function Dashboard() {
               <div className="mt-5">
                 {accounts.length === 0 ? (
                   <div className="text-sm py-4 text-center" style={{ color: 'var(--muted-foreground)' }}>暂无已配置账号</div>
-                ) : accounts.map((a, i) => {
+                ) : accounts.map((a) => {
                   const ac = a.brand_color || '#6366f1'
-                  const syncing = i === 2
+                  const syncState = syncStatus[a.id]
+                  const syncing = syncState === 'syncing'
+                  const syncErr = syncState === 'error'
+                  const dotColor = syncing ? 'var(--gold)' : syncErr ? 'var(--danger)' : 'var(--success)'
+                  const statusText = syncing ? '同步中' : syncErr ? '异常' : '在线'
                   return (
                     <div key={a.id} className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-3">
@@ -206,8 +219,8 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-[9px] h-2 rounded-full" style={{ backgroundColor: syncing ? 'var(--gold)' : 'var(--success)' }} />
-                        <span className="text-xs font-medium" style={{ color: syncing ? 'var(--gold)' : 'var(--success)' }}>{syncing ? '同步中' : '在线'}</span>
+                        <span className="w-[9px] h-2 rounded-full" style={{ backgroundColor: dotColor }} />
+                        <span className="text-xs font-medium" style={{ color: dotColor }}>{statusText}</span>
                       </div>
                     </div>
                   )

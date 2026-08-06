@@ -7,12 +7,12 @@ import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
 const navItems = [
-  { icon: LayoutDashboard, label: '仪表盘', href: '/', badge: 3 },
-  { icon: Inbox, label: '收件箱', href: '/mail', badge: 27 },
+  { icon: LayoutDashboard, label: '仪表盘', href: '/', badgeKey: 'unread' },
+  { icon: Inbox, label: '收件箱', href: '/mail', badgeKey: 'inbox_unread' },
   { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED' },
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=Sent' },
-  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badge: 5, badgeStyle: 'gold' },
+  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badgeKey: 'drafts', badgeStyle: 'gold' },
   { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
 
@@ -23,11 +23,15 @@ let lastSliderPos: { top: number; height: number } | null = null
 export function Sidebar({ currentPath }: { currentPath: string }) {
   const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [counts, setCounts] = useState<Record<string, number> | null>(null)
+  const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
+    api.mails.counts().then(d => setCounts(d ?? null)).catch(() => {})
+    api.sync.status().then(d => setSyncStatus(d ?? {})).catch(() => {})
   }, [])
 
   const isActive = (href: string) => {
@@ -99,14 +103,14 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   color: active ? 'var(--primary)' : 'var(--foreground)',
                   fontWeight: active ? '600' : '500',
                 }}>{item.label}</span>
-                {item.badge != null && (
+                {item.badgeKey && counts && counts[item.badgeKey] > 0 && (
                   <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
                     style={{
                       backgroundColor: item.badgeStyle === 'gold' ? 'var(--muted)' : 'var(--primary)',
                       color: item.badgeStyle === 'gold' ? 'var(--foreground-secondary)' : '#fff',
                       fontWeight: item.badgeStyle === 'gold' ? '500' : '600',
                     }}
-                  >{item.badge}</span>
+                  >{counts[item.badgeKey]}</span>
                 )}
               </Link>
             )
@@ -144,7 +148,8 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         <div style={{ paddingTop: 16 }} className="space-y-1">
           {accounts.map((a) => {
             const ac = a.brand_color || '#ea4335'
-            const isGold = a.brand_color === '#c9a96e'
+            const syncState = syncStatus[a.id]
+            const dotColor = syncState === 'syncing' ? 'var(--gold)' : syncState === 'error' ? 'var(--danger)' : 'var(--success)'
             return (
               <div key={a.id}
                 className="flex items-center gap-2 rounded-[8px] transition-colors cursor-pointer"
@@ -157,7 +162,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
                   <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{a.email}</div>
                 </div>
-                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'var(--gold)' : 'var(--success)' }} />
+                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
               </div>
             )
           })}

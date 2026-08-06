@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/emersion/go-imap"
@@ -28,6 +29,8 @@ type Syncer struct {
 	sseHub     *sse.Hub
 	stopCh     chan struct{}
 	doneCh     chan struct{}
+	statusMu   sync.RWMutex
+	status     string
 }
 
 func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub) *Syncer {
@@ -38,7 +41,20 @@ func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir
 		sseHub:     sseHub,
 		stopCh:     make(chan struct{}),
 		doneCh:     make(chan struct{}),
+		status:     "ok",
 	}
+}
+
+func (s *Syncer) setStatus(status string) {
+	s.statusMu.Lock()
+	s.status = status
+	s.statusMu.Unlock()
+}
+
+func (s *Syncer) Status() string {
+	s.statusMu.RLock()
+	defer s.statusMu.RUnlock()
+	return s.status
 }
 
 func (s *Syncer) Start() {
@@ -161,6 +177,7 @@ func (s *Syncer) syncAllFolders() {
 }
 
 func (s *Syncer) publishSync(status string) {
+	s.setStatus(status)
 	if s.sseHub == nil {
 		return
 	}

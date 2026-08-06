@@ -104,6 +104,7 @@ type SyncEngine interface {
 	RemoveAccount(int64)
 	RefreshAll()
 	RefreshAccount(int64)
+	Statuses() map[int64]string
 }
 
 func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string, syncEngine SyncEngine) *Handler {
@@ -130,6 +131,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/mails/search", rateLimitMiddleware(searchLimiter, h.handleSearchMails))
 	mux.HandleFunc("GET /api/v1/mails/trend", h.handleMailTrend)
 	mux.HandleFunc("GET /api/v1/mails/stats", h.handleMailStats)
+	mux.HandleFunc("GET /api/v1/mails/counts", h.handleMailCounts)
 
 	mux.HandleFunc("POST /api/v1/compose", h.handleCompose)
 	mux.HandleFunc("POST /api/v1/compose/attachments", h.handleUploadAttachment)
@@ -146,6 +148,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/storage/list", h.handleListStorageDirs)
 
 	mux.HandleFunc("POST /api/v1/sync", rateLimitMiddleware(listLimiter, h.handleSync))
+	mux.HandleFunc("GET /api/v1/sync/status", h.handleSyncStatus)
 
 	mux.HandleFunc("GET /api/v1/events", h.handleSSE)
 

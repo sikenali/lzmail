@@ -5,6 +5,18 @@ import (
 	"strconv"
 )
 
+func (h *Handler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
+	if h.syncEngine == nil {
+		writeJSON(w, http.StatusOK, map[string]string{})
+		return
+	}
+	statuses := h.syncEngine.Statuses()
+	if statuses == nil {
+		statuses = map[int64]string{}
+	}
+	writeJSON(w, http.StatusOK, statuses)
+}
+
 func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
 	if h.syncEngine == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "sync engine unavailable"})

@@ -38,7 +38,7 @@ export default function ContactPicker({
   const [loading, setLoading] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const MAX_DISPLAY = 10
-  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 解析已有值
   useEffect(() => {
@@ -89,8 +89,8 @@ export default function ContactPicker({
   const handleInputChange = (q: string) => {
     setQuery(q)
     setOpen(true)
-    if (searchTimer) clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => doSearch(q), 200)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => doSearch(q), 200)
   }
 
   const toggleShowAll = () => {

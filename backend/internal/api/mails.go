@@ -170,6 +170,15 @@ func (h *Handler) handleMailStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, stats)
 }
 
+func (h *Handler) handleMailCounts(w http.ResponseWriter, r *http.Request) {
+	counts, err := h.emails.Counts()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, counts)
+}
+
 func (h *Handler) handleDownloadAttachment(w http.ResponseWriter, r *http.Request) {
 	emailID, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	attID, _ := strconv.ParseInt(r.PathValue("attId"), 10, 64)

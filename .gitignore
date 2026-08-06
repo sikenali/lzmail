@@ -10,3 +10,4 @@ node_modules/
 scratch/
 .env
 config/
+.smoke-data/

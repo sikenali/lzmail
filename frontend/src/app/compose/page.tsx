@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, AlarmWarning, Send, X, Plus, ChevronDown } from '@/lib/icons'
@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import type { Account, Contact } from '@/types'
 import ContactPicker from '@/components/compose/ContactPicker'
 
-export default function ComposePage() {
+function ComposePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -23,7 +23,7 @@ export default function ComposePage() {
   const editorRef = useRef<any>(null)
   const [sending, setSending] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
-  const [attachments, setAttachments] = useState<Array<{ name: string, size: number }>>([])
+  const [attachments, setAttachments] = useState<Array<{ name: string, size: number, file?: File }>>([])
   const [scheduleAt, setScheduleAt] = useState('')
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
@@ -38,6 +38,19 @@ export default function ComposePage() {
       if (accounts.length > 0) setAccountId(accounts[0].id)
     }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const toParam = searchParams?.get('to')
+    const ccParam = searchParams?.get('cc')
+    const bccParam = searchParams?.get('bcc')
+    const subjectParam = searchParams?.get('subject')
+    const bodyParam = searchParams?.get('body')
+    if (toParam) setTo(toParam)
+    if (ccParam) { setCc(ccParam); setShowCc(true) }
+    if (bccParam) { setBcc(bccParam); setShowBcc(true) }
+    if (subjectParam) setSubject(subjectParam)
+    if (bodyParam) setBody(bodyParam)
+  }, [searchParams])
 
   const handleSend = async () => {
     if (!to) { toast.error('请输入收件人'); return }
@@ -93,7 +106,7 @@ export default function ComposePage() {
     if (!files) return
     Array.from(files).forEach(f => {
       if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name} 超过25MB限制`); return }
-      setAttachments(prev => [...prev, { name: f.name, size: f.size }])
+      setAttachments(prev => [...prev, { name: f.name, size: f.size, file: f }])
     })
   }
 
@@ -304,6 +317,14 @@ export default function ComposePage() {
         </div>
       </div>
     </AppShell>
+  )
+}
+
+export default function ComposePage() {
+  return (
+    <Suspense fallback={null}>
+      <ComposePageInner />
+    </Suspense>
   )
 }
 

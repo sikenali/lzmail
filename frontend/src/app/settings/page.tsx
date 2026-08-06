@@ -149,7 +149,7 @@ function AccountPanel() {
   const [form, setForm] = useState({
      name: '', email: '', imap_host: '', imap_port: 993,
      smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
-     access_token: '', token_type: '', expiry: '', scope: '', provider: '',
+     access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password',
    })
    const [saving, setSaving] = useState(false)
    const [provider, setProvider] = useState<ProviderKey>('auto')
@@ -163,7 +163,7 @@ function AccountPanel() {
   const activeProvider = configFor(provider === 'auto' ? detectProvider(form.email) : provider)
 
   const resetForm = () => {
-    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false, access_token: '', token_type: '', expiry: '', scope: '', provider: '' })
+    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false, access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password' })
     setProvider('auto')
   }
 
@@ -214,7 +214,7 @@ function AccountPanel() {
         name: form.name, email: form.email, imap_host: form.imap_host,
         imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
         username: form.username, password: form.password || undefined, use_idle: form.use_idle,
-        auth_method: form.access_token ? 'oauth2' : 'password',
+        auth_method: form.auth_method,
         provider: form.provider || '',
         access_token: form.access_token || undefined,
         token_type: form.token_type || undefined,
@@ -242,7 +242,7 @@ function AccountPanel() {
       name: a.name || '', email: a.email, imap_host: a.imap_host,
       imap_port: a.imap_port, smtp_host: a.smtp_host, smtp_port: a.smtp_port,
       username: a.username, password: '', use_idle: a.use_idle,
-      access_token: '', token_type: '', expiry: '', scope: '', provider: a.provider || '',
+      access_token: '', token_type: '', expiry: '', scope: '', provider: a.provider || '', auth_method: a.auth_method || 'password',
     })
     setProvider(detectProvider(a.email))
     setShowForm(true)
@@ -257,6 +257,8 @@ function AccountPanel() {
         name: form.name, email: form.email, imap_host: form.imap_host,
         imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
         username: form.username, password: form.password || undefined, use_idle: form.use_idle,
+        auth_method: form.auth_method || 'password',
+        provider: form.provider || undefined,
       })
       setShowForm(false)
       setEditingId(null)
@@ -347,13 +349,21 @@ function AccountPanel() {
             </div>
             <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
-            <div className="relative col-span-1">
-              <input type={showPassword ? 'text' : 'password'} placeholder={editingId ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-full" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)', paddingRight: '36px' }} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--accent)]" aria-label={showPassword ? '隐藏密码' : '显示密码'}>
-                {showPassword ? <EyeOff className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /> : <Eye className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />}
-              </button>
-            </div>
+            {form.auth_method !== 'oauth2' && (
+              <div className="relative col-span-1">
+                <input type={showPassword ? 'text' : 'password'} placeholder={editingId ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                  className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-full" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)', paddingRight: '36px' }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--accent)]" aria-label={showPassword ? '隐藏密码' : '显示密码'}>
+                  {showPassword ? <EyeOff className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /> : <Eye className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />}
+                </button>
+              </div>
+            )}
+            {form.auth_method === 'oauth2' && !editingId && (
+              <div className="col-span-1 text-xs flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}>
+                <span>已授权</span>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>OAuth</span>
+              </div>
+            )}
             {(provider === 'gmail' || provider === 'outlook') && !editingId && (
               <button type="button" onClick={() => handleOAuthLogin(provider as Exclude<ProviderKey, 'auto' | 'other'>)}
                 className="h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 shrink-0"
@@ -438,6 +448,9 @@ function AccountPanel() {
                         { label: 'IMAP 服务器', value: `${a.imap_host}:${a.imap_port}` },
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
                         { label: '同步状态', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },
+                        ...(a.auth_method === 'oauth2' && a.provider ? [
+                          { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider },
+                        ] : []),
                       ].map(item => (
                         <div key={item.label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--accent)' }}>
                           <div className="text-[11px]" style={{ color: 'var(--foreground-tertiary)' }}>{item.label}</div>

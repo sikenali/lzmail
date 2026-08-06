@@ -191,7 +191,6 @@ export default function ContactPicker({
               value={query}
               onChange={e => { setQuery(e.target.value); applyFilter(e.target.value, showAll) }}
               placeholder="搜索姓名或邮箱..."
-              className="w-full outline-none text-[13px] bg-transparent"
               className="w-full outline-none text-[13px] bg-transparent placeholder:text-[var(--muted-foreground)]" style={{ color: 'var(--foreground)' }}
               autoFocus
             />

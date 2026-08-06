@@ -61,7 +61,7 @@ function ContactCard({ contact }: { contact: Contact }) {
             <span style={{ fontSize: 16, fontWeight: 600, color: '#3d2b1f', lineHeight: '22px' }}>
               {contact.name || '(无名)'}
             </span>
-            <i className="ri-star-fill" style={{ fontSize: 18, color: '#c9a96e' }} />
+            <i className="ri-star-line" style={{ fontSize: 18, color: '#c9a96e' }} />
           </div>
           {contact.title && (
             <span style={{ fontSize: 13, color: '#8b7355', lineHeight: '18px' }}>
@@ -157,7 +157,7 @@ function ContactTableRow({ contact }: { contact: Contact }) {
           style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(243,237,227,1)' }}
           title="更多"
         >
-          <i className="ri-more-line" style={{ fontSize: 16, color: '#6b5b4f' }} />
+          <i className="ri-more-2-fill" style={{ fontSize: 16, color: '#6b5b4f' }} />
         </button>
       </div>
     </div>
@@ -197,7 +197,7 @@ export default function ContactsPage() {
             className="flex items-center gap-2 h-[47px] px-5 rounded-[12px] text-[14px] font-medium transition-opacity hover:opacity-90"
             style={{ backgroundColor: 'rgba(107,143,163,1)', color: '#ffffff' }}
           >
-            <i className="ri-add-line" style={{ fontSize: 18 }} />
+            <i className="ri-user-add-line" style={{ fontSize: 18 }} />
             添加联系人
           </button>
         </div>
@@ -248,7 +248,7 @@ export default function ContactsPage() {
               style={{ backgroundColor: 'rgba(243,237,227,1)', fontSize: 12, fontWeight: 500, color: '#6b5b4f' }}
             >
               按名称
-              <i className="ri-arrow-down-s-line" style={{ fontSize: 14 }} />
+              <i className="ri-arrow-up-down-line" style={{ fontSize: 14 }} />
             </button>
           </div>
 

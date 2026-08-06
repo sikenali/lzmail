@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
@@ -7,22 +7,20 @@ import type { Account } from '@/types'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const prevPath = useRef(pathname)
-  const isAnimating = useRef(false)
 
-  // Trigger page transition animation on route change
+  // Trigger page transition animation on route change.
+  // AppShell is rendered inside each page, so it remounts on every navigation:
+  // animate <main> whenever the path changes (disabled via the .no-animations toggle).
   useEffect(() => {
-    if (prevPath.current !== pathname && !isAnimating.current && !document.body.classList.contains('no-animations')) {
-      isAnimating.current = true
-      const main = document.querySelector('main')
-      if (main) {
-        main.classList.remove('page-enter')
-        void main.offsetWidth
-        main.classList.add('page-enter')
-      }
-      setTimeout(() => { isAnimating.current = false }, 400)
-    }
-    prevPath.current = pathname
+    if (document.body.classList.contains('no-animations')) return
+    const main = document.querySelector('main')
+    if (!main) return
+    const raf = requestAnimationFrame(() => {
+      main.classList.remove('page-enter')
+      void main.offsetWidth
+      main.classList.add('page-enter')
+    })
+    return () => cancelAnimationFrame(raf)
   }, [pathname])
 
   return (

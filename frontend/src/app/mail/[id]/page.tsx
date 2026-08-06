@@ -21,7 +21,7 @@ export default function MailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [detail, setDetail] = useState<EmailDetail | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [replyText, setReplyText] = useState('')
   const replyBoxRef = useRef<HTMLDivElement>(null)
 
@@ -101,9 +101,9 @@ export default function MailPage() {
           <div className="w-px h-5 bg-[rgba(229,217,196,1)] mx-1" />
         </div>
         <div className="flex items-center gap-1">
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronUp className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronDown className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><MoreHorizontal className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronUp className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button onClick={() => router.push('/mail')} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronDown className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
+          <button onClick={() => { const el = document.getElementById('reply-area'); el?.scrollIntoView({ behavior: 'smooth' }) }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><MoreHorizontal className="w-4 h-4 text-[var(--foreground-tertiary)]" /></button>
         </div>
       </div>
 

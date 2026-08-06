@@ -869,11 +869,11 @@ function AboutPanel() {
   ]
 
   const links = [
-    { icon: GitRepository, label: 'GitHub' },
-    { icon: BookRead, label: '使用文档' },
-    { icon: ChatSmile3, label: '反馈问题' },
+    { icon: GitRepository, label: 'GitHub', href: 'https://github.com/sikenali/lzmail' },
+    { icon: BookRead, label: '使用文档', href: 'https://github.com/sikenali/lzmail#readme' },
+    { icon: ChatSmile3, label: '反馈问题', href: 'https://github.com/sikenali/lzmail/issues' },
   ]
-  const updateLink = { icon: AlarmWarning, label: '检查更新' }
+  const updateLink = { icon: AlarmWarning, label: '检查更新', href: 'https://github.com/sikenali/lzmail/releases' }
 
   return (
     <div className="space-y-4">
@@ -920,7 +920,7 @@ function AboutPanel() {
         <div className="pt-4">
           <div className="flex items-center" style={{ gap: '16px' }}>
             {links.map(link => (
-              <a key={link.label} href="#"
+              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-lg transition-all"
                 style={{ backgroundColor: 'var(--muted)', padding: '8px 16px', gap: '8px' }}
               >
@@ -928,7 +928,7 @@ function AboutPanel() {
                 <span className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{link.label}</span>
               </a>
             ))}
-            <a href="#"
+            <a href={updateLink.href} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-lg transition-all"
               style={{ backgroundColor: 'var(--danger-bg)', padding: '8px 16px', gap: '8px' }}
             >

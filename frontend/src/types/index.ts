@@ -7,6 +7,8 @@ export interface Account {
   smtp_host: string
   smtp_port: number
   auth_type: string
+  auth_method: string
+  provider: string
   username: string
   use_idle: boolean
   brand_color: string

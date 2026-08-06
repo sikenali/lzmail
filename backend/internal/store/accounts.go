@@ -39,8 +39,40 @@ func (s *AccountStore) decryptAccount(a *models.Account) error {
 	return nil
 }
 
+func (s *AccountStore) encryptOAuthToken(a *models.Account) error {
+	if a.OAuth2Token == "" {
+		return nil
+	}
+	encrypted, err := crypto.Encrypt(a.OAuth2Token)
+	if err != nil {
+		return fmt.Errorf("encrypt oauth2 token: %w", err)
+	}
+	a.OAuth2Token = encrypted
+	return nil
+}
+
+func (s *AccountStore) decryptOAuthToken(a *models.Account) error {
+	if a.OAuth2Token == "" {
+		return nil
+	}
+	decrypted, err := crypto.Decrypt(a.OAuth2Token)
+	if err != nil {
+		return fmt.Errorf("decrypt oauth2 token: %w", err)
+	}
+	a.OAuth2Token = decrypted
+	return nil
+}
+
+const accountColumns = `id, name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, auth_method, provider, username, password, oauth2_token, use_idle, brand_color, created_at, updated_at`
+
+func scanAccount(row interface{ Scan(...any) error }, a *models.Account) error {
+	return row.Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort,
+		&a.AuthType, &a.AuthMethod, &a.Provider, &a.Username, &a.Password, &a.OAuth2Token,
+		&a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt)
+}
+
 func (s *AccountStore) List() ([]models.Account, error) {
-	rows, err := s.db.Query(`SELECT id, name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, username, password, use_idle, brand_color, created_at, updated_at FROM accounts ORDER BY id`)
+	rows, err := s.db.Query(`SELECT ` + accountColumns + ` FROM accounts ORDER BY id`)
 	if err != nil {
 		return nil, err
 	}
@@ -48,10 +80,13 @@ func (s *AccountStore) List() ([]models.Account, error) {
 	var accounts []models.Account
 	for rows.Next() {
 		var a models.Account
-		if err := rows.Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort, &a.AuthType, &a.Username, &a.Password, &a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := scanAccount(rows, &a); err != nil {
 			return nil, err
 		}
 		if err := s.decryptAccount(&a); err != nil {
+			return nil, err
+		}
+		if err := s.decryptOAuthToken(&a); err != nil {
 			return nil, err
 		}
 		accounts = append(accounts, a)
@@ -60,7 +95,7 @@ func (s *AccountStore) List() ([]models.Account, error) {
 }
 
 func (s *AccountStore) ListPublic() ([]models.Account, error) {
-	rows, err := s.db.Query(`SELECT id, name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, username, use_idle, brand_color, created_at, updated_at FROM accounts ORDER BY id`)
+	rows, err := s.db.Query(`SELECT id, name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, auth_method, provider, username, use_idle, brand_color, created_at, updated_at FROM accounts ORDER BY id`)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +103,7 @@ func (s *AccountStore) ListPublic() ([]models.Account, error) {
 	var accounts []models.Account
 	for rows.Next() {
 		var a models.Account
-		if err := rows.Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort, &a.AuthType, &a.Username, &a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort, &a.AuthType, &a.AuthMethod, &a.Provider, &a.Username, &a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		accounts = append(accounts, a)
@@ -78,12 +113,17 @@ func (s *AccountStore) ListPublic() ([]models.Account, error) {
 
 func (s *AccountStore) GetByID(id int64) (*models.Account, error) {
 	var a models.Account
-	err := s.db.QueryRow(`SELECT id, name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, username, password, use_idle, brand_color, created_at, updated_at FROM accounts WHERE id = ?`, id).
-		Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort, &a.AuthType, &a.Username, &a.Password, &a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt)
+	err := s.db.QueryRow(`SELECT `+accountColumns+` FROM accounts WHERE id = ?`, id).Scan(
+		&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort,
+		&a.AuthType, &a.AuthMethod, &a.Provider, &a.Username, &a.Password, &a.OAuth2Token,
+		&a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
 	if err := s.decryptAccount(&a); err != nil {
+		return nil, err
+	}
+	if err := s.decryptOAuthToken(&a); err != nil {
 		return nil, err
 	}
 	return &a, nil
@@ -93,8 +133,11 @@ func (s *AccountStore) Create(a *models.Account) error {
 	if err := s.encryptAccount(a); err != nil {
 		return err
 	}
-	result, err := s.db.Exec(`INSERT INTO accounts (name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, username, password, use_idle, brand_color) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-		a.Name, a.Email, a.IMAPHost, a.IMAPPort, a.SMTPHost, a.SMTPPort, a.AuthType, a.Username, a.Password, a.UseIDLE, a.BrandColor)
+	if err := s.encryptOAuthToken(a); err != nil {
+		return err
+	}
+	result, err := s.db.Exec(`INSERT INTO accounts (name, email, imap_host, imap_port, smtp_host, smtp_port, auth_type, auth_method, provider, username, password, oauth2_token, use_idle, brand_color) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		a.Name, a.Email, a.IMAPHost, a.IMAPPort, a.SMTPHost, a.SMTPPort, a.AuthType, a.AuthMethod, a.Provider, a.Username, a.Password, a.OAuth2Token, a.UseIDLE, a.BrandColor)
 	if err != nil {
 		return err
 	}
@@ -102,12 +145,14 @@ func (s *AccountStore) Create(a *models.Account) error {
 	a.ID = id
 	s.db.QueryRow(`SELECT created_at, updated_at FROM accounts WHERE id = ?`, id).Scan(&a.CreatedAt, &a.UpdatedAt)
 	a.Password = ""
+	a.OAuth2Token = ""
 	return nil
 }
 
-
 func (s *AccountStore) Update(a *models.Account) error {
-	// Re-encrypt password if changed
+	var storedPassword, storedToken string
+	row := s.db.QueryRow(`SELECT password, oauth2_token FROM accounts WHERE id = ?`, a.ID)
+	_ = row.Scan(&storedPassword, &storedToken)
 	if a.Password != "" {
 		encrypted, err := crypto.Encrypt(a.Password)
 		if err != nil {
@@ -115,19 +160,37 @@ func (s *AccountStore) Update(a *models.Account) error {
 		}
 		a.Password = encrypted
 	} else {
-		// Keep existing password
-		existing, _ := s.GetByID(a.ID)
-		if existing != nil {
-			a.Password = existing.Password
+		a.Password = storedPassword
+	}
+	if a.OAuth2Token != "" {
+		encrypted, err := crypto.Encrypt(a.OAuth2Token)
+		if err != nil {
+			return fmt.Errorf("encrypt oauth2 token: %w", err)
 		}
+		a.OAuth2Token = encrypted
+	} else {
+		a.OAuth2Token = storedToken
 	}
 	_, err := s.db.Exec(
 		`UPDATE accounts SET name=?, email=?, imap_host=?, imap_port=?, smtp_host=?, smtp_port=?,
-		 auth_type=?, username=?, password=?, use_idle=?, brand_color=?, updated_at=CURRENT_TIMESTAMP
+		 auth_type=?, auth_method=?, provider=?, username=?, password=?, oauth2_token=?, use_idle=?, brand_color=?, updated_at=CURRENT_TIMESTAMP
 		 WHERE id=?`,
 		a.Name, a.Email, a.IMAPHost, a.IMAPPort, a.SMTPHost, a.SMTPPort,
-		a.AuthType, a.Username, a.Password, a.UseIDLE, a.BrandColor, a.ID,
+		a.AuthType, a.AuthMethod, a.Provider, a.Username, a.Password, a.OAuth2Token, a.UseIDLE, a.BrandColor, a.ID,
 	)
+	return err
+}
+
+func (s *AccountStore) UpdateOAuth2Token(id int64, tokenData *models.OAuth2TokenData) error {
+	tokenStr, err := tokenData.Marshal()
+	if err != nil {
+		return err
+	}
+	encrypted, err := crypto.Encrypt(tokenStr)
+	if err != nil {
+		return fmt.Errorf("encrypt oauth2 token: %w", err)
+	}
+	_, err = s.db.Exec(`UPDATE accounts SET oauth2_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, encrypted, id)
 	return err
 }
 

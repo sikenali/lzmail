@@ -147,12 +147,15 @@ function AccountPanel() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [form, setForm] = useState({
-    name: '', email: '', imap_host: '', imap_port: 993,
-    smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
-  })
-  const [saving, setSaving] = useState(false)
-  const [provider, setProvider] = useState<ProviderKey>('auto')
-  const [showPassword, setShowPassword] = useState(false)
+     name: '', email: '', imap_host: '', imap_port: 993,
+     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
+     access_token: '', token_type: '', expiry: '', scope: '', provider: '',
+   })
+   const [saving, setSaving] = useState(false)
+   const [provider, setProvider] = useState<ProviderKey>('auto')
+   const [showPassword, setShowPassword] = useState(false)
+
+   const oauthProviders = ['gmail', 'outlook'] as const
 
   const configFor = (key: ProviderKey) =>
     key === 'auto' || key === 'other' ? null : PROVIDER_CONFIG[key]
@@ -160,8 +163,21 @@ function AccountPanel() {
   const activeProvider = configFor(provider === 'auto' ? detectProvider(form.email) : provider)
 
   const resetForm = () => {
-    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false })
+    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false, access_token: '', token_type: '', expiry: '', scope: '', provider: '' })
     setProvider('auto')
+  }
+
+  const handleOAuthLogin = async (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+      const resp = await api.oauth.authUrl(key, `${apiUrl}/api/v1/oauth/${key}/callback`)
+      if (!resp?.auth_url) { alert('未配置 OAuth 客户端凭据'); return }
+      sessionStorage.setItem('oauth_state', resp.state)
+      sessionStorage.setItem('oauth_provider', key)
+      window.location.href = resp.auth_url
+    } catch (e: any) {
+      alert(e.message)
+    }
   }
 
   const applyProviderHosts = (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
@@ -197,7 +213,13 @@ function AccountPanel() {
       await api.accounts.create({
         name: form.name, email: form.email, imap_host: form.imap_host,
         imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
-        username: form.username, password: form.password, use_idle: form.use_idle,
+        username: form.username, password: form.password || undefined, use_idle: form.use_idle,
+        auth_method: form.access_token ? 'oauth2' : 'password',
+        provider: form.provider || '',
+        access_token: form.access_token || undefined,
+        token_type: form.token_type || undefined,
+        expiry: form.expiry || undefined,
+        scope: form.scope || undefined,
       })
       setShowForm(false)
       setEditingId(null)
@@ -220,6 +242,7 @@ function AccountPanel() {
       name: a.name || '', email: a.email, imap_host: a.imap_host,
       imap_port: a.imap_port, smtp_host: a.smtp_host, smtp_port: a.smtp_port,
       username: a.username, password: '', use_idle: a.use_idle,
+      access_token: '', token_type: '', expiry: '', scope: '', provider: a.provider || '',
     })
     setProvider(detectProvider(a.email))
     setShowForm(true)
@@ -331,6 +354,14 @@ function AccountPanel() {
                 {showPassword ? <EyeOff className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /> : <Eye className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />}
               </button>
             </div>
+            {(provider === 'gmail' || provider === 'outlook') && !editingId && (
+              <button type="button" onClick={() => handleOAuthLogin(provider as Exclude<ProviderKey, 'auto' | 'other'>)}
+                className="h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 shrink-0"
+                style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                OAuth 授权
+              </button>
+            )}
           </div>
 
           {activeProvider && (

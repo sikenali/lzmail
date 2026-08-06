@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X, Plus } from '@/lib/icons'
+import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, X, Plus } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'

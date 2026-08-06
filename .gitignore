@@ -11,3 +11,9 @@ scratch/
 .env
 config/
 .smoke-data/
+!backend/internal/config/
+!backend/internal/oauth2/
+!backend/internal/providers/
+!backend/internal/sasl/
+!backend/internal/external_oauth/
+!frontend/src/app/oauth/

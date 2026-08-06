@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
+import { useSettings } from '@/hooks/useSettings'
 import { Plus, Mail as MailIcon, MoreVertical, ChevronDown, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X } from '@/lib/icons'
 import type { Contact } from '@/types'
 
@@ -106,24 +107,25 @@ function ContactCard({ contact }: { contact: Contact }) {
   )
 }
 
-function ContactTableRow({ contact }: { contact: Contact }) {
+function ContactTableRow({ contact, density }: { contact: Contact; density: string }) {
   const style = getAvatarStyle(contact.name)
+  const rowHeight = density === 'compact' ? 40 : 57
   return (
     <div
       className="flex items-center"
-      style={{ height: 57, padding: '0 16px' }}
+      style={{ height: rowHeight, padding: '0 16px' }}
     >
       {/* Name */}
       <div className="flex items-center gap-3" style={{ width: 220, flexShrink: 0 }}>
         <div
           className="flex items-center justify-center shrink-0"
-          style={{ width: 32, height: 32, borderRadius: 9999, backgroundColor: style.bg }}
+          style={{ width: density === 'compact' ? 24 : 32, height: density === 'compact' ? 24 : 32, borderRadius: 9999, backgroundColor: style.bg }}
         >
-          <span style={{ fontSize: 12, fontWeight: 600, color: style.text }}>
+          <span style={{ fontSize: density === 'compact' ? 10 : 12, fontWeight: 600, color: style.text }}>
             {contact.name?.[0] || '?'}
           </span>
         </div>
-        <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>
+        <span style={{ fontSize: density === 'compact' ? 13 : 14, fontWeight: 500, color: '#3d2b1f' }}>
           {contact.name || '(无名)'}
         </span>
       </div>
@@ -147,14 +149,14 @@ function ContactTableRow({ contact }: { contact: Contact }) {
       <div className="flex items-center gap-2" style={{ width: 132, flexShrink: 0 }}>
         <button
           className="flex items-center justify-center"
-          style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: style.bg }}
+          style={{ width: density === 'compact' ? 28 : 32, height: density === 'compact' ? 28 : 32, borderRadius: 8, backgroundColor: style.bg }}
           title="发邮件"
         >
           <MailIcon className="w-4 h-4" style={{ color: style.text }} />
         </button>
         <button
           className="flex items-center justify-center"
-          style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(243,237,227,1)' }}
+          style={{ width: density === 'compact' ? 28 : 32, height: density === 'compact' ? 28 : 32, borderRadius: 8, backgroundColor: 'rgba(243,237,227,1)' }}
           title="更多"
         >
           <MoreHorizontal className="w-4 h-4" style={{ color: '#6b5b4f' }} />
@@ -165,6 +167,7 @@ function ContactTableRow({ contact }: { contact: Contact }) {
 }
 
 export default function ContactsPage() {
+  const { settings } = useSettings()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -175,6 +178,8 @@ export default function ContactsPage() {
     setContacts(MOCK_CONTACTS)
     setLoading(false)
   }, [])
+
+  const density = settings.mail_density || 'comfortable'
 
   return (
     <AppShell>
@@ -291,7 +296,7 @@ export default function ContactsPage() {
                   key={c.id}
                   style={{ borderBottom: '1px solid rgba(229,217,196,1)' }}
                 >
-                  <ContactTableRow contact={c} />
+                  <ContactTableRow contact={c} density={density} />
                 </div>
               ))
             )}

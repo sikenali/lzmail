@@ -53,14 +53,23 @@ func main() {
 	contactStore := store.NewContactStore(db)
 	settingsStore := store.NewSettingsStore(db)
 
+	// Allow archive path override via settings
+	archiveDir := cfg.ArchiveDir
+	if settings, err := settingsStore.GetAll(); err == nil {
+		if p, ok := settings["archive_path"]; ok && p != "" {
+			archiveDir = p
+		}
+	}
+	ensureDir(archiveDir)
+
 	sseHub := sse.NewHub()
 	go sseHub.Run()
 
-	syncEngine := sync.NewEngine(emailStore, cfg.ArchiveDir, sseHub)
+	syncEngine := sync.NewEngine(emailStore, archiveDir, sseHub)
 	accounts, _ := accountStore.List()
 	syncEngine.StartAll(accounts)
 
-	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub, cfg.ArchiveDir, syncEngine)
+	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub, archiveDir, syncEngine)
 	mux := http.NewServeMux()
 	handler.Register(mux)
 

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef, useLayoutEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit } from '@/lib/icons'
@@ -25,7 +25,6 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
-  const [instant, setInstant] = useState<boolean>(!!lastSliderPos)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
@@ -47,22 +46,17 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
 
   const activeIndex = navItems.findIndex(item => isActive(item.href))
 
-  // Animate the highlight pill: on a fresh mount it starts where the previous
-  // route's pill was, then glides to the current nav item.
-  useLayoutEffect(() => {
+    // Highlight pill: on a fresh mount it starts where the previous route's pill
+  // was, then this effect runs AFTER the browser paints that old position, so
+  // the transform transition glides it to the current nav item. On the first
+  // ever load there is no previous position, so it just appears.
+  useEffect(() => {
     const el = navRefs.current[activeIndex]
     if (!el) return
     const target = { top: el.offsetTop, height: el.offsetHeight }
     lastSliderPos = target
-    if (instant) {
-      const raf = requestAnimationFrame(() => {
-        setInstant(false)
-        setSliderPos(target)
-      })
-      return () => cancelAnimationFrame(raf)
-    }
     setSliderPos(target)
-  }, [activeIndex, instant])
+  }, [activeIndex])
 
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16, backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
@@ -85,7 +79,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               backgroundColor: 'var(--primary-light)',
               borderRadius: 8,
               transform: `translateY(${sliderPos.top}px)`,
-              transition: instant ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+              transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
               pointerEvents: 'none',
             }} />
           )}

@@ -606,15 +606,112 @@ function AppearancePanel() {
   )
 }
 
+// ── Directory Tree Picker ─────────────────────────────────
+type DirNode = { name: string; is_dir: boolean; path: string; subdirs?: DirNode[] }
+
+function DirTree({ entries, basePath, onSelect, selected, depth = 0 }: {
+  entries: DirNode[]; basePath: string; onSelect: (path: string) => void; selected: string; depth?: number
+}) {
+  return (
+    <div className="space-y-0.5">
+      {entries.map(e => {
+        const isSelected = selected === e.path
+        return (
+          <div key={e.path}>
+            <button
+              onClick={() => e.is_dir && onSelect(e.path)}
+              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-[6px] text-[12px] transition-colors hover:bg-[var(--accent)]"
+              style={{
+                backgroundColor: isSelected ? 'var(--primary-light)' : 'transparent',
+                color: isSelected ? 'var(--primary)' : 'var(--foreground-secondary)',
+                paddingLeft: `${12 + depth * 16}px`,
+                cursor: e.is_dir ? 'pointer' : 'default',
+              }}
+            >
+              <span style={{ color: e.is_dir ? 'var(--gold)' : 'var(--foreground-tertiary)', fontSize: '14px' }}>
+                {e.is_dir ? '📁' : '📄'}
+              </span>
+              <span className="truncate">{e.name}</span>
+            </button>
+            {e.subdirs && e.subdirs.length > 0 && (
+              <DirTree entries={e.subdirs} basePath={basePath} onSelect={onSelect} selected={selected} depth={depth + 1} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── 归档 ──────────────────────────────────────────────────
 function StoragePanel() {
   const [stats, setStats] = useState<MailStats | null>(null)
   const [loading, setLoading] = useState(true)
   const { settings, setSetting } = useSettings()
+  const [editingPath, setEditingPath] = useState(false)
+  const [pathInput, setPathInput] = useState('')
+  const [dirEntries, setDirEntries] = useState<DirNode[]>([])
+  const [dirLoading, setDirLoading] = useState(false)
+  const [dirError, setDirError] = useState('')
+  const [treeOpen, setTreeOpen] = useState(false)
+  const treeRef = useRef<HTMLDivElement>(null)
+
+  const archivePath = settings.archive_path || '/mnt/nas/lzmail/archives'
 
   useEffect(() => {
     api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (treeRef.current && !treeRef.current.contains(e.target as Node)) {
+        setTreeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const loadDirTree = async (path: string) => {
+    if (!path) return
+    setDirLoading(true)
+    setDirError('')
+    try {
+      const res = await api.storage.list(path)
+      setDirEntries(res.entries)
+      setTreeOpen(true)
+    } catch (e: any) {
+      setDirError(e.message)
+      setDirEntries([])
+    } finally {
+      setDirLoading(false)
+    }
+  }
+
+  const handleStartEdit = () => {
+    setPathInput(archivePath)
+    setEditingPath(true)
+    loadDirTree(archivePath)
+  }
+
+  const handleSavePath = () => {
+    const p = pathInput.trim()
+    if (!p) return
+    setSetting('archive_path', p)
+    setEditingPath(false)
+    setTreeOpen(false)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingPath(false)
+    setTreeOpen(false)
+    setDirError('')
+  }
+
+  const handleSelectDir = (path: string) => {
+    setPathInput(path)
+    loadDirTree(path)
+  }
 
   const storageBytes = stats?.storage_bytes ?? 0
   const totalEmails = stats?.total_emails ?? 0
@@ -638,15 +735,63 @@ function StoragePanel() {
 
       <div className="rounded-[16px]" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         {/* Archive path */}
-        <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--card-border)' }}>
-          <div>
-            <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>归档根目录</div>
-            <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml 文件与附件的存储路径</div>
+        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>归档根目录</div>
+              <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml 文件与附件的存储路径</div>
+            </div>
+            {!editingPath ? (
+              <button onClick={handleStartEdit}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition-all hover:opacity-80"
+                style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)', color: 'var(--foreground-secondary)' }}>
+                <Folder className="w-4 h-4" style={{ color: 'var(--gold)' }} />
+                <span className="font-mono">{archivePath}</span>
+                <Edit className="w-3.5 h-3.5" style={{ color: 'var(--foreground-tertiary)' }} />
+              </button>
+            ) : (
+              <div className="flex-1 max-w-[600px] ml-8">
+                <div className="flex items-center gap-2">
+                  <input value={pathInput} onChange={e => setPathInput(e.target.value)}
+                    className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
+                    style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+                    placeholder="输入归档路径，如 /mnt/nas/lzmail/archives"
+                  />
+                  <button onClick={handleSavePath}
+                    className="px-3 h-9 rounded-lg text-[12px] font-medium"
+                    style={{ backgroundColor: 'var(--primary)', color: '#ffffff' }}
+                  >确定</button>
+                  <button onClick={handleCancelEdit}
+                    className="px-3 h-9 rounded-lg text-[12px] font-medium"
+                    style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}
+                  >取消</button>
+                </div>
+                <div className="relative mt-2" ref={treeRef}>
+                  {dirLoading && (
+                    <div className="text-[12px] py-2" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
+                  )}
+                  {dirError && (
+                    <div className="text-[12px] py-2" style={{ color: 'var(--danger)' }}>{dirError}</div>
+                  )}
+                  {treeOpen && dirEntries.length > 0 && (
+                    <div className="rounded-[8px] p-2 max-h-48 overflow-y-auto"
+                      style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--background)' }}>
+                      <div className="text-[11px] font-semibold px-2 pb-1" style={{ color: 'var(--muted-foreground)' }}>目录层级</div>
+                      <DirTree entries={dirEntries} basePath={pathInput} onSelect={handleSelectDir} selected={pathInput} />
+                    </div>
+                  )}
+                  {treeOpen && dirEntries.length === 0 && !dirLoading && !dirError && (
+                    <div className="text-[12px] py-2" style={{ color: 'var(--muted-foreground)' }}>空目录</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)' }}>
-            <Folder className="w-4 h-4" style={{ color: 'var(--gold)' }} />
-            <span className="text-[13px] font-mono" style={{ color: 'var(--foreground)' }}>/mnt/nas/lzmail/archives</span>
-          </div>
+          {editingPath && (
+            <div className="mt-3 px-3 py-2 rounded-lg text-[11px] leading-5" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>
+              修改归档路径后，新建的邮件将存储到新目录。已有邮件仍保留在原路径。重启服务后生效。
+            </div>
+          )}
         </div>
 
         {/* Storage stats */}
@@ -811,7 +956,6 @@ function SettingsPageInner() {
   const [active, setActive] = useState('account')
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [tabSlider, setTabSlider] = useState<{ x: number; w: number } | null>(null)
-  const [tabInstant, setTabInstant] = useState(true)
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -820,20 +964,19 @@ function SettingsPageInner() {
   const panels: Record<string, React.FC> = { account: AccountPanel, appearance: AppearancePanel, storage: StoragePanel, about: AboutPanel }
   const Panel = panels[active]
 
-  // Move the sliding pill to the active tab (glide on first paint too).
+  // Place the pill synchronously on first mount (no flash), then on every tab
+  // change move it in a passive effect — which runs AFTER the browser paints the
+  // old position — so the transform transition can glide between tabs.
   useLayoutEffect(() => {
     const el = tabRefs.current[TABS.findIndex(t => t.key === active)]
-    if (!el) return
-    const target = { x: el.offsetLeft, w: el.offsetWidth }
-    if (tabInstant) {
-      const raf = requestAnimationFrame(() => {
-        setTabInstant(false)
-        setTabSlider(target)
-      })
-      return () => cancelAnimationFrame(raf)
-    }
-    setTabSlider(target)
-  }, [active, tabInstant])
+    if (el) setTabSlider({ x: el.offsetLeft, w: el.offsetWidth })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const el = tabRefs.current[TABS.findIndex(t => t.key === active)]
+    if (el) setTabSlider({ x: el.offsetLeft, w: el.offsetWidth })
+  }, [active])
 
   return (
     <AppShell>
@@ -855,7 +998,7 @@ function SettingsPageInner() {
               width: tabSlider.w, borderRadius: 12,
               backgroundColor: 'var(--primary)',
               transform: `translateX(${tabSlider.x}px)`,
-              transition: tabInstant ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+              transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
               zIndex: 0,
             }} />
           )}

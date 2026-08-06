@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, X, Plus, ChevronDown } from '@/lib/icons'
+import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, AlarmWarning, Send, X, Plus, ChevronDown } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -272,9 +272,11 @@ export default function ComposePage() {
                 <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 25MB，支持拖拽上传</span>
               </div>
               <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date(Date.now() + 3600000).toISOString().slice(0, 16))}
-                className="flex items-center gap-2 h-8 px-4 rounded-[8px] transition-opacity hover:opacity-80"
-                style={{ backgroundColor: scheduleAt ? 'var(--danger-bg)' : 'var(--muted)', color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }}>
-                <Clock className="w-[18px] h-[18px]" style={{ color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }} /> {scheduleAt ? '取消定时' : '定时发送'}
+                className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80"
+                style={{ backgroundColor: scheduleAt ? 'var(--danger-bg)' : 'var(--muted)', borderColor: scheduleAt ? 'var(--danger)' : 'transparent', borderWidth: scheduleAt ? 0 : 0, borderStyle: 'solid' }}>
+                <i className="ri-alarm-warning-line w-4 h-4" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }} />
+                <span className="text-[12px] font-medium" style={{ color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }}>{scheduleAt ? '取消定时' : '定时发送'}</span>
+                <i className="ri-arrow-down-s-line w-3 h-3" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground-tertiary)' }} />
               </button>
             </div>
 

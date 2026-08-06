@@ -93,15 +93,11 @@ export default function Dashboard() {
               <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>邮件概览与同步状态</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 h-[40px] px-4 rounded-[8px]" style={{ backgroundColor: 'rgba(243,237,227,1)', padding: '8px 16px' }}>
-            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current" strokeWidth="1.8" style={{ color: 'rgba(139,115,85,1)' }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span className="text-[13px] font-medium" style={{ color: 'rgba(107,91,79,1)' }}>{dateStr}</span>
-          </div>
+          <button className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80" style={{ backgroundColor: 'var(--muted)', borderColor: 'transparent', borderWidth: 0, borderStyle: 'solid' }}>
+            <i className="ri-calendar-line w-4 h-4" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground-secondary)' }} />
+            <span className="text-[12px] font-medium" style={{ color: 'var(--foreground-secondary)' }}>{dateStr}</span>
+            <i className="ri-arrow-down-s-line w-3 h-3" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground-tertiary)' }} />
+          </button>
         </div>
 
         {/* Stats cards */}

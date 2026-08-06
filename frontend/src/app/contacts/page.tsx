@@ -75,13 +75,13 @@ function ContactCard({ contact }: { contact: Contact }) {
       <div className="flex flex-col gap-2 mb-4">
         {contact.email && (
           <div className="flex items-center gap-2">
-            <i className="ri-mail-line" style={{ fontSize: 16, color: '#b8a88a' }} />
+            <MailIcon className="w-4 h-4 shrink-0" style={{ color: '#b8a88a' }} />
             <span style={{ fontSize: 13, color: '#6b5b4f' }}>{contact.email}</span>
           </div>
         )}
         {contact.phone && (
           <div className="flex items-center gap-2">
-            <i className="ri-phone-line" style={{ fontSize: 16, color: '#b8a88a' }} />
+            <Phone className="w-4 h-4 shrink-0" style={{ color: '#b8a88a' }} />
             <span style={{ fontSize: 13, color: '#6b5b4f' }}>{contact.phone}</span>
           </div>
         )}
@@ -98,7 +98,7 @@ function ContactCard({ contact }: { contact: Contact }) {
             fontWeight: 500,
           }}
         >
-          <i className="ri-send-plane-line" style={{ fontSize: 14 }} />
+          <SendPlane className="w-[14px] h-[14px]" style={{ color: style.text }} />
           发邮件
         </button>
       </div>

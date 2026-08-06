@@ -271,7 +271,7 @@ function AppearancePanel() {
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" style={{ color: isActive ? '#ffffff' : 'rgba(107,91,79,1)' }} />
                   {t.name}
                 </button>
               )
@@ -314,7 +314,7 @@ function AppearancePanel() {
               const next = sizes[Math.max(0, idx - 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
-              <Minus className="w-4 h-4" />
+              <Minus className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} />
             </button>
             <div className="px-4 py-1.5 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)', minWidth: 95, textAlign: 'center' }}>
               <span className="text-[14px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>
@@ -326,7 +326,7 @@ function AppearancePanel() {
               const next = sizes[Math.min(sizes.length - 1, idx + 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}>
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" style={{ color: 'rgba(107,91,79,1)' }} />
             </button>
           </div>
         </div>
@@ -433,11 +433,11 @@ function StoragePanel() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
-              <Folder className="w-[18px] h-[18px] shrink-0" />
+              <Folder className="w-[18px] h-[18px] shrink-0" style={{ color: 'rgba(201,169,110,1)' }} />
               <span className="text-[13px]" style={{ color: 'rgba(61,43,31,1)' }}>/mnt/nas/lzmail/archives</span>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
-              <Edit className="w-[18px] h-[18px] shrink-0" />
+              <Edit className="w-[18px] h-[18px] shrink-0" style={{ color: 'rgba(107,91,79,1)' }} />
             </div>
           </div>
         </div>

@@ -44,7 +44,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'rgba(196,61,61,1)', paddingLeft: 20, paddingRight: 20 }}
         >
-          <FlowChart className="w-[18px] h-[18px]" />
+          <FlowChart className="w-[18px] h-[18px]" style={{ color: 'rgba(255,255,255,0.9)' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>
@@ -136,7 +136,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
               style={{ border: '0.7px dashed rgba(201,169,110,1)' }}
             >
-              <Plus className="w-[18px] h-[18px]" />
+              <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
             </div>
             <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>
           </a>

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, X, Plus } from '@/lib/icons'
+import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, X, Plus, ChevronDown } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -26,8 +26,10 @@ export default function ComposePage() {
   const [scheduleAt, setScheduleAt] = useState('')
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
+  const [showSenderPicker, setShowSenderPicker] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const senderPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -135,20 +137,47 @@ export default function ComposePage() {
             {/* 发件人 */}
             <div className="flex items-center gap-4 pb-4">
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
-              <div className="flex items-center gap-2 flex-1 min-w-0 h-[41px] rounded-[8px] px-4"
-                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
-                <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
-                  {(selectedAccount?.name || 'G')[0].toUpperCase()}
-                </span>
-                <input value={selectedAccount?.email || ''} readOnly
-                  className="flex-1 min-w-0 outline-none text-[14px] bg-transparent"
-                  style={{ color: 'var(--foreground)' }} />
-                <button onClick={() => router.push('/contacts')}
-                  className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
-                  style={{ color: 'var(--foreground-secondary)' }} title="添加联系人">
-                  <Plus className="w-4 h-4" />
+              <div className="relative flex-1 min-w-0" ref={senderPickerRef}>
+                <button
+                  className="flex items-center gap-2 w-full h-[41px] rounded-[8px] px-4 transition-all hover:border-[rgba(196,61,61,0.4)] focus:border-[rgba(196,61,61,0.6)]"
+                  style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}
+                  onClick={() => { if (!showSenderPicker) setShowSenderPicker(true) }}
+                >
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                    style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
+                    {(selectedAccount?.name || 'G')[0].toUpperCase()}
+                  </span>
+                  <span className="flex-1 min-w-0 text-[14px] font-medium text-left truncate"
+                    style={{ color: selectedAccount ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
+                    {selectedAccount ? selectedAccount.email : '选择账号'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0 transition-transform" style={{ color: 'var(--foreground-tertiary)', transform: showSenderPicker ? 'rotate(180deg)' : 'none' }} />
                 </button>
+                {showSenderPicker && (
+                  <div className="absolute z-50 top-full mt-1 left-0 rounded-[12px] overflow-hidden"
+                    style={{ backgroundColor: '#ffffff', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 240 }}>
+                    {accounts.map(account => (
+                      <div key={account.id}
+                        className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
+                        onClick={() => { setAccountId(account.id); setShowSenderPicker(false) }}>
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                          style={{ backgroundColor: account.brand_color || 'var(--gmail)' }}>
+                          {(account.name || 'G')[0].toUpperCase()}
+                        </span>
+                        <span className="flex-1 min-w-0 text-[13px] font-medium truncate" style={{ color: 'var(--foreground)' }}>{account.email}</span>
+                        {account.id === accountId && (
+                          <span className="text-[12px] shrink-0" style={{ color: 'rgba(196,61,61,1)' }}>✓</span>
+                        )}
+                      </div>
+                    ))}
+                    <div className="border-t flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
+                      style={{ borderColor: 'rgba(229,217,196,1)', color: 'var(--foreground-secondary)', fontSize: 12 }}
+                      onClick={() => { router.push('/settings?tab=account'); setShowSenderPicker(false) }}>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>添加账号</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -61,16 +61,16 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   padding: '12px 16px',
                 }}
               >
-                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
                 <span className="flex-1 text-[14px]" style={{
-                  color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
+                  color: active ? 'rgba(196,61,61,1)' : 'var(--foreground)',
                   fontWeight: active ? '600' : '500',
                 }}>{item.label}</span>
                 {item.badge != null && (
                   <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
                     style={{
                       backgroundColor: item.badgeStyle === 'gold' ? 'rgba(229,217,196,1)' : 'rgba(196,61,61,1)',
-                      color: item.badgeStyle === 'gold' ? 'rgba(107,91,79,1)' : '#fff',
+                      color: item.badgeStyle === 'gold' ? 'var(--foreground-secondary)' : '#fff',
                       fontWeight: item.badgeStyle === 'gold' ? '500' : '600',
                     }}
                   >{item.badge}</span>
@@ -94,9 +94,9 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               className="flex items-center gap-2 rounded-[8px] transition-colors"
               style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
             >
-              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
               <span className="flex-1 text-[14px]" style={{
-                color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
+                color: active ? 'rgba(196,61,61,1)' : 'var(--foreground)',
                 fontWeight: active ? '600' : '500',
               }}>{item.label}</span>
             </a>
@@ -107,7 +107,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
       <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
 
       <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>
-        <div className="text-[11px] font-semibold" style={{ color: 'rgba(184,168,138,1)', padding: '0 16px' }}>邮箱账号</div>
+        <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)', padding: '0 16px' }}>邮箱账号</div>
         <div style={{ paddingTop: 16 }} className="space-y-1">
           {accounts.map((a) => {
             const ac = a.brand_color || '#ea4335'
@@ -121,10 +121,10 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'rgba(61,43,31,1)' }}>{a.name || a.email}</div>
-                  <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'rgba(184,168,138,1)' }}>{a.email}</div>
+                  <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
+                  <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{a.email}</div>
                 </div>
-                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'rgba(201,169,110,1)' : 'rgba(91,140,90,1)' }} />
+                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'var(--gold)' : 'rgba(91,140,90,1)' }} />
               </div>
             )
           })}
@@ -134,11 +134,11 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             onClick={(e) => { e.preventDefault(); router.push('/settings?tab=account') }}
           >
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-              style={{ border: '0.7px dashed rgba(201,169,110,1)' }}
+              style={{ border: '0.7px dashed var(--gold)' }}
             >
-              <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
+              <Plus className="w-[18px] h-[18px]" style={{ color: 'var(--gold)' }} />
             </div>
-            <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>
+            <span className="text-[13px] font-medium" style={{ color: 'var(--gold)' }}>添加账号</span>
           </a>
         </div>
       </div>

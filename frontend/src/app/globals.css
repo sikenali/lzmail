@@ -209,6 +209,26 @@ h1, .font-display {
   box-shadow: var(--card-shadow);
 }
 
+/* Page transition animations */
+.page-enter {
+  animation: pageSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.no-animations .page-enter {
+  animation: none;
+}
+
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Tiptap Editor styles */
 .ProseMirror {
   outline: none;

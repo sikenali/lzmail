@@ -57,13 +57,19 @@ export function useSettings() {
   useEffect(() => {
     if (loaded.current) return
     loaded.current = true
-    
+
     // Initialize theme before fetching settings (use system/localStorage default)
     const saved = localStorage.getItem('lzmail_theme')
-    const initialTheme = saved && ['light', 'dark', 'system'].includes(saved) 
-      ? saved 
+    const initialTheme = saved && ['light', 'dark', 'system'].includes(saved)
+      ? saved
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     applyTheme(initialTheme)
+
+    // Initialize animations setting on document
+    const savedAnimations = localStorage.getItem('lzmail_animations')
+    if (savedAnimations === 'false') {
+      document.body.classList.add('no-animations')
+    }
 
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
@@ -73,6 +79,13 @@ export function useSettings() {
       // Apply accent color
       const accentColor = s?.accent_color || defaults.accent_color
       applyAccentColor(accentColor)
+      // Apply animations
+      const anims = s?.animations || defaults.animations
+      if (anims === 'false') {
+        document.body.classList.add('no-animations')
+      } else {
+        document.body.classList.remove('no-animations')
+      }
     }).catch(() => {
       setSettings(defaults)
       // Use saved theme or system preference on error
@@ -80,6 +93,10 @@ export function useSettings() {
       // Apply saved accent color
       const savedAccent = localStorage.getItem('lzmail_accent_color')
       if (savedAccent) applyAccentColor(savedAccent)
+      // Apply saved animations
+      if (savedAnimations === 'false') {
+        document.body.classList.add('no-animations')
+      }
     })
     setLoading(false)
   }, [])
@@ -87,13 +104,20 @@ export function useSettings() {
   const setSetting = useCallback((key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
     api.settings.set({ [key]: value }).catch(() => {})
-    
+
     if (key === 'theme') {
       applyTheme(value)
       localStorage.setItem('lzmail_theme', value)
     }
     if (key === 'accent_color') {
       applyAccentColor(value)
+    }
+    if (key === 'animations') {
+      if (value === 'false') {
+        document.body.classList.add('no-animations')
+      } else {
+        document.body.classList.remove('no-animations')
+      }
     }
   }, [])
 

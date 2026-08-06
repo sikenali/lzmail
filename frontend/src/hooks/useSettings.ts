@@ -87,12 +87,6 @@ export function useSettings() {
       document.body.classList.add('no-animations')
     }
 
-    // Initialize animations setting on document
-    const savedAnimations = localStorage.getItem('lzmail_animations')
-    if (savedAnimations === 'false') {
-      document.body.classList.add('no-animations')
-    }
-
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
       // Apply theme: prefer saved theme from localStorage, fallback to API or default

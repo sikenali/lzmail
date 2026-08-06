@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, FlowChart } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, PenNib } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
@@ -41,10 +41,10 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16 }}>
       <div>
         <a href="/compose"
-          className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
+          className="flex items-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'rgba(196,61,61,1)', paddingLeft: 20, paddingRight: 20 }}
         >
-          <FlowChart className="w-[18px] h-[18px]" style={{ color: 'rgba(255,255,255,0.9)' }} />
+          <PenNib className="w-[18px] h-[18px]" style={{ color: 'rgba(255,255,255,0.9)' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>

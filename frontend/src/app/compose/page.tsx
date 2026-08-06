@@ -242,7 +242,7 @@ export default function ComposePage() {
                     border: dragOver ? '1.5px dashed var(--primary)' : 'none',
                     color: 'var(--foreground-secondary)',
                   }}>
-                  <Paperclip className="w-[18px] h-[18px]" /> 添加附件
+                  <Paperclip className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /> 添加附件
                 </label>
                 <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 25MB，支持拖拽上传</span>
               </div>

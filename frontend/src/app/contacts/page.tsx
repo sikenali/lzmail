@@ -61,7 +61,7 @@ function ContactCard({ contact }: { contact: Contact }) {
             <span style={{ fontSize: 16, fontWeight: 600, color: '#3d2b1f', lineHeight: '22px' }}>
               {contact.name || '(无名)'}
             </span>
-            <Star className="w-4 h-4 shrink-0" />
+            <Star className="w-4 h-4 shrink-0" style={{ color: '#b8a88a' }} />
           </div>
           {contact.title && (
             <span style={{ fontSize: 13, color: '#8b7355', lineHeight: '18px' }}>

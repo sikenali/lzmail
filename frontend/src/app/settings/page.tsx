@@ -372,7 +372,7 @@ function AppearancePanel() {
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className="w-4 h-4" style={{ color: active ? '#ffffff' : 'rgba(107,91,79,1)' }} />
                   {item.label}
                 </button>
               )

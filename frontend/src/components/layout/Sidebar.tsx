@@ -61,7 +61,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   padding: '12px 16px',
                 }}
               >
-                <item.icon className="w-[20px] h-[20px] shrink-0" />
+                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
                 <span className="flex-1 text-[14px]" style={{
                   color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                   fontWeight: active ? '600' : '500',
@@ -94,7 +94,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               className="flex items-center gap-2 rounded-[8px] transition-colors"
               style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
             >
-              <item.icon className="w-[20px] h-[20px] shrink-0" />
+              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
               <span className="flex-1 text-[14px]" style={{
                 color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                 fontWeight: active ? '600' : '500',

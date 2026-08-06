@@ -16,9 +16,15 @@ const navItems = [
   { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
 
-// Sidebar remounts on every route change; keep the pill's last position in module
+const secondaryNavItems = [
+  { icon: Contact, label: '联系人', href: '/contacts' },
+  { icon: Settings, label: '设置', href: '/settings' },
+]
+
+// Sidebar remounts on every route change; keep each pill's last position in module
 // scope so a fresh mount can slide continuously from the previous nav item.
 let lastSliderPos: { top: number; height: number } | null = null
+let lastSecondarySliderPos: { top: number; height: number } | null = null
 
 export function Sidebar({ currentPath }: { currentPath: string }) {
   const router = useRouter()
@@ -26,7 +32,9 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   const [counts, setCounts] = useState<Record<string, number> | null>(null)
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
+  const secondaryNavRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
+  const [secondarySliderPos, setSecondarySliderPos] = useState<{ top: number; height: number } | null>(lastSecondarySliderPos)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
@@ -49,6 +57,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   }
 
   const activeIndex = navItems.findIndex(item => isActive(item.href))
+  const secondaryActiveIndex = secondaryNavItems.findIndex(item => isActive(item.href))
 
     // Highlight pill: on a fresh mount it starts where the previous route's pill
   // was, then this effect runs AFTER the browser paints that old position, so
@@ -61,6 +70,14 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     lastSliderPos = target
     setSliderPos(target)
   }, [activeIndex])
+
+  useEffect(() => {
+    const el = secondaryNavRefs.current[secondaryActiveIndex]
+    if (!el) return
+    const target = { top: el.offsetTop, height: el.offsetHeight }
+    lastSecondarySliderPos = target
+    setSecondarySliderPos(target)
+  }, [secondaryActiveIndex])
 
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16, backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
@@ -120,16 +137,25 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
 
   <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'var(--sidebar-border)' }} />
 
-      <div className="space-y-1" style={{ paddingTop: 16 }}>
-        {[
-          { icon: Contact, label: '联系人', href: '/contacts' },
-          { icon: Settings, label: '设置', href: '/settings' },
-        ].map(item => {
+      <div className="space-y-1" style={{ paddingTop: 16, position: 'relative' }}>
+        {secondarySliderPos && (
+          <div className="nav-slider" style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            height: secondarySliderPos.height,
+            backgroundColor: 'var(--primary-light)',
+            borderRadius: 8,
+            transform: `translateY(${secondarySliderPos.top}px)`,
+            transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+            pointerEvents: 'none',
+          }} />
+        )}
+        {secondaryNavItems.map((item, i) => {
           const active = isActive(item.href)
           return (
             <Link key={item.href} href={item.href}
+              ref={el => { secondaryNavRefs.current[i] = el }}
               className="flex items-center gap-2 rounded-[8px] transition-colors"
-              style={{ padding: '12px 16px', backgroundColor: active ? 'var(--primary-light)' : 'transparent' }}
+              style={{ padding: '12px 16px', backgroundColor: 'transparent' }}
             >
               <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'var(--primary)' : 'var(--foreground-secondary)' }} />
               <span className="flex-1 text-[14px]" style={{

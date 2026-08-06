@@ -1,10 +1,10 @@
 'use client'
-import { Suspense, useEffect, useRef, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download, Calendar, ArrowLeft, ChevronRight } from '@/lib/icons'
+import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -32,122 +32,19 @@ function MailPageInner() {
   const [folderMoveOpen, setFolderMoveOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sortAsc, setSortAsc] = useState(false)
-  const [dateFilterOpen, setDateFilterOpen] = useState(false)
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
-  const dateFilterRef = useRef<HTMLDivElement>(null)
-  // 日历面板的月份（用于切换）
-  const [calFromYear, setCalFromYear] = useState(new Date().getFullYear())
-  const [calFromMonth, setCalFromMonth] = useState(new Date().getMonth())
-  const [calToYear, setCalToYear] = useState(new Date().getFullYear())
-  const [calToMonth, setCalToMonth] = useState(new Date().getMonth())
 
   useSSE(() => setRefresh(n => n + 1))
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dateFilterRef.current && !dateFilterRef.current.contains(e.target as Node)) {
-        setDateFilterOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const formatDate = (d: string) => {
-    if (!d) return ''
-    const dt = new Date(d)
-    const y = dt.getFullYear()
-    const m = String(dt.getMonth() + 1).padStart(2, '0')
-    const day = String(dt.getDate()).padStart(2, '0')
-    return `${y}年${m}月${day}日`
-  }
-
-  const formatDateISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-
-  // ── 日历网格组件 ──────────────────────────────────────────────
-  const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
-  const CalendarGrid = ({
-    year, month, mode, selected, onSelect,
-  }: {
-    year: number; month: number; mode: 'from' | 'to'
-    selected?: string; onSelect: (d: string) => void
-  }) => {
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const today = formatDateISO(new Date())
-    const prevMonth = () => {
-      if (mode === 'from') setCalFromMonth(m => { if (m === 0) { setCalFromYear(y => y - 1); return 11 } return m - 1 })
-      else setCalToMonth(m => { if (m === 0) { setCalToYear(y => y - 1); return 11 } return m - 1 })
-    }
-    const nextMonth = () => {
-      if (mode === 'from') setCalFromMonth(m => { if (m === 11) { setCalFromYear(y => y + 1); return 0 } return m + 1 })
-      else setCalToMonth(m => { if (m === 11) { setCalToYear(y => y + 1); return 0 } return m + 1 })
-    }
-    const cells: (number | null)[] = []
-    for (let i = 0; i < firstDay; i++) cells.push(null)
-    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-    while (cells.length % 7) cells.push(null)
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-[6px] transition-colors hover:bg-[rgba(243,237,227,1)]" style={{ color: 'var(--foreground-secondary)' }}>
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <span className="text-[13px] font-semibold" style={{ color: 'var(--foreground)' }}>{year}年{month + 1}月</span>
-          <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-[6px] transition-colors hover:bg-[rgba(243,237,227,1)]" style={{ color: 'var(--foreground-secondary)' }}>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-7 mb-1">
-          {WEEKDAYS.map(w => (
-            <div key={w} className="text-center text-[11px] font-medium py-1" style={{ color: 'rgba(184,168,138,1)' }}>{w}</div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {cells.map((day, i) => {
-            if (day === null) return <div key={i} />
-            const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-            const isToday = ds === today
-            const isSelected = ds === selected
-            return (
-              <button
-                key={i}
-                onClick={() => onSelect(ds)}
-                className="h-8 flex items-center justify-center rounded-[6px] text-[12px] font-medium transition-all"
-                style={{
-                  color: isSelected ? '#ffffff' : isToday ? 'rgba(196,61,61,1)' : 'var(--foreground)',
-                  backgroundColor: isSelected ? 'rgba(196,61,61,1)' : isToday ? 'rgba(253,242,242,1)' : 'transparent',
-                }}
-              >
-                {day}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  const handleFromSelect = (d: string) => {
-    setFromDate(d)
-    if (toDate && d > toDate) setToDate(d)
-  }
-  const handleToSelect = (d: string) => {
-    setToDate(d)
-    if (fromDate && d < fromDate) setFromDate(d)
-  }
 
   const loadEmails = useCallback(async () => {
     setLoading(true)
     try {
       const data = debouncedSearch
         ? await api.mails.search(debouncedSearch)
-        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, 50, 0, fromDate || undefined, toDate || undefined)
+        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, 50, 0)
       setEmails(data || [])
     } catch { setEmails([]) }
     setLoading(false)
-  }, [folder, debouncedSearch, fromDate, toDate])
+  }, [folder, debouncedSearch])
 
   useEffect(() => { loadEmails() }, [loadEmails, refresh])
 
@@ -271,101 +168,10 @@ function MailPageInner() {
                   <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--foreground-secondary)' }} />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+               <div className="flex items-center gap-2">
                  <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
                  </button>
-                 <div ref={dateFilterRef} className="relative">
-                   <button onClick={() => setDateFilterOpen(v => !v)} className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80" style={{ backgroundColor: fromDate || toDate ? 'rgba(196,61,61,0.08)' : 'var(--muted)', borderColor: (fromDate || toDate) ? 'rgba(196,61,61,0.3)' : 'transparent', borderWidth: fromDate || toDate ? '1px' : '0', borderStyle: 'solid' }}>
-                     <Calendar className="w-4 h-4" style={{ color: (fromDate || toDate) ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
-                     <span className="text-[12px] font-medium" style={{ color: (fromDate || toDate) ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }}>
-                       {fromDate || toDate ? formatDate(fromDate || '') + (toDate ? ' ~ ' + formatDate(toDate) : '') : '日期'}
-                     </span>
-                     <ChevronDown className="w-3 h-3" style={{ color: 'var(--foreground-tertiary)' }} />
-                   </button>
-                   {dateFilterOpen && (
-                     <div
-                       className="absolute z-50 top-full mt-1 right-0 rounded-[12px] overflow-hidden"
-                       style={{ backgroundColor: '#ffffff', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: 16, width: 340 }}
-                       onClick={e => e.stopPropagation()}
-                     >
-                       {/* 标签 */}
-                       <div className="flex gap-6 mb-3">
-                         <div>
-                           <div className="text-[11px] font-semibold mb-2" style={{ color: 'rgba(184,168,138,1)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>开始日期</div>
-                           <CalendarGrid
-                             year={calFromYear} month={calFromMonth} mode="from"
-                             selected={fromDate} onSelect={handleFromSelect}
-                           />
-                         </div>
-                         <div>
-                           <div className="text-[11px] font-semibold mb-2" style={{ color: 'rgba(184,168,138,1)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>结束日期</div>
-                           <CalendarGrid
-                             year={calToYear} month={calToMonth} mode="to"
-                             selected={toDate} onSelect={handleToSelect}
-                           />
-                         </div>
-                       </div>
-                       {/* 快捷日期 */}
-                       <div className="flex flex-wrap gap-1.5 mb-3">
-                         {([
-                           { label: '今天', from: '', to: '' },
-                           { label: '昨天', from: 'yesterday', to: 'yesterday' },
-                           { label: '近7天', from: '7d', to: '' },
-                           { label: '近30天', from: '30d', to: '' },
-                           { label: '本月', from: 'thisMonth', to: '' },
-                         ] as const).map(({ label, from, to }) => (
-                           <button
-                             key={label}
-                             onClick={() => {
-                               const now = new Date()
-                               const y = now.getFullYear()
-                               const m = String(now.getMonth() + 1).padStart(2, '0')
-                               const d = String(now.getDate()).padStart(2, '0')
-                               const todayStr = `${y}-${m}-${d}`
-                               const setDates = (f: string, t: string) => {
-                               if (f === 'yesterday') {
-                                 const d = new Date(); d.setDate(d.getDate() - 1)
-                                 setFromDate(formatDateISO(d)); setToDate(formatDateISO(d))
-                               } else if (f === todayStr) {
-                                 setFromDate(todayStr); setToDate(todayStr)
-                               } else if (f === '7d') {
-                                 const d = new Date(); d.setDate(d.getDate() - 7); setFromDate(formatDateISO(d)); setToDate(todayStr)
-                               } else if (f === '30d') {
-                                 const d = new Date(); d.setDate(d.getDate() - 30); setFromDate(formatDateISO(d)); setToDate(todayStr)
-                               } else if (f === 'thisMonth') {
-                                 const d = new Date(); d.setDate(1); setFromDate(formatDateISO(d)); setToDate(todayStr)
-                               } else {
-                                 setFromDate(f); setToDate(t)
-                               }
-                             }
-                               setDates(from, to)
-                               setDateFilterOpen(false)
-                               setRefresh(n => n + 1)
-                             }}
-                             className="px-2.5 h-[26px] rounded-[6px] text-[11px] font-medium transition-all"
-                             style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}
-                           >
-                             {label}
-                           </button>
-                         ))}
-                       </div>
-                       {/* 操作按钮 */}
-                       <div className="flex gap-2 pt-2" style={{ borderTop: '0.7px solid rgba(229,217,196,1)' }}>
-                         <button
-                           onClick={() => { setFromDate(''); setToDate(''); setDateFilterOpen(false); setRefresh(n => n + 1) }}
-                           className="flex-1 h-[32px] rounded-[8px] text-[12px] font-medium transition-opacity hover:opacity-80"
-                           style={{ border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground-tertiary)' }}
-                         >清除</button>
-                         <button
-                           onClick={() => { setDateFilterOpen(false); setRefresh(n => n + 1) }}
-                           className="flex-1 h-[32px] rounded-[8px] text-[12px] font-medium transition-opacity hover:opacity-80"
-                           style={{ backgroundColor: 'rgba(196,61,61,1)', color: '#ffffff' }}
-                         >确定</button>
-                       </div>
-                     </div>
-                   )}
-                 </div>
                  <button className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                    <Filter className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
                  </button>

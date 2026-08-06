@@ -67,8 +67,11 @@ export default function Dashboard() {
   const storageCap = (stats as any)?.storage_limit || 50 * 1024 * 1024 * 1024
   const storagePct = storageCap > 0 ? Math.round(((storageBytes / storageCap) * 100)) : 0
 
-  const today = new Date()
-  const dateStr = `${today.getFullYear()}年${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const t = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}`
+  })
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',
@@ -102,11 +105,10 @@ export default function Dashboard() {
               <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>邮件概览与同步状态</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80" style={{ backgroundColor: 'var(--muted)', borderColor: 'transparent', borderWidth: 0, borderStyle: 'solid' }}>
-            <i className="ri-calendar-line w-4 h-4" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground-secondary)' }} />
-            <span className="text-[12px] font-medium" style={{ color: 'var(--foreground-secondary)' }}>{dateStr}</span>
-            <i className="ri-arrow-down-s-line w-3 h-3" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground-tertiary)' }} />
-          </button>
+          <input id="dashboard-date-input" type="datetime-local" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+            className="px-3 h-9 rounded-lg text-sm outline-none cursor-pointer"
+            style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
+          />
         </div>
 
         {/* Stats cards */}

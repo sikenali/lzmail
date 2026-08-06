@@ -138,21 +138,24 @@ export default function ComposePage() {
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
               <div className="relative flex-1 min-w-0">
                 <button
-                  className="flex items-center gap-2 w-full h-[41px] rounded-[8px] px-4 transition-all hover:border-[rgba(196,61,61,0.4)] focus:border-[rgba(196,61,61,0.6)]"
+                  className="flex items-center gap-2 w-full h-[41px] rounded-[8px] px-4 transition-all hover:border-[rgba(196,61,61,0.4)]"
                   style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}
-                  onClick={() => { if (!showSenderPicker) setShowSenderPicker(true) }}
+                  onClick={() => setShowSenderPicker(v => !v)}
                 >
                   <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                     style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
                     {(selectedAccount?.name || 'G')[0].toUpperCase()}
                   </span>
                   <span className="flex-1 min-w-0 text-[14px] font-medium text-left truncate"
-                    style={{ color: selectedAccount ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
-                    {selectedAccount ? selectedAccount.email : '选择账号'}
+                    style={{ color: 'var(--foreground)' }}>
+                    {selectedAccount?.email || '选择账号'}
                   </span>
-                  <ChevronDown className="w-4 h-4 shrink-0 transition-transform" style={{ color: 'var(--foreground-tertiary)', transform: showSenderPicker ? 'rotate(180deg)' : 'none' }} />
+                  {accounts.length > 1 && (
+                    <ChevronDown className="w-4 h-4 shrink-0 transition-transform duration-200"
+                      style={{ color: 'var(--foreground-tertiary)', transform: showSenderPicker ? 'rotate(180deg)' : 'none' }} />
+                  )}
                 </button>
-                {showSenderPicker && (
+                {showSenderPicker && accounts.length > 1 && (
                   <div className="absolute z-50 top-full mt-1 left-0 rounded-[12px] overflow-hidden"
                     style={{ backgroundColor: '#ffffff', border: '0.7px solid rgba(229,217,196,1)', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 240 }}>
                     {accounts.map(account => (
@@ -169,12 +172,6 @@ export default function ComposePage() {
                         )}
                       </div>
                     ))}
-                    <div className="border-t flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
-                      style={{ borderColor: 'rgba(229,217,196,1)', color: 'var(--foreground-secondary)', fontSize: 12 }}
-                      onClick={() => { router.push('/settings?tab=account'); setShowSenderPicker(false) }}>
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>添加账号</span>
-                    </div>
                   </div>
                 )}
               </div>

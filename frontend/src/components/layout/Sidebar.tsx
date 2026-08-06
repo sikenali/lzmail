@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit } from '@/lib/icons'
@@ -16,9 +16,16 @@ const navItems = [
   { icon: Trash2, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
 
+// Sidebar remounts on every route change; keep the pill's last position in module
+// scope so a fresh mount can slide continuously from the previous nav item.
+let lastSliderPos: { top: number; height: number } | null = null
+
 export function Sidebar({ currentPath }: { currentPath: string }) {
   const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
+  const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
+  const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
+  const [instant, setInstant] = useState<boolean>(!!lastSliderPos)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
@@ -38,6 +45,25 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     return false
   }
 
+  const activeIndex = navItems.findIndex(item => isActive(item.href))
+
+  // Animate the highlight pill: on a fresh mount it starts where the previous
+  // route's pill was, then glides to the current nav item.
+  useLayoutEffect(() => {
+    const el = navRefs.current[activeIndex]
+    if (!el) return
+    const target = { top: el.offsetTop, height: el.offsetHeight }
+    lastSliderPos = target
+    if (instant) {
+      const raf = requestAnimationFrame(() => {
+        setInstant(false)
+        setSliderPos(target)
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+    setSliderPos(target)
+  }, [activeIndex, instant])
+
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16, backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
       <div>
@@ -51,14 +77,26 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
       </div>
 
       <div style={{ paddingTop: 24 }}>
-        <div className="space-y-1">
-          {navItems.map((item) => {
+        <div className="space-y-1" style={{ position: 'relative' }}>
+          {sliderPos && (
+            <div className="nav-slider" style={{
+              position: 'absolute', top: 0, left: 0, right: 0,
+              height: sliderPos.height,
+              backgroundColor: 'var(--primary-light)',
+              borderRadius: 8,
+              transform: `translateY(${sliderPos.top}px)`,
+              transition: instant ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+              pointerEvents: 'none',
+            }} />
+          )}
+          {navItems.map((item, i) => {
             const active = isActive(item.href)
             return (
               <Link key={item.href} href={item.href}
+                ref={el => { navRefs.current[i] = el }}
                 className="flex items-center gap-2 rounded-[8px] transition-colors"
                 style={{
-                  backgroundColor: active ? 'var(--primary-light)' : 'transparent',
+                  backgroundColor: 'transparent',
                   padding: '12px 16px',
                 }}
               >

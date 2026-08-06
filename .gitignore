@@ -1,11 +1,11 @@
-node_modules/
-.next/
+*.db
 *.exe
-data/
+.next/
 archives/
 backend/lzmail
-frontend/tsconfig.tsbuildinfo
-*.db
 data/
-archives/
+frontend/tsconfig.tsbuildinfo
+node_modules/
 scratch/
+.env
+config/

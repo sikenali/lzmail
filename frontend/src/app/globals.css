@@ -218,6 +218,10 @@ h1, .font-display {
   animation: none;
 }
 
+.no-animations .nav-slider {
+  transition: none !important;
+}
+
 @keyframes pageSlideIn {
   from {
     opacity: 0;

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
@@ -14,6 +14,7 @@ import {
   Grid2x2, Columns2,
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
   LayoutRow, CollapseVertical,
+  Eye, EyeOff,
 } from '@/lib/icons'
 
 // ── Custom Select Component ─────────────────────────────────────
@@ -150,6 +151,7 @@ function AccountPanel() {
   })
   const [saving, setSaving] = useState(false)
   const [provider, setProvider] = useState<ProviderKey>('auto')
+  const [showPassword, setShowPassword] = useState(false)
 
   const configFor = (key: ProviderKey) =>
     key === 'auto' || key === 'other' ? null : PROVIDER_CONFIG[key]
@@ -321,8 +323,13 @@ function AccountPanel() {
             </div>
             <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
               className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
-            <input type="password" placeholder={editingId ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-              className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent col-span-1" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+            <div className="relative col-span-1">
+              <input type={showPassword ? 'text' : 'password'} placeholder={editingId ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                className="h-9 px-3 rounded-lg outline-none text-sm bg-transparent w-full" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)', paddingRight: '36px' }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--accent)]" aria-label={showPassword ? '隐藏密码' : '显示密码'}>
+                {showPassword ? <EyeOff className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /> : <Eye className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />}
+              </button>
+            </div>
           </div>
 
           {activeProvider && (
@@ -801,12 +808,31 @@ function SettingsPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [active, setActive] = useState('account')
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [tabSlider, setTabSlider] = useState<{ x: number; w: number } | null>(null)
+  const [tabInstant, setTabInstant] = useState(true)
+
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab && Object.hasOwn({ account: 1, appearance: 1, storage: 1, about: 1 }, tab)) setActive(tab)
   }, [searchParams])
   const panels: Record<string, React.FC> = { account: AccountPanel, appearance: AppearancePanel, storage: StoragePanel, about: AboutPanel }
   const Panel = panels[active]
+
+  // Move the sliding pill to the active tab (glide on first paint too).
+  useLayoutEffect(() => {
+    const el = tabRefs.current[TABS.findIndex(t => t.key === active)]
+    if (!el) return
+    const target = { x: el.offsetLeft, w: el.offsetWidth }
+    if (tabInstant) {
+      const raf = requestAnimationFrame(() => {
+        setTabInstant(false)
+        setTabSlider(target)
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+    setTabSlider(target)
+  }, [active, tabInstant])
 
   return (
     <AppShell>
@@ -821,17 +847,28 @@ function SettingsPageInner() {
         </div>
 
         {/* Tab 导航 */}
-        <div className="inline-flex items-center gap-2 h-[40px] mb-8" style={{ backgroundColor: 'transparent' }}>
-          {TABS.map(tab => {
+        <div className="inline-flex items-center gap-2 h-[40px] mb-8" style={{ position: 'relative', backgroundColor: 'transparent' }}>
+          {tabSlider && (
+            <div className="nav-slider" style={{
+              position: 'absolute', top: 0, bottom: 0, left: 0,
+              width: tabSlider.w, borderRadius: 12,
+              backgroundColor: 'var(--primary)',
+              transform: `translateX(${tabSlider.x}px)`,
+              transition: tabInstant ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+              zIndex: 0,
+            }} />
+          )}
+          {TABS.map((tab, i) => {
             const Icon = tab.icon
             const isActive = active === tab.key
             return (
-              <button key={tab.key} onClick={() => { setActive(tab.key); router.replace(`/settings?tab=${tab.key}`) }}
-                className="flex items-center gap-2 px-5 h-full rounded-[12px] text-[14px] font-medium transition-all"
+              <button key={tab.key} ref={el => { tabRefs.current[i] = el }} onClick={() => { setActive(tab.key); router.replace(`/settings?tab=${tab.key}`) }}
+                className="flex items-center gap-2 px-5 h-full rounded-[12px] text-[14px] font-medium transition-colors"
                 style={{
-                  backgroundColor: isActive ? 'var(--primary)' : 'var(--muted)',
+                  backgroundColor: 'transparent',
                   color: isActive ? '#ffffff' : 'var(--foreground-secondary)',
                   fontFamily: isActive ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                  position: 'relative', zIndex: 1,
                 }}
               >
                 <Icon className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 export function Header({ onCompose }: { onCompose: () => void }) {
+  const router = useRouter()
   const pathname = usePathname()
   const [searchFocused, setSearchFocused] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
@@ -14,7 +15,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
 
   return (
     <div className="flex items-center justify-between h-16 px-8 shrink-0" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-4 shrink-0" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
           <svg viewBox="0 0 24 24" className="w-[22px] h-[22px] fill-none stroke-current" strokeWidth="1.8" style={{ color: 'var(--primary-foreground)' }}>
             {/* Cat head */}

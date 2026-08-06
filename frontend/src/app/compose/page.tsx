@@ -29,7 +29,6 @@ export default function ComposePage() {
   const [showSenderPicker, setShowSenderPicker] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const senderPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -137,7 +136,7 @@ export default function ComposePage() {
             {/* 发件人 */}
             <div className="flex items-center gap-4 pb-4">
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
-              <div className="relative flex-1 min-w-0" ref={senderPickerRef}>
+              <div className="relative flex-1 min-w-0">
                 <button
                   className="flex items-center gap-2 w-full h-[41px] rounded-[8px] px-4 transition-all hover:border-[rgba(196,61,61,0.4)] focus:border-[rgba(196,61,61,0.6)]"
                   style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}
@@ -186,8 +185,7 @@ export default function ComposePage() {
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>收件人</span>
               <ContactPicker
                 value={to}
-                placeholder="选择联系人或输入邮箱..."
-                onSelect={contact => setTo(prev => prev ? prev + ', ' + contact.email : contact.email)}
+                onSelect={emails => setTo(emails.join(', '))}
               />
               <div className="flex items-center gap-2 shrink-0">
                 {!showCc && <button onClick={() => setShowCc(true)} className="text-[13px] font-medium hover:opacity-70" style={{ color: '#6b8fa3' }}>抄送</button>}

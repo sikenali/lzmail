@@ -86,6 +86,11 @@ export const api = {
       fetchJSON<{ status: string }>('/api/v1/settings', { method: 'POST', body: JSON.stringify(data) }),
   },
 
+  storage: {
+    list: (path: string) =>
+      fetchJSON<{ path: string; entries: Array<{ name: string; is_dir: boolean; path: string; subdirs?: Array<{ name: string; is_dir: boolean; path: string }> }> }>(`/api/v1/storage/list?path=${encodeURIComponent(path)}`),
+  },
+
   sync: {
     all: () => fetchJSON<{ status: string }>('/api/v1/sync', { method: 'POST' }),
     account: (id: number) => fetchJSON<{ status: string }>(`/api/v1/sync?account_id=${id}`, { method: 'POST' }),

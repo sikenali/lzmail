@@ -143,6 +143,8 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/settings", h.handleGetSettings)
 	mux.HandleFunc("POST /api/v1/settings", h.handleUpdateSettings)
 
+	mux.HandleFunc("GET /api/v1/storage/list", h.handleListStorageDirs)
+
 	mux.HandleFunc("POST /api/v1/sync", rateLimitMiddleware(listLimiter, h.handleSync))
 
 	mux.HandleFunc("GET /api/v1/events", h.handleSSE)

@@ -76,6 +76,16 @@ export function useSettings() {
       document.documentElement.style.setProperty('--primary', savedAccent)
       document.documentElement.style.setProperty('--primary-light', savedAccent + '15')
     }
+    
+    // Apply saved font size immediately
+    const savedFontSize = localStorage.getItem('lzmail_font_size')
+    if (savedFontSize) applyFontSize(savedFontSize)
+    
+    // Apply saved animations state immediately
+    const savedAnimations = localStorage.getItem('lzmail_animations')
+    if (savedAnimations === 'false') {
+      document.body.classList.add('no-animations')
+    }
 
     // Initialize animations setting on document
     const savedAnimations = localStorage.getItem('lzmail_animations')
@@ -85,9 +95,12 @@ export function useSettings() {
 
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
-      // Apply theme from settings or fallback to localStorage
+      // Apply theme: prefer saved theme from localStorage, fallback to API or default
       const apiTheme = s?.theme
-      const themeToApply = (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) ? apiTheme : defaults.theme) as 'light' | 'dark' | 'system'
+      const localStorageTheme = localStorage.getItem('lzmail_theme')
+      const themeToApply = (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) 
+        ? apiTheme 
+        : (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme) ? localStorageTheme : defaults.theme)) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
       // Apply accent color
       const accentColor = s?.accent_color || defaults.accent_color

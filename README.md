@@ -145,32 +145,90 @@ npm run build
 | `PORT` | `8080` | 后端 HTTP 服务端口 |
 | `DATA_DIR` | `./data` | SQLite 数据库目录 |
 | `ARCHIVE_DIR` | `./archives` | 邮件 EML 归档根目录 |
+| `STORAGE_LIMIT_GB` | `50` | 邮件存储容量上限（GB） |
 
-### Docker 部署
+### Docker Compose 部署（推荐）
 
-```dockerfile
-FROM golang:1.25-alpine AS backend
-WORKDIR /app
-COPY backend/go.mod backend/go.sum ./
-RUN go mod download
-COPY backend ./
-RUN go build -o lzmail ./cmd/lzmail/
+```yaml
+# docker-compose.yml
+services:
+  lzmail:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GO_BASE_IMAGE: ${GO_BASE_IMAGE:-golang:1.25-alpine}
+        NODE_BASE_IMAGE: ${NODE_BASE_IMAGE:-node:20-alpine}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    image: lzmail:latest
+    container_name: lzmail-app
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+    volumes:
+      - lzmail_data:/app/data
+      - lzmail_archives:/app/archives
+    environment:
+      - BACKEND_PORT=8080
+      - FRONTEND_PORT=3000
+      - DATA_DIR=/app/data
+      - ARCHIVE_DIR=/app/archives
+      - STORAGE_LIMIT_GB=${STORAGE_LIMIT_GB:-50}
+      - TZ=${TZ:-Asia/Shanghai}
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-FROM node:20-alpine AS frontend
-WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend ./
-RUN npm run build
+volumes:
+  lzmail_data:
+    driver: local
+  lzmail_archives:
+    driver: local
+```
 
-FROM alpine:latest
-COPY --from=backend /app/lzmail /lzmail
-COPY --from=frontend /app/frontend/.next /app/.next
-COPY --from=frontend /app/frontend/node_modules /app/node_modules
-COPY --from=frontend /app/frontend/package.json /app/
-WORKDIR /app
-EXPOSE 8080
-CMD ["/lzmail"]
+```bash
+# 1. 克隆项目
+git clone https://github.com/sikenali/lzmail.git
+cd lzmail
+
+# 2. （可选）复制并修改环境变量
+cp .env.docker.example .env
+
+# 3. 构建并启动
+docker-compose up -d
+
+# 4. 查看状态与日志
+docker-compose ps
+docker-compose logs -f
+
+# 5. 升级（重建镜像并保留数据）
+docker-compose up -d --build
+```
+
+服务启动后访问 `http://localhost:3000`。
+
+- **数据持久化**：数据库存于卷 `lzmail_data`，邮件归档存于卷 `lzmail_archives`，升级重建不会丢失数据。
+- **远程访问**：将 `NEXT_PUBLIC_API_URL` 改为 `http://<服务器IP>:8080` 后需重新构建（`docker-compose up -d --build`）。
+- **镜像加速**：构建阶段拉取不稳定的场景，可将 `GO_BASE_IMAGE` / `NODE_BASE_IMAGE` 指向内部镜像缓存或 registry mirror。
+
+### Docker CLI 部署
+
+```bash
+docker build -t lzmail:latest .
+docker run -d \
+  --name lzmail-app \
+  -p 3000:3000 \
+  -p 8080:8080 \
+  -v lzmail_data:/app/data \
+  -v lzmail_archives:/app/archives \
+  -e TZ=Asia/Shanghai \
+  --restart unless-stopped \
+  lzmail:latest
 ```
 
 ### Nginx 配置
@@ -204,11 +262,21 @@ server {
 }
 ```
 
-## 声明
+## 重要声明
 
-1. **使用目的**：本工具面向个人 / 小团队私有部署，用于管理自有邮箱账号。
-2. **数据安全**：邮件密码采用 AES-GCM 加密存储，邮件正文与附件归档于本地磁盘，不上传至第三方服务器。
-3. **免责声明**：本工具按"现有状态"提供，不作任何形式的明示或默示保证。作者或版权持有人不对因使用本工具而产生的数据丢失、隐私泄露或其他责任负责。
+1. **无官方隶属关系**
+   本工具与 Microsoft、Google 及其他邮箱服务商不存在官方合作、授权、从属关系，使用本工具操作邮箱账户，必须严格遵守对应邮箱服务商用户协议、服务条款及风控规则。
+
+2. **数据存储与安全责任**
+   邮箱账号、密码等敏感凭证仅保存在本地 SQLite 数据库中。服务器 / 部署环境的运维安全、访问权限管控、防泄露防护工作由使用者全权负责，开发者不承担因服务器漏洞、配置不当导致的数据泄露责任。
+
+3. **平台接口限制说明**
+   各大邮箱服务商存在 API 调用频次限制、安全策略动态更新机制，使用工具过程中若出现接口限流、登录拦截、账号受限等问题，请根据服务商官方规范自行调整使用方式。
+
+## 责任划分
+
+- 因违规使用工具、违背邮箱平台协议、服务器防护不足、人为误操作所造成的账号封禁、数据丢失、隐私泄露、经济损失、行政处罚及民事 / 刑事责任，全部由**终端使用者自行承担**。
+- 工具开发者不对工具运行稳定性、持续性、适配性做保证，对于使用本工具产生的一切直接、间接损失与潜在风险，不承担任何赔偿、兜底及法律责任。
 
 ## License
 

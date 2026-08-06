@@ -46,6 +46,7 @@ export function DateTimePicker({ value, onChange, className }: {
   })
   const [hour, setHour] = useState(() => parseValue(value).getHours())
   const [minute, setMinute] = useState(() => parseValue(value).getMinutes())
+  const [alignRight, setAlignRight] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,6 +56,8 @@ export function DateTimePicker({ value, onChange, className }: {
       setSelectedDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()))
       setHour(d.getHours())
       setMinute(d.getMinutes())
+      const rect = ref.current?.getBoundingClientRect()
+      if (rect) setAlignRight(rect.right + 268 > (window.innerWidth || document.documentElement.clientWidth))
     }
   }, [open, value])
 
@@ -109,7 +112,7 @@ export function DateTimePicker({ value, onChange, className }: {
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 rounded-[12px]"
+        <div className={`absolute z-50 top-full mt-1 rounded-[12px] ${alignRight ? 'right-0' : 'left-0'}`}
           style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', boxShadow: '0 8px 28px rgba(0,0,0,0.14)', width: 268, padding: 12 }}
         >
           <div className="flex items-center justify-between mb-2">

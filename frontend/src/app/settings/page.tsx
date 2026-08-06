@@ -936,16 +936,19 @@ function AboutPanel() {
       <div className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '24px' }}>
         {/* 产品信息区 */}
         <div className="flex items-center gap-6 pb-6" style={{ borderBottom: '1px solid var(--card-border)' }}>
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
-            style={{ backgroundColor: 'var(--primary)' }}
-          >LZ</div>
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
+            <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px' }}>
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="#ffffff" />
+              <polyline points="22,6 12,13 2,6" fill="none" stroke="var(--primary)" strokeWidth="2" />
+            </svg>
+          </div>
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-[24px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>LZMail</h2>
-              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>v2.1.0</span>
+              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>v0.0.99</span>
             </div>
-            <p className="text-[14px] mt-2" style={{ color: 'var(--foreground-tertiary)' }}>NAS 自托管邮件客户端 — 统一管理 Gmail、Outlook、QQ邮箱、网易、iCloud 等多平台邮件，数据完全存储于本地，隐私可控。</p>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--muted-foreground)' }}>专为懒猫微服 NAS 优化，兼容任何支持 Docker 的 NAS 环境。</p>
+            <p className="text-[14px] mt-2" style={{ color: 'var(--foreground-tertiary)' }}>统一管理 Gmail、Outlook、QQ邮箱、网易、iCloud 等多平台邮件，数据完全存储于本地，隐私可控。</p>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--muted-foreground)' }}>@2026 Web邮件客户端 Powered by LightOS</p>
           </div>
         </div>
 

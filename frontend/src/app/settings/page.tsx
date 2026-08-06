@@ -12,7 +12,7 @@ import {
   Minus, ExternalLink,
   Sun, Moon, Monitor,
   CheckCircle as CheckCircleIcon,
-  Grid2x2, Columns2,
+  Grid2x2, Columns2, Layout3,
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
   LayoutRow, CollapseVertical,
 } from '@/lib/icons'
@@ -344,14 +344,14 @@ function AppearancePanel() {
               const DensityIcon = idx === 0 ? LayoutRow : CollapseVertical
               return (
                 <button key={item} onClick={() => setSetting('mail_density', item === '舒适' ? 'comfortable' : 'compact')}
-                  className={active ? btnActive : btnBase}
+                  className={active ? 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px] font-semibold' : 'flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]'}
                   style={{
                     backgroundColor: active ? 'rgba(196,61,61,1)' : 'rgba(243,237,227,1)',
                     color: active ? '#ffffff' : 'rgba(107,91,79,1)',
                     fontFamily: active ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
                   }}
                 >
-                  <DensityIcon className="w-3.5 h-3.5 shrink-0" />
+                  <DensityIcon className="w-[18px] h-[18px] shrink-0" />
                   {item}
                 </button>
               )

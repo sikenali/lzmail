@@ -63,12 +63,19 @@ export function useSettings() {
     if (loaded.current) return
     loaded.current = true
 
-    // Initialize theme before fetching settings (use system/localStorage default)
+    // Initialize theme IMMEDIATELY to prevent flash of wrong theme
     const saved = localStorage.getItem('lzmail_theme')
     const initialTheme = saved && ['light', 'dark', 'system'].includes(saved)
       ? saved
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     applyTheme(initialTheme)
+    
+    // Apply saved accent color immediately
+    const savedAccent = localStorage.getItem('lzmail_accent_color')
+    if (savedAccent) {
+      document.documentElement.style.setProperty('--primary', savedAccent)
+      document.documentElement.style.setProperty('--primary-light', savedAccent + '15')
+    }
 
     // Initialize animations setting on document
     const savedAnimations = localStorage.getItem('lzmail_animations')
@@ -78,8 +85,9 @@ export function useSettings() {
 
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
-      // Apply theme from settings or fallback
-      const themeToApply = (s?.theme || defaults.theme) as 'light' | 'dark' | 'system'
+      // Apply theme from settings or fallback to localStorage
+      const apiTheme = s?.theme
+      const themeToApply = (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) ? apiTheme : defaults.theme) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
       // Apply accent color
       const accentColor = s?.accent_color || defaults.accent_color

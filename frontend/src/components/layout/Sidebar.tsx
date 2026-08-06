@@ -38,11 +38,11 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16 }}>
+    <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16, backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
       <div>
         <a href="/compose"
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'rgba(196,61,61,1)', paddingLeft: 20, paddingRight: 20 }}
+          style={{ backgroundColor: 'var(--primary)', paddingLeft: 20, paddingRight: 20 }}
         >
           <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(255,255,255,0.9)' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
@@ -57,19 +57,19 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               <a key={item.href} href={item.href}
                 className="flex items-center gap-2 rounded-[8px] transition-colors"
                 style={{
-                  backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent',
+                  backgroundColor: active ? 'var(--primary-light)' : 'transparent',
                   padding: '12px 16px',
                 }}
               >
-                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
+                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'var(--primary)' : 'var(--foreground-secondary)' }} />
                 <span className="flex-1 text-[14px]" style={{
-                  color: active ? 'rgba(196,61,61,1)' : 'var(--foreground)',
+                  color: active ? 'var(--primary)' : 'var(--foreground)',
                   fontWeight: active ? '600' : '500',
                 }}>{item.label}</span>
                 {item.badge != null && (
                   <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
                     style={{
-                      backgroundColor: item.badgeStyle === 'gold' ? 'rgba(229,217,196,1)' : 'rgba(196,61,61,1)',
+                      backgroundColor: item.badgeStyle === 'gold' ? 'var(--muted)' : 'var(--primary)',
                       color: item.badgeStyle === 'gold' ? 'var(--foreground-secondary)' : '#fff',
                       fontWeight: item.badgeStyle === 'gold' ? '500' : '600',
                     }}
@@ -81,7 +81,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         </div>
       </div>
 
-  <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
+  <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'var(--sidebar-border)' }} />
 
       <div className="space-y-1" style={{ paddingTop: 16 }}>
         {[
@@ -92,11 +92,11 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           return (
             <a key={item.href} href={item.href}
               className="flex items-center gap-2 rounded-[8px] transition-colors"
-              style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
+              style={{ padding: '12px 16px', backgroundColor: active ? 'var(--primary-light)' : 'transparent' }}
             >
-              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'var(--foreground-secondary)' }} />
+              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'var(--primary)' : 'var(--foreground-secondary)' }} />
               <span className="flex-1 text-[14px]" style={{
-                color: active ? 'rgba(196,61,61,1)' : 'var(--foreground)',
+                color: active ? 'var(--primary)' : 'var(--foreground)',
                 fontWeight: active ? '600' : '500',
               }}>{item.label}</span>
             </a>
@@ -104,7 +104,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         })}
       </div>
 
-      <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'rgba(229,217,196,1)' }} />
+      <div className="mx-4" style={{ marginTop: 16, marginBottom: 0, height: 1, backgroundColor: 'var(--sidebar-border)' }} />
 
       <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>
         <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)', padding: '0 16px' }}>邮箱账号</div>
@@ -124,7 +124,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
                   <div className="text-[11px] leading-tight truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{a.email}</div>
                 </div>
-                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'var(--gold)' : 'rgba(91,140,90,1)' }} />
+                <div className="w-[9px] h-2 rounded-full shrink-0" style={{ backgroundColor: isGold ? 'var(--gold)' : 'var(--success)' }} />
               </div>
             )
           })}

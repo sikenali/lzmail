@@ -155,7 +155,7 @@
 }
 
 * {
-  border-color: rgba(229,217,196,1);
+  border-color: var(--card-border);
 }
 
 body {

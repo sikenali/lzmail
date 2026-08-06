@@ -445,7 +445,7 @@ function AppearancePanel() {
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>开启或关闭界面过渡动画</div>
           </div>
           <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
-            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[rgba(91,140,90,1)]' : 'bg-[var(--border)]'}`}
+            className={`w-12 h-7 rounded-full transition-colors flex items-center px-0.5 ${(settings.animations || 'true') === 'true' ? 'bg-[var(--success)]' : 'bg-[var(--border)]'}`}
           >
             <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${(settings.animations || 'true') === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>

@@ -172,7 +172,7 @@ function MailPageInner() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
                <input value={searchQ} onChange={e => setSearchQ(e.target.value)}
                  className="w-full h-10 pl-9 pr-4 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"
-                 style={{ backgroundColor: 'var(--card)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
+                 style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
                  placeholder="搜索邮件..." />
             </form>
           </div>
@@ -230,7 +230,7 @@ function MailPageInner() {
                   <button onClick={() => { setSelectedId(null); setDetail(null); }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   <button onClick={() => handleMove('DEFERRED')} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Clock className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   </div>
-                  <div className="w-px h-6 bg-[rgba(229,217,196,1)]" />
+                  <div className="w-px h-6 bg-[var(--card-border)]" />
                   <div className="flex items-center gap-1 relative">
                   <button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   <button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
@@ -335,7 +335,7 @@ function MailPageInner() {
               )}
 
               {/* Quick reply */}
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--card)', border: '0.7px solid rgba(229,217,196,1)' }}>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
                 <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>快捷回复</div>
                 <textarea
                   placeholder="输入回复内容..."

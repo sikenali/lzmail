@@ -19,6 +19,13 @@ function MailPageInner() {
   const [loading, setLoading] = useState(false)
   const [folder, setFolder] = useState(searchParams?.get('folder') || 'INBOX')
   const [searchQ, setSearchQ] = useState(searchParams?.get('q') || '')
+
+  useEffect(() => {
+    const f = searchParams?.get('folder')
+    const q = searchParams?.get('q')
+    setFolder(f || 'INBOX')
+    setSearchQ(q || '')
+  }, [searchParams])
   const debouncedSearch = useDebounce(searchQ, 300)
   const [refresh, setRefresh] = useState(0)
   const [selectedId, setSelectedId] = useState<number | null>(null)

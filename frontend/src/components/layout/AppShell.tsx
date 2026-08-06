@@ -1,9 +1,17 @@
 'use client'
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { Suspense, useEffect } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import type { Account } from '@/types'
+
+function SidebarWithPath() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const qs = searchParams ? searchParams.toString() : ''
+  const fullPath = qs ? `${pathname}?${qs}` : pathname
+  return <Sidebar currentPath={fullPath} />
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -28,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Header onCompose={() => { window.location.href = '/compose' }} />
       <div className="flex flex-1 min-h-0">
         <div className="w-[240px] flex flex-col shrink-0" style={{ backgroundColor: 'var(--background)' }}>
-          <Sidebar currentPath={pathname} />
+          <Suspense fallback={null}><SidebarWithPath /></Suspense>
         </div>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>

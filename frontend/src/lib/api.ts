@@ -1,4 +1,4 @@
-import type { Account, Email, Contact, MailStats, EmailDetail, ComposePayload } from '@/types'
+import type { Account, Email, Contact, MailStats, EmailDetail, ComposePayload, StorageTreeNode } from '@/types'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -90,6 +90,8 @@ export const api = {
   storage: {
     list: (path: string) =>
       fetchJSON<{ path: string; entries: Array<{ name: string; is_dir: boolean; path: string; subdirs?: Array<{ name: string; is_dir: boolean; path: string }> }> }>(`/api/v1/storage/list?path=${encodeURIComponent(path)}`),
+    tree: (path: string) =>
+      fetchJSON<{ path: string; root: StorageTreeNode }>(`/api/v1/storage/tree?path=${encodeURIComponent(path)}`),
   },
 
   sync: {

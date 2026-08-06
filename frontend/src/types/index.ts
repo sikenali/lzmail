@@ -84,3 +84,10 @@ export interface ComposePayload {
   draft?: boolean
   attachments?: Array<{ filename: string; path: string }>
 }
+
+export interface StorageTreeNode {
+  name: string
+  is_dir: boolean
+  path: string
+  children?: StorageTreeNode[]
+}

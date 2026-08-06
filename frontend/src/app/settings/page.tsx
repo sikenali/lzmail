@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
-import type { Account, MailStats } from '@/types'
+import type { Account, MailStats, StorageTreeNode } from '@/types'
 import {
   User, Palette, Archive, Info,
   Plus, Trash2, Check, Edit,
@@ -644,6 +644,42 @@ function DirTree({ entries, basePath, onSelect, selected, depth = 0 }: {
 }
 
 // ── 归档 ──────────────────────────────────────────────────
+function StorageTreeView({ root }: { root: StorageTreeNode }) {
+  const renderNode = (node: StorageTreeNode, depth: number) => {
+    const isDir = node.is_dir
+    return (
+      <div key={node.path}>
+        <div
+          className="flex items-center gap-2 rounded-[6px]"
+          style={{ paddingLeft: depth * 24 }}
+        >
+          {isDir ? (
+            <Folder className="w-[17px] h-[17px] shrink-0" style={{ color: 'var(--gold)' }} />
+          ) : (
+            <FileText className="w-[17px] h-[17px] shrink-0" style={{ color: 'var(--foreground-tertiary)' }} />
+          )}
+          <span
+            className="truncate"
+            style={{
+              fontSize: depth <= 1 ? 14 : 13,
+              fontWeight: depth <= 1 ? 600 : 500,
+              color: isDir ? 'var(--foreground)' : 'var(--foreground-secondary)',
+            }}
+          >
+            {node.name}{isDir ? '/' : ''}
+          </span>
+        </div>
+        {node.children && node.children.length > 0 && (
+          <div className="mt-[3px] space-y-[3px]">
+            {node.children.map(child => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
+  return renderNode(root, 0)
+}
+
 function StoragePanel() {
   const [stats, setStats] = useState<MailStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -655,12 +691,14 @@ function StoragePanel() {
   const [dirError, setDirError] = useState('')
   const [treeOpen, setTreeOpen] = useState(false)
   const treeRef = useRef<HTMLDivElement>(null)
+  const [storageRoot, setStorageRoot] = useState<StorageTreeNode | null>(null)
 
   const archivePath = settings.archive_path || '/mnt/nas/lzmail/archives'
 
   useEffect(() => {
     api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+    api.storage.tree(archivePath).then(res => setStorageRoot(res.root)).catch(() => setStorageRoot(null))
+  }, [archivePath])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -792,6 +830,20 @@ function StoragePanel() {
               修改归档路径后，新建的邮件将存储到新目录。已有邮件仍保留在原路径。重启服务后生效。
             </div>
           )}
+        </div>
+
+        {/* Directory structure */}
+        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+          <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>目录结构</div>
+          <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>当前归档文件的组织方式预览</div>
+          <div className="mt-4 rounded-[12px] p-5 max-h-[360px] overflow-auto"
+            style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)' }}>
+            {storageRoot ? (
+              <StorageTreeView root={storageRoot} />
+            ) : (
+              <div className="text-[12px] py-2" style={{ color: 'var(--muted-foreground)' }}>暂无可预览的目录结构</div>
+            )}
+          </div>
         </div>
 
         {/* Storage stats */}

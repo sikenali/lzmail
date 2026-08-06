@@ -9,6 +9,7 @@ import {
   ChevronRight
 } from '@/lib/icons'
 import TrendChart from './TrendChart'
+import { DateTimePicker } from '@/components/DateTimePicker'
 import type { MailStats, Email, Account } from '@/types'
 
 function formatBytes(bytes: number): string {
@@ -105,10 +106,7 @@ export default function Dashboard() {
               <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>邮件概览与同步状态</p>
             </div>
           </div>
-          <input id="dashboard-date-input" type="datetime-local" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-            className="px-3 h-9 rounded-lg text-sm outline-none cursor-pointer"
-            style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
-          />
+          <DateTimePicker value={selectedDate} onChange={setSelectedDate} />
         </div>
 
         {/* Stats cards */}

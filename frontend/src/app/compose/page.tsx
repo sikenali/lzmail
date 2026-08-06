@@ -4,6 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, AlarmWarning, Send, X, Plus, ChevronDown } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
+import { DateTimePicker } from '@/components/DateTimePicker'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Account, Contact } from '@/types'
@@ -307,9 +308,7 @@ function ComposePageInner() {
             {/* 定时时间选择 */}
             {scheduleAt && (
               <div className="flex items-center gap-3 pt-4">
-                <input id="schedule-input" type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)}
-                  className="px-3 h-9 rounded-lg text-sm outline-none"
-                  style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }} />
+                <DateTimePicker value={scheduleAt} onChange={setScheduleAt} />
                 <button onClick={() => setScheduleAt('')} className="text-xs hover:opacity-70" style={{ color: 'var(--muted-foreground)' }}>取消定时</button>
               </div>
             )}

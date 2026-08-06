@@ -3,6 +3,7 @@ import { Search, Settings, User } from '@/lib/icons'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useSSE } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
@@ -98,9 +99,9 @@ export function Header({ onCompose }: { onCompose: () => void }) {
         )}
 
         {showSettings && (
-          <a href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--muted)' }}>
+          <Link href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--muted)' }}>
             <Settings className="w-5 h-5" style={{ color: 'var(--foreground-secondary)' }} />
-          </a>
+          </Link>
         )}
 
         {/* User avatar - uses account brand_color or accent color */}

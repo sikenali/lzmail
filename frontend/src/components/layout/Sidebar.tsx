@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
@@ -40,13 +41,13 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   return (
     <div className="flex flex-col h-full" style={{ paddingTop: 24, paddingBottom: 24, paddingLeft: 16, paddingRight: 16, backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
       <div>
-        <a href="/compose"
+        <Link href="/compose"
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--primary)', paddingLeft: 20, paddingRight: 20 }}
         >
           <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(255,255,255,0.9)' }} />
           <span className="text-[15px] font-semibold">写邮件</span>
-        </a>
+        </Link>
       </div>
 
       <div style={{ paddingTop: 24 }}>
@@ -54,7 +55,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           {navItems.map((item) => {
             const active = isActive(item.href)
             return (
-              <a key={item.href} href={item.href}
+              <Link key={item.href} href={item.href}
                 className="flex items-center gap-2 rounded-[8px] transition-colors"
                 style={{
                   backgroundColor: active ? 'var(--primary-light)' : 'transparent',
@@ -75,7 +76,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                     }}
                   >{item.badge}</span>
                 )}
-              </a>
+              </Link>
             )
           })}
         </div>
@@ -90,7 +91,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         ].map(item => {
           const active = isActive(item.href)
           return (
-            <a key={item.href} href={item.href}
+            <Link key={item.href} href={item.href}
               className="flex items-center gap-2 rounded-[8px] transition-colors"
               style={{ padding: '12px 16px', backgroundColor: active ? 'var(--primary-light)' : 'transparent' }}
             >
@@ -99,7 +100,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                 color: active ? 'var(--primary)' : 'var(--foreground)',
                 fontWeight: active ? '600' : '500',
               }}>{item.label}</span>
-            </a>
+            </Link>
           )
         })}
       </div>

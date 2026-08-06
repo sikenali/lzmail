@@ -89,12 +89,12 @@ export function useSettings() {
 
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
-      // Apply theme: prefer saved theme from localStorage, fallback to API or default
+      // Apply theme: prefer the user's explicit localStorage choice, fall back to API, then defaults
       const apiTheme = s?.theme
       const localStorageTheme = localStorage.getItem('lzmail_theme')
-      const themeToApply = (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) 
-        ? apiTheme 
-        : (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme) ? localStorageTheme : defaults.theme)) as 'light' | 'dark' | 'system'
+      const themeToApply = (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme)
+        ? localStorageTheme
+        : (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) ? apiTheme : defaults.theme)) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
       // Apply accent color
       const accentColor = s?.accent_color || defaults.accent_color

@@ -67,7 +67,7 @@ function CustomSelect({
 }
 
 // ── 账号管理 ──────────────────────────────────────────────
-type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease' | 'icloud' | 'other'
+type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease' | 'icloud' | 'yahoo' | 'other'
 
 const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
   label: string; brand: string;
@@ -288,6 +288,7 @@ function AccountPanel() {
                 { value: 'qq', label: 'QQ邮箱' },
                 { value: 'netease', label: '网易 163' },
                 { value: 'icloud', label: 'iCloud' },
+                { value: 'yahoo', label: 'Yahoo' },
                 { value: 'other', label: '其他/自定义' },
               ]}
             />

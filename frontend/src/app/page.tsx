@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
@@ -139,9 +140,9 @@ export default function Dashboard() {
               <div className="w-[4px] h-5 rounded-[2px]" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
               <h2 className="text-[14px] font-bold" style={{ color: 'rgba(61,43,31,1)' }}>最近邮件</h2>
               </div>
-              <a href="/mail" className="flex items-center gap-1 text-[13px] font-medium hover:underline" style={{ color: 'rgba(196,61,61,1)' }}>
+              <Link href="/mail" className="flex items-center gap-1 text-[13px] font-medium hover:underline" style={{ color: 'rgba(196,61,61,1)' }}>
                 查看全部 <ChevronRight className="w-3.5 h-3.5" />
-              </a>
+              </Link>
             </div>
             <div className="mt-5">
               {loading ? (

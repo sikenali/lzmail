@@ -11,9 +11,10 @@ import {
   Folder, FileText, ChevronDown,
   Minus,
   Sun, Moon, Monitor,
-  Grid2x2, Columns2,
+  Columns2,
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
   LayoutRow, CollapseVertical,
+  Layout2,
   Eye, EyeOff,
 } from '@/lib/icons'
 
@@ -568,7 +569,7 @@ function AppearancePanel() {
             <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择收件箱的默认视图布局</div>
           </div>
           <div className="flex items-center" style={{ gap: '8px' }}>
-            {[{ label: '三栏', id: 'three', icon: Grid2x2 }, { label: '双栏', id: 'two', icon: Columns2 }].map(item => {
+            {[{ label: '三栏', id: 'three', icon: Columns2 }, { label: '双栏', id: 'two', icon: Layout2 }].map(item => {
               const active = settings.layout_density === item.id
               return (
                 <button key={item.id} onClick={() => setSetting('layout_density', item.id)}

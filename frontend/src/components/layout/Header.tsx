@@ -1,6 +1,7 @@
 'use client'
 import { Search, Settings } from '@/lib/icons'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 
 export function Header({ onCompose }: { onCompose: () => void }) {
@@ -18,18 +19,21 @@ export function Header({ onCompose }: { onCompose: () => void }) {
       <div className="flex items-center gap-4 shrink-0" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
           <svg viewBox="0 0 24 24" className="w-[22px] h-[22px] fill-none stroke-current" strokeWidth="1.8" style={{ color: 'var(--primary-foreground)' }}>
+            {/* Cat ears */}
+            <path d="M5 10L3 3l4 3" />
+            <path d="M19 10l2-7-4 3" />
             {/* Cat head */}
-            <path d="M4 9l2-5 4 3" />
-            <path d="M20 9l-2-5-4 3" />
-            <path d="M5 8v7a7 7 0 0 0 14 0V8" />
-            {/* Body */}
-            <path d="M7 16v2a2 2 0 0 0 4 0v-1" />
-            <path d="M13 16v2a2 2 0 0 0 4 0v-1" />
+            <path d="M4 9a8 8 0 0 0 16 0" />
+            {/* Cat body */}
+            <path d="M5 15c0 4 2 7 7 7s7-3 7-7" />
             {/* Tail */}
-            <path d="M19 16c2-1 3-3 2-5" />
-            {/* @ symbol in center */}
-            <circle cx="12" cy="12" r="3" />
-            <path d="M10.5 10.5C11 9.5 12 9 12.5 9.5s1 2 0 3-2 1-3 0" />
+            <path d="M19 18c2-1 3-4 2-6" />
+            {/* Envelope held by cat */}
+            <rect x="9" y="13" width="6" height="4" rx="0.5" />
+            <polyline points="9,13 12,16 15,13" />
+            {/* @ symbol as path */}
+            <circle cx="12" cy="15" r="1.2" />
+            <path d="M11 14.5c0.3-0.5 0.8-0.5 1 0s0 1-0.5 1.2" />
           </svg>
         </div>
         <div className="flex flex-col gap-0.5">

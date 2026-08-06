@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Plus, ChevronDown, Check } from '@/lib/icons'
 import type { Contact } from '@/types'
@@ -41,7 +40,6 @@ export default function ContactPicker({
   onSelect?: (emails: string[]) => void
   placeholder?: string
 }) {
-  const router = useRouter()
   const [allContacts, setAllContacts] = useState<Contact[]>(MOCK_CONTACTS)
   const [filtered, setFiltered] = useState<Contact[]>([])
   const [query, setQuery] = useState('')
@@ -166,10 +164,10 @@ export default function ContactPicker({
           onClick={e => e.stopPropagation()}
         />
         <button
-          onClick={e => { e.stopPropagation(); router.push('/contacts') }}
+          onClick={e => { e.stopPropagation(); setOpen(true) }}
           className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
           style={{ color: 'var(--foreground-secondary)' }}
-          title="打开联系人"
+          title="选择联系人"
         >
           <Plus className="w-4 h-4" />
         </button>

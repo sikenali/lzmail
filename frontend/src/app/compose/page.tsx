@@ -76,7 +76,13 @@ function ComposePageInner() {
         body_html: editorRef.current?.getHTML() || body,
         attachments: uploadedAttachments,
       }
-      if (scheduleAt) data.schedule_at = scheduleAt
+      if (scheduleAt) {
+        const tzOff = new Date().getTimezoneOffset()
+        const sign = tzOff <= 0 ? '+' : '-'
+        const abs = Math.abs(tzOff)
+        const tz = `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
+        data.schedule_at = `${scheduleAt}:00${tz}`
+      }
       await api.compose(data)
       toast.success('邮件已发送')
       setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')

@@ -1,12 +1,29 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
+
+// anchorPath 将请求路径锚定到 allowed root 内，防止任意目录遍历读取。
+func anchorPath(root, p string) (string, error) {
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		return "", err
+	}
+	if abs != rootAbs && !strings.HasPrefix(abs, rootAbs+string(os.PathSeparator)) {
+		return "", fmt.Errorf("path outside allowed root")
+	}
+	return abs, nil
+}
 
 type DirEntry struct {
 	Name    string     `json:"name"`
@@ -32,8 +49,13 @@ func (h *Handler) handleListStorageDirs(w http.ResponseWriter, r *http.Request) 
 	if basePath == "" {
 		basePath = h.archiveDir
 	}
+	resolved, err := anchorPath(h.archiveDir, basePath)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	basePath = resolved
 
-	basePath = filepath.Clean(basePath)
 	info, err := os.Stat(basePath)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "path not accessible: " + err.Error()})
@@ -136,7 +158,13 @@ func (h *Handler) handleStorageTree(w http.ResponseWriter, r *http.Request) {
 	if basePath == "" {
 		basePath = h.archiveDir
 	}
-	basePath = filepath.Clean(basePath)
+	resolved, err := anchorPath(h.archiveDir, basePath)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	basePath = resolved
+
 	info, err := os.Stat(basePath)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "path not accessible: " + err.Error()})

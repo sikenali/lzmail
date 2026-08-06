@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 	"github.com/lzmail/backend/internal/models"
+	"github.com/lzmail/backend/internal/providers"
 	"github.com/lzmail/backend/internal/store"
 	"github.com/lzmail/backend/internal/sse"
 )
@@ -87,17 +88,22 @@ func rateLimitMiddleware(limitter *rateLimiter, next http.HandlerFunc) http.Hand
 }
 
 type Handler struct {
-	accounts   *store.AccountStore
-	emails     *store.EmailStore
-	contacts   *store.ContactStore
-	settings   *store.SettingsStore
-	sseHub     *sse.Hub
-	archiveDir string
-	syncEngine SyncEngine
+	accounts    *store.AccountStore
+	emails      *store.EmailStore
+	contacts    *store.ContactStore
+	settings    *store.SettingsStore
+	sseHub      *sse.Hub
+	archiveDir  string
+	syncEngine  SyncEngine
+	oauth       *providers.Manager
+	oauthStates *oauthStateStore
 }
 
 var AccountStoreInstance interface{ GetByID(int64) (*models.Account, error) }
 var EmailStoreInstance interface{ InsertSent(*models.Email) error }
+var OAuthManagerInstance *providers.Manager
+var ScheduledStoreInstance *store.ScheduledStore
+var ArchiveDirInstance string
 
 type SyncEngine interface {
 	AddAccount(*models.Account)
@@ -105,12 +111,17 @@ type SyncEngine interface {
 	RefreshAll()
 	RefreshAccount(int64)
 	Statuses() map[int64]string
+	ApplyFlag(accountID int64, folder string, uid uint32, flag string, set bool) error
+	MoveMessage(accountID int64, srcFolder string, uid uint32, destFolder string) error
+	DeleteMessage(accountID int64, folder string, uid uint32) error
 }
 
-func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string, syncEngine SyncEngine) *Handler {
-	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, sseHub: hub, archiveDir: archiveDir, syncEngine: syncEngine}
+func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string, syncEngine SyncEngine, oauth *providers.Manager) *Handler {
+	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, sseHub: hub, archiveDir: archiveDir, syncEngine: syncEngine, oauth: oauth, oauthStates: newOAuthStateStore()}
 	AccountStoreInstance = as
 	EmailStoreInstance = es
+	OAuthManagerInstance = oauth
+	ArchiveDirInstance = archiveDir
 	return h
 }
 
@@ -119,6 +130,9 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/accounts", h.handleCreateAccount)
 	mux.HandleFunc("DELETE /api/v1/accounts/{id}", h.handleDeleteAccount)
 	mux.HandleFunc("PATCH /api/v1/accounts/{id}", h.handleUpdateAccount)
+
+	mux.HandleFunc("GET /api/v1/oauth/{provider}/init", h.handleOAuthInit)
+	mux.HandleFunc("GET /api/v1/oauth/{provider}/callback", h.handleOAuthCallback)
 
 	mux.HandleFunc("GET /api/v1/mails", rateLimitMiddleware(listLimiter, h.handleListMails))
 	mux.HandleFunc("GET /api/v1/mails/{id}", h.handleGetMail)

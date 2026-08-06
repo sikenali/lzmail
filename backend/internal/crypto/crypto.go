@@ -1,28 +1,58 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/aes"
-	"log"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"path/filepath"
 )
 
+// keyFile 是持久化的加密密钥文件路径（ENCRYPTION_KEY 未设置时自动生成）。
+var keyFile string
+
+// SetKeyFile 设置自动生成的密钥文件路径，由入口在启动时调用。
+func SetKeyFile(path string) {
+	keyFile = path
+}
+
+// encryptionKey 返回 32 字节 AES 密钥。
+// 优先取 ENCRYPTION_KEY 环境变量；未设置时自动生成随机密钥并持久化到
+// keyFile（0600），确保密码始终加密存储（I8）。
 func encryptionKey() []byte {
-	key := os.Getenv("ENCRYPTION_KEY")
-	if key == "" {
-		log.Println("[WARN] ENCRYPTION_KEY not set - passwords stored in plaintext (development mode)")
-		return nil
+	if key := os.Getenv("ENCRYPTION_KEY"); key != "" {
+		if decoded, err := hex.DecodeString(key); err == nil && len(decoded) == 32 {
+			return decoded
+		}
 	}
-	decoded, err := hex.DecodeString(key)
-	if err != nil || len(decoded) != 32 {
-		return nil
+	if keyFile != "" {
+		if data, err := os.ReadFile(keyFile); err == nil {
+			if decoded, err := hex.DecodeString(string(bytes.TrimSpace(data))); err == nil && len(decoded) == 32 {
+				return decoded
+			}
+		}
+		key := make([]byte, 32)
+		if _, err := io.ReadFull(rand.Reader, key); err != nil {
+			log.Printf("[WARN] unable to generate encryption key: %v", err)
+			return nil
+		}
+		if err := os.MkdirAll(filepath.Dir(keyFile), 0755); err != nil {
+			log.Printf("[WARN] unable to create key dir: %v", err)
+			return key
+		}
+		if err := os.WriteFile(keyFile, []byte(hex.EncodeToString(key)), 0600); err != nil {
+			log.Printf("[WARN] unable to persist encryption key: %v", err)
+		}
+		return key
 	}
-	return decoded
+	log.Println("[WARN] ENCRYPTION_KEY not set and no key file - passwords stored in plaintext (development mode)")
+	return nil
 }
 
 func Encrypt(plaintext string) (string, error) {

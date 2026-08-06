@@ -3,17 +3,22 @@ package sync
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"log"
 	"math"
+	"net"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/lzmail/backend/internal/archive"
 	"github.com/lzmail/backend/internal/models"
-	"github.com/lzmail/backend/internal/store"
+	"github.com/lzmail/backend/internal/providers"
+	"github.com/lzmail/backend/internal/sasl"
 	"github.com/lzmail/backend/internal/sse"
+	"github.com/lzmail/backend/internal/store"
 )
 
 const (
@@ -23,25 +28,27 @@ const (
 )
 
 type Syncer struct {
-	account    *models.Account
-	emailStore *store.EmailStore
-	archiveDir string
-	sseHub     *sse.Hub
-	stopCh     chan struct{}
-	doneCh     chan struct{}
-	statusMu   sync.RWMutex
-	status     string
+	account     *models.Account
+	emailStore  *store.EmailStore
+	archiveDir  string
+	sseHub      *sse.Hub
+	tokenSource *providers.TokenSource
+	stopCh      chan struct{}
+	doneCh      chan struct{}
+	statusMu    sync.RWMutex
+	status      string
 }
 
-func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub) *Syncer {
+func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub, tokenSource *providers.TokenSource) *Syncer {
 	return &Syncer{
-		account:    account,
-		emailStore: emailStore,
-		archiveDir: archiveDir,
-		sseHub:     sseHub,
-		stopCh:     make(chan struct{}),
-		doneCh:     make(chan struct{}),
-		status:     "ok",
+		account:     account,
+		emailStore:  emailStore,
+		archiveDir:  archiveDir,
+		sseHub:      sseHub,
+		tokenSource: tokenSource,
+		stopCh:      make(chan struct{}),
+		doneCh:      make(chan struct{}),
+		status:      "ok",
 	}
 }
 
@@ -72,9 +79,19 @@ func (s *Syncer) ForceSync() {
 	s.syncAllFolders()
 }
 
+// Stop 关闭同步循环并等待退出。为避免在网络调用卡死时永久阻塞，
+// 最多等待 5 秒（I7）。
 func (s *Syncer) Stop() {
-	close(s.stopCh)
-	<-s.doneCh
+	select {
+	case <-s.stopCh:
+	default:
+		close(s.stopCh)
+	}
+	select {
+	case <-s.doneCh:
+	case <-time.After(5 * time.Second):
+		log.Printf("[sync] account %s stop timed out after 5s", s.account.Email)
+	}
 }
 
 func (s *Syncer) run() {
@@ -208,6 +225,8 @@ func (s *Syncer) listFolders() ([]string, error) {
 	return folders, <-errCh
 }
 
+// syncFolder 增量同步单个文件夹：用 UID 识别缺失消息，仅对新增/无正文的消息
+// 抓取 RFC822 正文，其余只刷新已读/星标标志。
 func (s *Syncer) syncFolder(folder string) {
 	c, err := s.connect()
 	if err != nil {
@@ -221,37 +240,27 @@ func (s *Syncer) syncFolder(folder string) {
 		log.Printf("[sync] account %s select %s failed: %v", s.account.Email, folder, err)
 		return
 	}
-
 	if mbox.Messages == 0 {
 		return
 	}
 
-	lastUID := s.emailStore.GetLastUIDByFolder(s.account.ID, folder)
-
-	var from uint32
-	if lastUID > 0 && lastUID < mbox.Messages {
-		from = lastUID + 1
-	} else {
-		from = uint32(1)
-		if mbox.Messages > 50 {
-			from = mbox.Messages - 50
-		}
-	}
-
-	if from > mbox.Messages {
-		return
-	}
-
 	seqset := new(imap.SeqSet)
-	seqset.AddRange(from, mbox.Messages)
+	seqset.AddRange(1, mbox.Messages)
 
-	messages := make(chan *imap.Message, 10)
+	metaCh := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchBodyStructure, imap.FetchUid}, messages)
+		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchUid}, metaCh)
 	}()
 
-	for msg := range messages {
+	existing, err := s.emailStore.UIDsWithBody(s.account.ID, folder)
+	if err != nil {
+		log.Printf("[sync] account %s load existing uids failed: %v", s.account.Email, err)
+		existing = map[uint32]bool{}
+	}
+
+	var needBody []uint32
+	for msg := range metaCh {
 		if msg.Envelope == nil {
 			continue
 		}
@@ -261,8 +270,9 @@ func (s *Syncer) syncFolder(folder string) {
 			Folder:      folder,
 			Subject:     msg.Envelope.Subject,
 			Date:        msg.Envelope.Date,
-			IsRead:      !hasFlag(msg.Flags, "\\Seen"),
-			BodyPreview: extractBodyPreview(msg),
+			IsRead:      hasFlag(msg.Flags, "\\Seen"),
+			IsStarred:   hasFlag(msg.Flags, "\\Flagged"),
+			BodyPreview: "",
 		}
 		if len(msg.Envelope.From) > 0 {
 			email.From = msg.Envelope.From[0].Address()
@@ -270,19 +280,97 @@ func (s *Syncer) syncFolder(folder string) {
 		if len(msg.Envelope.To) > 0 {
 			email.To = joinAddresses(msg.Envelope.To)
 		}
-		if err := s.emailStore.Upsert(email); err != nil {
-			log.Printf("[sync] account %s upsert failed: %v", s.account.Email, err)
+		if !existing[msg.Uid] {
+			needBody = append(needBody, msg.Uid)
+			if _, err := s.emailStore.Upsert(email); err != nil {
+				log.Printf("[sync] account %s upsert failed: %v", s.account.Email, err)
+			}
+			continue
+		}
+		if err := s.emailStore.UpdateFlags(s.account.ID, msg.Uid, folder, email.IsRead, email.IsStarred); err != nil {
+			log.Printf("[sync] account %s update flags failed: %v", s.account.Email, err)
 		}
 	}
-
 	if err := <-done; err != nil {
 		log.Printf("[sync] account %s fetch failed: %v", s.account.Email, err)
 	}
 
-	if mbox.Messages > 0 {
-		if err := s.emailStore.SaveLastUID(s.account.ID, folder, mbox.Messages); err != nil {
-			log.Printf("[sync] account %s save last UID failed: %v", s.account.Email, err)
+	if len(needBody) > 0 {
+		s.fetchBodies(c, folder, needBody)
+	}
+}
+
+// fetchBodies 抓取指定 UID 的 RFC822 原文，落盘并解析正文预览与附件。
+func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32) {
+	set := new(imap.SeqSet)
+	set.AddNum(uids...)
+
+	bodyCh := make(chan *imap.Message, 5)
+	done := make(chan error, 1)
+	go func() {
+		done <- c.UidFetch(set, []imap.FetchItem{imap.FetchUid, imap.FetchRFC822}, bodyCh)
+	}()
+	for msg := range bodyCh {
+		lit, ok := msg.Items[imap.FetchRFC822].(imap.Literal)
+		if !ok {
+			continue
 		}
+		raw, err := io.ReadAll(lit)
+		if err != nil {
+			log.Printf("[sync] account %s read body uid=%d failed: %v", s.account.Email, msg.Uid, err)
+			continue
+		}
+		s.saveBody(folder, msg.Uid, raw)
+	}
+	if err := <-done; err != nil {
+		log.Printf("[sync] account %s fetch bodies failed: %v", s.account.Email, err)
+	}
+}
+
+// saveBody 保存 .eml 与附件，并把正文信息写回数据库。
+func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
+	w := archive.NewWriter(s.archiveDir)
+
+	parsed, err := archive.Parse(raw)
+	if err != nil {
+		log.Printf("[sync] account %s parse body uid=%d failed: %v", s.account.Email, uid, err)
+		parsed = &archive.Parsed{Date: time.Now().UTC()}
+	}
+
+	path, err := w.Save(s.account.ID, uid, parsed.Date, raw)
+	if err != nil {
+		log.Printf("[sync] account %s save eml uid=%d failed: %v", s.account.Email, uid, err)
+		return
+	}
+
+	id, err := s.emailStore.UpdateBody(s.account.ID, uid, folder, parsed.Preview, parsed.HasAttachments, path)
+	if err != nil {
+		log.Printf("[sync] account %s update body uid=%d failed: %v", s.account.Email, uid, err)
+		return
+	}
+
+	if !parsed.HasAttachments {
+		return
+	}
+	atts := make([]models.Attachment, 0, len(parsed.Attachments))
+	for i, a := range parsed.Attachments {
+		attPath, err := w.SaveAttachment(s.account.ID, uid, i, a.Filename, a.Content)
+		if err != nil {
+			log.Printf("[sync] account %s save attachment uid=%d failed: %v", s.account.Email, uid, err)
+			continue
+		}
+		atts = append(atts, models.Attachment{
+			Filename: a.Filename,
+			MimeType: a.MimeType,
+			Size:     a.Size,
+			Path:     attPath,
+		})
+	}
+	if len(atts) == 0 {
+		return
+	}
+	if err := s.emailStore.ReplaceAttachments(id, atts); err != nil {
+		log.Printf("[sync] account %s save attachments uid=%d failed: %v", s.account.Email, uid, err)
 	}
 }
 
@@ -302,12 +390,13 @@ func (s *Syncer) connect() (*client.Client, error) {
 		}
 
 		addr := fmt.Sprintf("%s:%d", s.account.IMAPHost, s.account.IMAPPort)
+		dialer := &net.Dialer{Timeout: 15 * time.Second}
 		var c *client.Client
 		var err error
 		if s.account.IMAPPort == 993 {
-			c, err = client.DialTLS(addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
+			c, err = client.DialWithDialerTLS(dialer, addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
 		} else {
-			c, err = client.Dial(addr)
+			c, err = client.DialWithDialer(dialer, addr)
 			if err == nil {
 				err = c.StartTLS(&tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
 			}
@@ -315,29 +404,32 @@ func (s *Syncer) connect() (*client.Client, error) {
 		if err != nil {
 			continue
 		}
-		if err := c.Login(s.account.Username, s.account.Password); err != nil {
-			c.Logout()
-			continue
+		c.Timeout = 60 * time.Second
+		if s.account.IsOAuth2() {
+			if s.tokenSource == nil {
+				c.Logout()
+				continue
+			}
+			accessToken, err := s.tokenSource.GetAccessToken()
+			if err != nil {
+				log.Printf("[sync] account %s get oauth2 token failed: %v", s.account.Email, err)
+				c.Logout()
+				continue
+			}
+			auth := sasl.NewXOAUTH2(s.account.Username, accessToken)
+			if err := c.Authenticate(auth); err != nil {
+				c.Logout()
+				continue
+			}
+		} else {
+			if err := c.Login(s.account.Username, s.account.Password); err != nil {
+				c.Logout()
+				continue
+			}
 		}
 		return c, nil
 	}
 	return nil, fmt.Errorf("failed to connect after %d attempts", maxAttempts)
-}
-
-func extractBodyPreview(msg *imap.Message) string {
-	body, ok := msg.Items[imap.FetchBodyStructure]
-	if !ok {
-		return ""
-	}
-	bs, ok := body.(*imap.BodyStructure)
-	if !ok || bs == nil {
-		return ""
-	}
-	// Try to get text body preview from the envelope if available
-	if msg.Envelope != nil && msg.Envelope.Subject != "" {
-		return msg.Envelope.Subject
-	}
-	return ""
 }
 
 func hasFlag(flags []string, flag string) bool {

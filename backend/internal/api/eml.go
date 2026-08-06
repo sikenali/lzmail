@@ -42,6 +42,7 @@ func extractBody(path string) string {
 
 func walkMultipart(r io.Reader, boundary string) string {
 	mr := multipart.NewReader(r, boundary)
+	var plain string
 	for {
 		p, err := mr.NextPart()
 		if err != nil {
@@ -57,9 +58,11 @@ func walkMultipart(r io.Reader, boundary string) string {
 			}
 		} else if mediaType == "text/html" {
 			return decodeBody(p.Header.Get("Content-Transfer-Encoding"), partBody)
+		} else if mediaType == "text/plain" && plain == "" {
+			plain = decodeBody(p.Header.Get("Content-Transfer-Encoding"), partBody)
 		}
 	}
-	return ""
+	return plain
 }
 
 func decodeBody(encoding string, data []byte) string {

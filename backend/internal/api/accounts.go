@@ -3,21 +3,29 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"time"
 	"github.com/lzmail/backend/internal/models"
+	"github.com/lzmail/backend/internal/providers"
 )
 
 type CreateAccountRequest struct {
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	IMAPHost   string `json:"imap_host"`
-	IMAPPort   int    `json:"imap_port"`
-	SMTPHost   string `json:"smtp_host"`
-	SMTPPort   int    `json:"smtp_port"`
-	AuthType   string `json:"auth_type"`
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	UseIDLE    bool   `json:"use_idle"`
-	BrandColor string `json:"brand_color"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	IMAPHost    string `json:"imap_host"`
+	IMAPPort    int    `json:"imap_port"`
+	SMTPHost    string `json:"smtp_host"`
+	SMTPPort    int    `json:"smtp_port"`
+	AuthType    string `json:"auth_type"`
+	AuthMethod  string `json:"auth_method"`
+	Provider    string `json:"provider"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	UseIDLE     bool   `json:"use_idle"`
+	BrandColor  string `json:"brand_color"`
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Expiry      string `json:"expiry"`
+	Scope       string `json:"scope"`
 }
 
 func (h *Handler) handleListAccounts(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +59,17 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "username is required"})
 		return
 	}
-	if req.Password == "" {
+	isOAuth2 := req.AuthMethod == "oauth2"
+	if !isOAuth2 && req.Password == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "password is required"})
+		return
+	}
+	if isOAuth2 && req.AccessToken == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "access_token is required for oauth2"})
+		return
+	}
+	if isOAuth2 && req.Provider == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "provider is required for oauth2"})
 		return
 	}
 	if req.IMAPPort == 0 {
@@ -64,6 +81,9 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	if req.AuthType == "" {
 		req.AuthType = "password"
 	}
+	if req.AuthMethod == "" {
+		req.AuthMethod = "password"
+	}
 	a := &models.Account{
 		Name:       req.Name,
 		Email:      req.Email,
@@ -72,11 +92,28 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 		SMTPHost:   req.SMTPHost,
 		SMTPPort:   req.SMTPPort,
 		AuthType:   req.AuthType,
+		AuthMethod: req.AuthMethod,
+		Provider:   req.Provider,
 		Username:   req.Username,
 		Password:   req.Password,
 		UseIDLE:    req.UseIDLE,
 		BrandColor: req.BrandColor,
 	}
+	if isOAuth2 {
+		tok := &models.OAuth2TokenData{
+			AccessToken: req.AccessToken,
+			TokenType:   req.TokenType,
+			Scope:       req.Scope,
+		}
+		if req.Expiry != "" {
+			if t, err := time.Parse(time.RFC3339, req.Expiry); err == nil {
+				tok.Expiry = t
+			}
+		}
+		s, _ := tok.Marshal()
+		a.OAuth2Token = s
+	}
+	providers.ApplyDefaults(a)
 	if err := h.accounts.Create(a); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -88,6 +125,23 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 
+// UpdateAccountRequest 用指针字段区分「未提供」与「置空/置 false」。
+type UpdateAccountRequest struct {
+	Name       *string `json:"name"`
+	Email      *string `json:"email"`
+	IMAPHost   *string `json:"imap_host"`
+	IMAPPort   *int    `json:"imap_port"`
+	SMTPHost   *string `json:"smtp_host"`
+	SMTPPort   *int    `json:"smtp_port"`
+	AuthType   *string `json:"auth_type"`
+	AuthMethod *string `json:"auth_method"`
+	Provider   *string `json:"provider"`
+	Username   *string `json:"username"`
+	Password   *string `json:"password"`
+	UseIDLE    *bool   `json:"use_idle"`
+	BrandColor *string `json:"brand_color"`
+}
+
 func (h *Handler) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	existing, err := h.accounts.GetByID(id)
@@ -95,21 +149,51 @@ func (h *Handler) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "account not found"})
 		return
 	}
-	var req CreateAccountRequest
+	var req UpdateAccountRequest
 	if err := readJSON(r, &req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
 		return
 	}
 	// Only update fields that are provided
-	if req.Name != "" { existing.Name = req.Name }
-	if req.Email != "" { existing.Email = req.Email }
-	if req.IMAPHost != "" { existing.IMAPHost = req.IMAPHost }
-	if req.IMAPPort != 0 { existing.IMAPPort = req.IMAPPort }
-	if req.SMTPHost != "" { existing.SMTPHost = req.SMTPHost }
-	if req.SMTPPort != 0 { existing.SMTPPort = req.SMTPPort }
-	if req.Username != "" { existing.Username = req.Username }
-	if req.Password != "" { existing.Password = req.Password }
-	if req.UseIDLE { existing.UseIDLE = req.UseIDLE }
+	if req.Name != nil {
+		existing.Name = *req.Name
+	}
+	if req.Email != nil {
+		existing.Email = *req.Email
+	}
+	if req.IMAPHost != nil {
+		existing.IMAPHost = *req.IMAPHost
+	}
+	if req.IMAPPort != nil {
+		existing.IMAPPort = *req.IMAPPort
+	}
+	if req.SMTPHost != nil {
+		existing.SMTPHost = *req.SMTPHost
+	}
+	if req.SMTPPort != nil {
+		existing.SMTPPort = *req.SMTPPort
+	}
+	if req.AuthType != nil {
+		existing.AuthType = *req.AuthType
+	}
+	if req.AuthMethod != nil {
+		existing.AuthMethod = *req.AuthMethod
+	}
+	if req.Provider != nil {
+		existing.Provider = *req.Provider
+	}
+	if req.Username != nil {
+		existing.Username = *req.Username
+	}
+	if req.Password != nil {
+		existing.Password = *req.Password
+	}
+	if req.UseIDLE != nil {
+		existing.UseIDLE = *req.UseIDLE
+	}
+	if req.BrandColor != nil {
+		existing.BrandColor = *req.BrandColor
+	}
 	if err := h.accounts.Update(existing); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

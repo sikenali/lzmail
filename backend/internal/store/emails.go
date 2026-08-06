@@ -3,6 +3,10 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/lzmail/backend/internal/models"
 )
 
@@ -24,60 +28,49 @@ func scanEmail(scanner interface {
 	return e, err
 }
 
-func buildListQuery(folder string, fromDate, toDate string) (string, []any) {
-	where := ""
-	args := []any{}
+// buildListCond 返回不带 WHERE 关键字的条件片段（如 "e.folder = ? AND e.is_read = 0"），
+// 以及对应的参数。调用方自行拼接到 WHERE 之后。
+func buildListCond(folder string, fromDate, toDate string) (string, []any) {
+	var conds []string
+	var args []any
 	switch folder {
 	case "UNSEEN":
-		where += " AND e.is_read = 0"
+		conds = append(conds, "e.is_read = 0")
 	case "STARRED":
-		where += " AND e.is_starred = 1"
+		conds = append(conds, "e.is_starred = 1")
 	case "HASATTACH":
-		where += " AND e.has_attachments = 1"
+		conds = append(conds, "e.has_attachments = 1")
 	case "ALL", "":
-		break
+		// no folder filter
 	default:
-		where += " AND e.folder = ?"
+		conds = append(conds, "e.folder = ?")
 		args = append(args, folder)
 	}
 	if fromDate != "" {
-		if where != "" {
-			where += " AND e.date >= ?"
-		} else {
-			where += " WHERE e.date >= ?"
-		}
+		conds = append(conds, "e.date >= ?")
 		args = append(args, fromDate)
 	}
 	if toDate != "" {
-		endOfDay := toDate + " 23:59:59"
-		if where != "" {
-			where += " AND e.date <= ?"
-		} else {
-			where += " WHERE e.date <= ?"
-		}
-		args = append(args, endOfDay)
+		conds = append(conds, "e.date <= ?")
+		args = append(args, toDate+" 23:59:59")
 	}
-	if fromLen := len(args); fromLen == 0 {
-		return where, args
-	}
-	// prepend WHERE if needed
-	if where == "" {
+	if len(conds) == 0 {
 		return "", args
 	}
-	// add WHERE prefix if first clause starts with AND
-	if len(where) > 0 && where[0:1] == "A" {
-		where = " WHERE " + where[6:]
-	}
-	return where, args
+	return strings.Join(conds, " AND "), args
 }
 
 func (s *EmailStore) List(accountID int64, folder string, fromDate, toDate string, limit, offset int) ([]models.Email, error) {
-	fq, fargs := buildListQuery(folder, fromDate, toDate)
+	cond, fargs := buildListCond(folder, fromDate, toDate)
+	where := " WHERE e.account_id = ?"
+	if cond != "" {
+		where += " AND " + cond
+	}
 	args := append([]any{accountID}, fargs...)
 	args = append(args, limit, offset)
 	rows, err := s.db.Query(
 		`SELECT `+emailSelectCols+`
-		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id`+fq+` ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id`+where+` ORDER BY e.date DESC LIMIT ? OFFSET ?`,
 		args...)
 	if err != nil {
 		return nil, err
@@ -95,11 +88,16 @@ func (s *EmailStore) List(accountID int64, folder string, fromDate, toDate strin
 }
 
 func (s *EmailStore) ListAll(folder string, fromDate, toDate string, limit, offset int) ([]models.Email, error) {
-	fq, fargs := buildListQuery(folder, fromDate, toDate)
-	args := append(fargs, limit, offset)
+	cond, fargs := buildListCond(folder, fromDate, toDate)
+	args := fargs
+	where := ""
+	if cond != "" {
+		where = " WHERE " + cond
+	}
+	args = append(args, limit, offset)
 	rows, err := s.db.Query(
 		`SELECT `+emailSelectCols+`
-		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id`+fq+` ORDER BY e.date DESC LIMIT ? OFFSET ?`, args...)
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id`+where+` ORDER BY e.date DESC LIMIT ? OFFSET ?`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -253,20 +251,99 @@ func (s *EmailStore) Trend(days int) ([]TrendPoint, error) {
 	return result, nil
 }
 
-func (s *EmailStore) Upsert(e *models.Email) error {
+func formatDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339)
+}
+
+func (s *EmailStore) Upsert(e *models.Email) (int64, error) {
+	var id int64
+	err := s.db.QueryRow(
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+		 ON CONFLICT(account_id, uid, folder) DO UPDATE SET
+			subject=excluded.subject, from_addr=excluded.from_addr, to_addr=excluded.to_addr,
+			cc=excluded.cc, date=excluded.date, body_preview=excluded.body_preview,
+			is_read=excluded.is_read, is_starred=excluded.is_starred,
+			has_attachments=excluded.has_attachments, archive_path=excluded.archive_path,
+			message_id=excluded.message_id
+		 RETURNING id`,
+		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC,
+		formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID,
+	).Scan(&id)
+	return id, err
+}
+
+// ReplaceAttachments 删除该邮件旧附件记录并写入新附件。
+func (s *EmailStore) ReplaceAttachments(emailID int64, atts []models.Attachment) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`DELETE FROM attachments WHERE email_id = ?`, emailID); err != nil {
+		return err
+	}
+	for _, a := range atts {
+		a.EmailID = emailID
+		if _, err := tx.Exec(
+			`INSERT INTO attachments (email_id, filename, mime_type, size, path) VALUES (?,?,?,?,?)`,
+			a.EmailID, a.Filename, a.MimeType, a.Size, a.Path,
+		); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// UIDsWithBody 返回该账号/文件夹下已保存正文归档的 UID 集合。
+func (s *EmailStore) UIDsWithBody(accountID int64, folder string) (map[uint32]bool, error) {
+	rows, err := s.db.Query(
+		`SELECT uid FROM emails WHERE account_id = ? AND folder = ? AND archive_path != ''`,
+		accountID, folder)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	uids := make(map[uint32]bool)
+	for rows.Next() {
+		var uid uint32
+		if err := rows.Scan(&uid); err != nil {
+			return nil, err
+		}
+		uids[uid] = true
+	}
+	return uids, rows.Err()
+}
+
+// UpdateFlags 增量同步时仅更新已读/星标状态。
+func (s *EmailStore) UpdateFlags(accountID int64, uid uint32, folder string, isRead, isStarred bool) error {
 	_, err := s.db.Exec(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, has_attachments, archive_path, message_id)
-		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-		 ON CONFLICT(account_id, uid) DO UPDATE SET subject=excluded.subject, from_addr=excluded.from_addr, date=excluded.date, body_preview=excluded.body_preview`,
-		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC, e.Date, e.BodyPreview, e.HasAttachments, e.ArchivePath, e.MessageID)
+		`UPDATE emails SET is_read = ?, is_starred = ? WHERE account_id = ? AND uid = ? AND folder = ?`,
+		isRead, isStarred, accountID, uid, folder)
 	return err
+}
+
+// UpdateBody 补充正文预览/附件标记/归档路径（仅在正文已落库后调用）。
+func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview string, hasAttachments bool, archivePath string) (int64, error) {
+	var id int64
+	err := s.db.QueryRow(
+		`UPDATE emails SET body_preview = ?, has_attachments = ?, archive_path = ?
+		 WHERE account_id = ? AND uid = ? AND folder = ?
+		 RETURNING id`,
+		bodyPreview, hasAttachments, archivePath, accountID, uid, folder,
+	).Scan(&id)
+	return id, err
 }
 
 func (s *EmailStore) InsertSent(e *models.Email) error {
 	_, err := s.db.Exec(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, is_read, message_id)
-		 VALUES (?,?,?,?,?,?,?,?,1,?)`,
-		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC, e.Date, e.MessageID)
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, is_read, has_attachments, archive_path, message_id)
+		 VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)`,
+		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC, formatDate(e.Date),
+		e.BodyPreview, e.HasAttachments, e.ArchivePath, e.MessageID)
 	return err
 }
 
@@ -292,14 +369,13 @@ func (s *EmailStore) Delete(id int64) error {
 
 func (s *EmailStore) GetLastUIDByFolder(accountID int64, folder string) uint32 {
 	key := fmt.Sprintf("last_uid:%d:%s", accountID, folder)
-	var uid uint32
-	err := s.db.QueryRow(
-		`SELECT value FROM settings WHERE key = ?`, key,
-	).Scan(&uid)
+	var raw string
+	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&raw)
 	if err != nil {
 		return 0
 	}
-	return uid
+	uid, _ := strconv.ParseUint(raw, 10, 32)
+	return uint32(uid)
 }
 
 func (s *EmailStore) SaveLastUID(accountID int64, folder string, uid uint32) error {

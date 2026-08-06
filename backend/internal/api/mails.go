@@ -1,12 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	"encoding/json"
 )
 
 func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
@@ -53,11 +54,13 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 
 	bodyHTML := ""
 	if email.ArchivePath != "" {
-		if cached, ok := globalBodyCache.get(id); ok {
-			bodyHTML = cached
-		} else {
-			bodyHTML = extractBody(email.ArchivePath)
-			globalBodyCache.set(id, bodyHTML)
+		if resolved, err := anchorPath(h.archiveDir, email.ArchivePath); err == nil {
+			if cached, ok := globalBodyCache.get(id); ok {
+				bodyHTML = cached
+			} else {
+				bodyHTML = extractBody(resolved)
+				globalBodyCache.set(id, bodyHTML)
+			}
 		}
 	}
 
@@ -70,6 +73,11 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
 	var body struct {
 		Folder string `json:"folder"`
 	}
@@ -81,6 +89,13 @@ func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if h.syncEngine != nil && email.Folder != body.Folder {
+		go func() {
+			if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, body.Folder); err != nil {
+				log.Printf("[sync] move %d to %s failed: %v", id, body.Folder, err)
+			}
+		}()
+	}
 	if h.sseHub != nil {
 		d, _ := json.Marshal(map[string]string{"id": strconv.FormatInt(id, 10), "folder": body.Folder})
 		h.sseHub.Publish("mail:updated", string(d))
@@ -90,9 +105,21 @@ func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleMarkRead(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
 	if err := h.emails.MarkRead(id); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if h.syncEngine != nil {
+		go func() {
+			if err := h.syncEngine.ApplyFlag(email.AccountID, email.Folder, email.UID, "\\Seen", true); err != nil {
+				log.Printf("[sync] mark read %d failed: %v", id, err)
+			}
+		}()
 	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d}`, id))
@@ -102,10 +129,22 @@ func (h *Handler) handleMarkRead(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleMarkStar(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
 	starred := r.URL.Query().Get("starred") == "true"
 	if err := h.emails.MarkStar(id, starred); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if h.syncEngine != nil {
+		go func() {
+			if err := h.syncEngine.ApplyFlag(email.AccountID, email.Folder, email.UID, "\\Flagged", starred); err != nil {
+				log.Printf("[sync] mark star %d failed: %v", id, err)
+			}
+		}()
 	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"star":%s}`, id, strconv.FormatBool(starred)))
@@ -115,9 +154,21 @@ func (h *Handler) handleMarkStar(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	if err := h.emails.Delete(id); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if h.syncEngine != nil {
+		go func() {
+			if err := h.syncEngine.DeleteMessage(email.AccountID, email.Folder, email.UID); err != nil {
+				log.Printf("[sync] delete %d failed: %v", id, err)
+			}
+		}()
 	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"deleted":true}`, id))
@@ -190,12 +241,17 @@ func (h *Handler) handleDownloadAttachment(w http.ResponseWriter, r *http.Reques
 	}
 	for _, a := range atts {
 		if a.ID == attID {
-			if a.Path != "" {
-				w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", a.Filename))
-				http.ServeFile(w, r, a.Path)
+			if a.Path == "" {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "file not found"})
 				return
 			}
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": "file not found"})
+			resolved, err := anchorPath(h.archiveDir, a.Path)
+			if err != nil {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "file not found"})
+				return
+			}
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", a.Filename))
+			http.ServeFile(w, r, resolved)
 			return
 		}
 	}
@@ -213,13 +269,18 @@ func (h *Handler) handleRenderMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no archive"})
 		return
 	}
-	data, err := os.ReadFile(email.ArchivePath)
+	resolved, err := anchorPath(h.archiveDir, email.ArchivePath)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no archive"})
+		return
+	}
+	data, err := os.ReadFile(resolved)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	contentType := "text/plain"
-	if strings.HasSuffix(email.ArchivePath, ".eml") {
+	if strings.HasSuffix(resolved, ".eml") {
 		contentType = "message/rfc822"
 	}
 	w.Header().Set("Content-Type", contentType)

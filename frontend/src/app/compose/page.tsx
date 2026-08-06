@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X } from '@/lib/icons'
+import { Bold, Italic, Underline, Link, Image, Emoji, Table, Code, Paperclip, Clock, Send, ChevronDown, X, Plus } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import type { Account } from '@/types'
+import type { Account, Contact } from '@/types'
+import ContactPicker from '@/components/compose/ContactPicker'
 
 export default function ComposePage() {
   const router = useRouter()
@@ -134,31 +135,31 @@ export default function ComposePage() {
             {/* 发件人 */}
             <div className="flex items-center gap-4 pb-4">
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>发件人</span>
-              <button className="flex items-center gap-2 h-[41px] rounded-[8px] transition-opacity hover:opacity-80"
-                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', padding: '8px 16px' }}>
+              <div className="flex items-center gap-2 flex-1 min-w-0 h-[41px] rounded-[8px] px-4"
+                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
                 <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                   style={{ backgroundColor: selectedAccount?.brand_color || 'var(--gmail)' }}>
                   {(selectedAccount?.name || 'G')[0].toUpperCase()}
                 </span>
-                <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>
-                  {selectedAccount ? selectedAccount.email : '选择账号'}
-                </span>
-                <ChevronDown className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-tertiary)' }} />
-              </button>
+                <input value={selectedAccount?.email || ''} readOnly
+                  className="flex-1 min-w-0 outline-none text-[14px] bg-transparent"
+                  style={{ color: 'var(--foreground)' }} />
+                <button onClick={() => router.push('/contacts')}
+                  className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
+                  style={{ color: 'var(--foreground-secondary)' }} title="添加联系人">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* 收件人 */}
             <div className="flex items-center gap-4 pt-4 pb-4">
               <span className="w-[61px] shrink-0 text-[14px] font-semibold" style={{ color: 'var(--foreground-secondary)' }}>收件人</span>
-              <div className="flex items-center gap-2 h-[41px] rounded-[8px] flex-1 px-4"
-                style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}>
-                <input value={to} onChange={e => setTo(e.target.value)} placeholder="输入邮箱地址..."
-                  className="flex-1 min-w-0 outline-none text-[14px] bg-transparent placeholder:text-[var(--muted-foreground)]"
-                  style={{ color: 'var(--foreground)' }} />
-                {to && (
-                  <button onClick={() => setTo('')} className="shrink-0"><X className="w-4 h-4" style={{ color: 'var(--muted-foreground)' }} /></button>
-                )}
-              </div>
+              <ContactPicker
+                value={to}
+                placeholder="选择联系人或输入邮箱..."
+                onSelect={contact => setTo(prev => prev ? prev + ', ' + contact.email : contact.email)}
+              />
               <div className="flex items-center gap-2 shrink-0">
                 {!showCc && <button onClick={() => setShowCc(true)} className="text-[13px] font-medium hover:opacity-70" style={{ color: '#6b8fa3' }}>抄送</button>}
                 {!showBcc && <button onClick={() => setShowBcc(true)} className="text-[13px] font-medium hover:opacity-70" style={{ color: '#6b8fa3' }}>密送</button>}

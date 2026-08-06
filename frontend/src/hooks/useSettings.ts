@@ -63,12 +63,29 @@ export function useSettings() {
     if (loaded.current) return
     loaded.current = true
 
-    // Initialize theme before fetching settings (use system/localStorage default)
+    // Initialize theme IMMEDIATELY to prevent flash of wrong theme
     const saved = localStorage.getItem('lzmail_theme')
     const initialTheme = saved && ['light', 'dark', 'system'].includes(saved)
       ? saved
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     applyTheme(initialTheme)
+    
+    // Apply saved accent color immediately
+    const savedAccent = localStorage.getItem('lzmail_accent_color')
+    if (savedAccent) {
+      document.documentElement.style.setProperty('--primary', savedAccent)
+      document.documentElement.style.setProperty('--primary-light', savedAccent + '15')
+    }
+    
+    // Apply saved font size immediately
+    const savedFontSize = localStorage.getItem('lzmail_font_size')
+    if (savedFontSize) applyFontSize(savedFontSize)
+    
+    // Apply saved animations state immediately
+    const savedAnimations = localStorage.getItem('lzmail_animations')
+    if (savedAnimations === 'false') {
+      document.body.classList.add('no-animations')
+    }
 
     // Initialize animations setting on document
     const savedAnimations = localStorage.getItem('lzmail_animations')
@@ -78,8 +95,12 @@ export function useSettings() {
 
     api.settings.get().then((s) => {
       setSettings((prev) => ({ ...defaults, ...s }))
-      // Apply theme from settings or fallback
-      const themeToApply = (s?.theme || defaults.theme) as 'light' | 'dark' | 'system'
+      // Apply theme: prefer saved theme from localStorage, fallback to API or default
+      const apiTheme = s?.theme
+      const localStorageTheme = localStorage.getItem('lzmail_theme')
+      const themeToApply = (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) 
+        ? apiTheme 
+        : (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme) ? localStorageTheme : defaults.theme)) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
       // Apply accent color
       const accentColor = s?.accent_color || defaults.accent_color

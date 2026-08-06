@@ -115,10 +115,18 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
     usernameHint: 'iCloud 完整邮箱地址', passwordTip: 'App 专用密码',
     guide: 'iCloud 需在 appleid.apple.com → 登录与安全 → App 专用密码 生成专用密码，再用它而非 iCloud 登录密码。',
   },
+  yahoo: {
+    label: 'Yahoo', brand: '#721c90',
+    domains: ['yahoo.com', 'ymail.com', 'yahoo.co.jp', 'yahoo.co.uk', 'yahoo.de', 'yahoo.fr'],
+    imapHost: 'imap.mail.yahoo.com', imapPort: 993, smtpHost: 'smtp.mail.yahoo.com', smtpPort: 587,
+    nameHint: 'Yahoo 账号', emailHint: 'xxx@yahoo.com',
+    usernameHint: '完整 Yahoo 邮箱地址', passwordTip: 'Yahoo 应用密码（非登录密码）',
+    guide: 'Yahoo 需生成「应用密码」：登录 Yahoo 账号 → 账户信息 → 账户安全 → 应用密码，生成后输入此处。',
+  },
 }
 
 const PROVIDER_LABELS: Record<ProviderKey, string> = {
-  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易163', icloud: 'iCloud', other: '自定义',
+  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易163', icloud: 'iCloud', yahoo: 'Yahoo', other: '自定义',
 }
 
 function detectProvider(email: string): ProviderKey {

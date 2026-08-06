@@ -17,8 +17,18 @@ export function Header({ onCompose }: { onCompose: () => void }) {
       <div className="flex items-center gap-4 shrink-0">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary)' }}>
           <svg viewBox="0 0 24 24" className="w-[22px] h-[22px] fill-none stroke-current" strokeWidth="1.8" style={{ color: 'var(--primary-foreground)' }}>
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <polyline points="22,4 12,13 2,4" fill="none" />
+            {/* Cat head */}
+            <path d="M4 9l2-5 4 3" />
+            <path d="M20 9l-2-5-4 3" />
+            <path d="M5 8v7a7 7 0 0 0 14 0V8" />
+            {/* Body */}
+            <path d="M7 16v2a2 2 0 0 0 4 0v-1" />
+            <path d="M13 16v2a2 2 0 0 0 4 0v-1" />
+            {/* Tail */}
+            <path d="M19 16c2-1 3-3 2-5" />
+            {/* @ symbol in center */}
+            <circle cx="12" cy="12" r="3" />
+            <path d="M10.5 10.5C11 9.5 12 9 12.5 9.5s1 2 0 3-2 1-3 0" />
           </svg>
         </div>
         <div className="flex flex-col gap-0.5">

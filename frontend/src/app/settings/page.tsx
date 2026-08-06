@@ -285,16 +285,16 @@ function AppearancePanel() {
             <div className="text-[15px] font-semibold" style={{ color: 'rgba(61,43,31,1)' }}>主题色</div>
             <div className="text-[13px] mt-0.5" style={{ color: 'rgba(139,115,85,1)' }}>选择界面强调色</div>
           </div>
-          <div className="flex items-center" style={{ gap: '12px' }}>
+          <div className="flex items-center" style={{ gap: '8px' }}>
             {accentColors.map(c => {
               const active = settings.accent_color === c.value
               return (
                 <button key={c.value} title={c.name} onClick={() => setSetting('accent_color', c.value)}
                   className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-                  style={{ backgroundColor: c.value, minWidth: 36, width: 36, height: 36 }}
+                  style={{ backgroundColor: c.value }}
                 >
                   {active && (
-                    <CheckCircleIcon className="w-4 h-4 text-white" />
+                    <CheckCircleIcon className="w-5 h-5 text-white" />
                   )}
                 </button>
               )
@@ -437,7 +437,7 @@ function StoragePanel() {
               <span className="text-[13px]" style={{ color: 'rgba(61,43,31,1)' }}>/mnt/nas/lzmail/archives</span>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
-              <Edit className="w-[16px] h-[16px]" style={{ color: 'rgba(107,91,79,1)' }} />
+              <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} />
             </div>
           </div>
         </div>
@@ -671,7 +671,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab 导航 */}
-        <div className="flex gap-2 h-[40px] mb-8 inline-flex" style={{ backgroundColor: 'transparent' }}>
+        <div className="inline-flex items-center gap-2 h-[40px] mb-8" style={{ backgroundColor: 'transparent' }}>
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = active === tab.key

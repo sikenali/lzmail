@@ -55,13 +55,13 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             const active = isActive(item.href)
             return (
               <a key={item.href} href={item.href}
-                className="flex items-center gap-3 rounded-[8px] transition-colors"
+                className="flex items-center gap-2 rounded-[8px] transition-colors"
                 style={{
                   backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent',
                   padding: '12px 16px',
                 }}
               >
-                <item.icon className="w-[22px] h-[22px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
                 <span className="flex-1 text-[14px]" style={{
                   color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                   fontWeight: active ? '600' : '500',
@@ -91,10 +91,10 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           const active = isActive(item.href)
           return (
             <a key={item.href} href={item.href}
-              className="flex items-center gap-3 rounded-[8px] transition-colors"
+              className="flex items-center gap-2 rounded-[8px] transition-colors"
               style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
             >
-              <item.icon className="w-[22px] h-[22px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
               <span className="flex-1 text-[14px]" style={{
                 color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                 fontWeight: active ? '600' : '500',
@@ -114,7 +114,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             const isGold = a.brand_color === '#c9a96e'
             return (
               <div key={a.id}
-                className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
+                className="flex items-center gap-2 rounded-[8px] transition-colors cursor-pointer"
                 style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
               >
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0" style={{ backgroundColor: ac }}>
@@ -129,7 +129,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             )
           })}
           <a href="#"
-            className="flex items-center gap-3 rounded-[8px] transition-colors cursor-pointer"
+            className="flex items-center gap-2 rounded-[8px] transition-colors cursor-pointer"
             style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
             onClick={(e) => { e.preventDefault(); router.push('/settings?tab=account') }}
           >

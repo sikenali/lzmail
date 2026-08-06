@@ -4,17 +4,6 @@ import { api } from '@/lib/api'
 import { Plus, ChevronDown, Check } from '@/lib/icons'
 import type { Contact } from '@/types'
 
-const MOCK_CONTACTS: Contact[] = [
-  { id: 1, name: '张伟', email: 'zhangwei@qq.com', phone: '138-0000-1234', title: '产品经理', company: '腾讯', account_id: 1, created_at: '', updated_at: '' },
-  { id: 2, name: '刘芳', email: 'liufang@outlook.com', phone: '139-0000-5678', title: '设计师', company: '阿里', account_id: 1, created_at: '', updated_at: '' },
-  { id: 3, name: '王明', email: 'wangming@gmail.com', phone: '137-0000-9012', title: '工程师', company: '字节', account_id: 2, created_at: '', updated_at: '' },
-  { id: 4, name: '李娜', email: 'lina@163.com', phone: '136-0000-3456', title: '市场总监', company: '华为', account_id: 2, created_at: '', updated_at: '' },
-  { id: 5, name: '赵强', email: 'zhaoqiang@icloud.com', phone: '135-0000-7890', title: '运营', company: '小米', account_id: 1, created_at: '', updated_at: '' },
-  { id: 6, name: '陈静', email: 'chenjing@company.com', phone: '134-0000-1111', title: '财务', company: '京东', account_id: 2, created_at: '', updated_at: '' },
-  { id: 7, name: '孙磊', email: 'sunlei@partner.com', phone: '133-0000-2222', title: '销售', company: '百度', account_id: 1, created_at: '', updated_at: '' },
-  { id: 8, name: '周雪', email: 'zhouxue@qq.com', phone: '132-0000-3333', title: 'HR', company: '美团', account_id: 2, created_at: '', updated_at: '' },
-]
-
 const avatarColors: Record<string, { bg: string; text: string }> = {
   '张': { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
   '刘': { bg: 'rgba(237,245,236,1)', text: '#5b8c5a' },
@@ -40,18 +29,20 @@ export default function ContactPicker({
   onSelect?: (emails: string[]) => void
   placeholder?: string
 }) {
-  const [allContacts, setAllContacts] = useState<Contact[]>(MOCK_CONTACTS)
+  const [allContacts, setAllContacts] = useState<Contact[]>([])
   const [filtered, setFiltered] = useState<Contact[]>([])
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const MAX_DISPLAY = 10
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
 
   // 解析已有值
   useEffect(() => {
-    if (value) {
+    if (value && allContacts.length > 0) {
       const emails = value.split(',').map(s => s.trim()).filter(Boolean)
       const ids = new Set<string>()
       allContacts.forEach(c => { if (emails.includes(c.email)) ids.add(String(c.id)) })
@@ -59,11 +50,12 @@ export default function ContactPicker({
     }
   }, [value, allContacts])
 
+  // 初始化加载全部联系人
   useEffect(() => {
     api.contacts.list().then(list => {
       if (list && list.length > 0) {
         setAllContacts(list)
-        applyFilter(query, showAll, list)
+        setFiltered(list.slice(0, MAX_DISPLAY))
       }
     }).catch(() => {})
   }, [])
@@ -78,22 +70,38 @@ export default function ContactPicker({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const applyFilter = (q: string, all: boolean, contacts?: Contact[]) => {
+  const doSearch = async (q: string) => {
     setQuery(q)
-    setShowAll(all)
-    const source = contacts || allContacts
-    const lower = q.trim().toLowerCase()
-    if (lower.length === 0) {
-      setFiltered(all ? source : source.slice(0, MAX_DISPLAY))
-    } else {
-      setFiltered(source.filter(c =>
-        c.name.toLowerCase().includes(lower) ||
-        c.email.toLowerCase().includes(lower)
-      ))
+    if (q.trim().length === 0) {
+      setFiltered(showAll ? allContacts : allContacts.slice(0, MAX_DISPLAY))
+      return
+    }
+    setLoading(true)
+    try {
+      const result = await api.contacts.search(q)
+      setFiltered(result || [])
+    } catch {
+      setFiltered([])
+    }
+    setLoading(false)
+  }
+
+  const handleInputChange = (q: string) => {
+    setQuery(q)
+    setOpen(true)
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => doSearch(q), 200)
+  }
+
+  const toggleShowAll = () => {
+    const next = !showAll
+    setShowAll(next)
+    if (query.trim().length === 0) {
+      setFiltered(next ? allContacts : allContacts.slice(0, MAX_DISPLAY))
     }
   }
 
-  const hasMore = allContacts.length > MAX_DISPLAY && !showAll && query.trim().length === 0
+  const hasMore = allContacts.length > MAX_DISPLAY && !showAll && query.trim().length === 0 && allContacts.length > 0
 
   const toggleSelect = (contact: Contact) => {
     setSelected(prev => {
@@ -155,8 +163,8 @@ export default function ContactPicker({
 
         <input
           value={query}
-          onChange={e => { setQuery(e.target.value); if (!open) setOpen(true); applyFilter(e.target.value, showAll) }}
-          onFocus={() => { if (!open) setOpen(true); if (filtered.length === 0) applyFilter('', false) }}
+          onChange={e => handleInputChange(e.target.value)}
+          onFocus={() => { if (!open) setOpen(true); if (filtered.length === 0 && allContacts.length > 0) setFiltered(allContacts.slice(0, MAX_DISPLAY)) }}
           placeholder={selectedCount === 0 ? placeholder : ''}
           className="flex-1 min-w-0 outline-none text-[14px] bg-transparent"
           style={{ color: 'var(--foreground)' }}
@@ -189,15 +197,20 @@ export default function ContactPicker({
           <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
             <input
               value={query}
-              onChange={e => { setQuery(e.target.value); applyFilter(e.target.value, showAll) }}
+              onChange={e => handleInputChange(e.target.value)}
               placeholder="搜索姓名或邮箱..."
-              className="w-full outline-none text-[13px] bg-transparent placeholder:text-[var(--muted-foreground)]" style={{ color: 'var(--foreground)' }}
+              className="w-full outline-none text-[13px] bg-transparent"
+              style={{ color: 'var(--foreground)' }}
               autoFocus
             />
           </div>
 
           {/* 联系人列表 */}
-          {filtered.length === 0 && query.trim().length > 0 ? (
+          {loading ? (
+            <div className="px-4 py-8 text-center text-[13px]" style={{ color: 'var(--muted-foreground)' }}>
+              搜索中...
+            </div>
+          ) : filtered.length === 0 && query.trim().length > 0 ? (
             <div className="px-4 py-8 text-center text-[13px]" style={{ color: 'var(--muted-foreground)' }}>
               未找到匹配的联系人
             </div>
@@ -251,10 +264,17 @@ export default function ContactPicker({
             <div
               className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
               style={{ borderTop: '0.7px solid rgba(229,217,196,1)', color: 'rgba(107,91,79,1)', fontSize: 12 }}
-              onClick={() => applyFilter('', true)}
+              onClick={e => { e.stopPropagation(); toggleShowAll() }}
             >
               <span>查看全部 {allContacts.length} 位联系人</span>
               <ChevronDown className="w-3.5 h-3.5" />
+            </div>
+          )}
+
+          {/* 搜索结果显示计数 */}
+          {query.trim().length > 0 && !loading && (
+            <div className="px-4 py-2 text-[11px]" style={{ color: 'var(--muted-foreground)', borderTop: '0.7px solid rgba(229,217,196,1)' }}>
+              找到 {filtered.length} 位联系人
             </div>
           )}
 

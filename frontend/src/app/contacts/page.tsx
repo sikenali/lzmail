@@ -4,20 +4,8 @@ import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
-import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit } from '@/lib/icons'
+import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search } from '@/lib/icons'
 import type { Contact } from '@/types'
-
-// MOCK 假数据（上线前删除）
-const MOCK_CONTACTS: Contact[] = [
-  { id: 1, name: '张伟', email: 'zhangwei@qq.com', phone: '138-0000-1234', title: '产品经理', company: '腾讯', account_id: 1, created_at: '', updated_at: '' },
-  { id: 2, name: '刘芳', email: 'liufang@outlook.com', phone: '139-0000-5678', title: '设计师', company: '阿里', account_id: 1, created_at: '', updated_at: '' },
-  { id: 3, name: '王明', email: 'wangming@gmail.com', phone: '137-0000-9012', title: '工程师', company: '字节', account_id: 2, created_at: '', updated_at: '' },
-  { id: 4, name: '李娜', email: 'lina@163.com', phone: '136-0000-3456', title: '市场总监', company: '华为', account_id: 2, created_at: '', updated_at: '' },
-  { id: 5, name: '赵强', email: 'zhaoqiang@icloud.com', phone: '135-0000-7890', title: '运营', company: '小米', account_id: 1, created_at: '', updated_at: '' },
-  { id: 6, name: '陈静', email: 'chenjing@company.com', phone: '134-0000-1111', title: '财务', company: '京东', account_id: 2, created_at: '', updated_at: '' },
-  { id: 7, name: '孙磊', email: 'sunlei@partner.com', phone: '133-0000-2222', title: '销售', company: '百度', account_id: 1, created_at: '', updated_at: '' },
-  { id: 8, name: '周雪', email: 'zhouxue@qq.com', phone: '132-0000-3333', title: 'HR', company: '美团', account_id: 2, created_at: '', updated_at: '' },
-]
 
 const avatarColors: Record<string, { bg: string; text: string }> = {
   '张': { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
@@ -42,6 +30,7 @@ export default function ContactsPage() {
   const { settings } = useSettings()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQ, setSearchQ] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
@@ -49,14 +38,23 @@ export default function ContactsPage() {
   const [sortAsc, setSortAsc] = useState(true)
   const [menuId, setMenuId] = useState<number | null>(null)
 
-  const load = (fallback = true) => {
+  const load = async (q = '') => {
     setLoading(true)
-    api.contacts.list()
-      .then(d => setContacts((d && d.length > 0) ? d : (fallback ? MOCK_CONTACTS : [])))
-      .catch(() => { if (fallback) setContacts(MOCK_CONTACTS) })
-      .finally(() => setLoading(false))
+    try {
+      const data = q ? await api.contacts.search(q) : await api.contacts.list()
+      setContacts(data || [])
+    } catch { setContacts([]) }
+    setLoading(false)
   }
   useEffect(() => { load() }, [])
+
+  // 搜索防抖
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  const handleSearch = (q: string) => {
+    setSearchQ(q)
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => load(q), 300)
+  }
 
   const density = settings.mail_density || 'comfortable'
 
@@ -122,9 +120,9 @@ export default function ContactsPage() {
   return (
     <AppShell>
       <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
-        {/* Title */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        {/* 搜索 + 标题行 */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 flex-1">
             <div className="shrink-0" style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
             <div>
               <h1 style={{ fontSize: 28, fontWeight: 700, color: '#3d2b1f', lineHeight: '36px', margin: 0 }}>
@@ -135,9 +133,25 @@ export default function ContactsPage() {
               </p>
             </div>
           </div>
+          {/* 搜索框 */}
+          <div className="relative flex-1 max-w-[280px]" style={{ flexShrink: 0 }}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: 'rgba(184,168,138,1)' }} />
+            <input
+              value={searchQ}
+              onChange={e => handleSearch(e.target.value)}
+              placeholder="搜索姓名或邮箱..."
+              className="w-full h-[40px] pl-9 pr-4 rounded-[8px] outline-none text-[13px]"
+              style={{ backgroundColor: 'var(--muted)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
+            />
+            {searchQ && (
+              <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(184,168,138,1)' }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 h-[47px] px-5 rounded-[12px] text-[14px] font-medium transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 h-[40px] px-5 rounded-[10px] text-[14px] font-medium transition-opacity hover:opacity-90 shrink-0"
             style={{ backgroundColor: 'rgba(107,143,163,1)', color: '#ffffff' }}
           >
             <UserAdd className="w-4 h-4" />
@@ -211,7 +225,7 @@ export default function ContactsPage() {
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="shrink-0" style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#3d2b1f' }}>全部联系人</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#3d2b1f' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
               <span className="flex items-center justify-center" style={{ width: 42, height: 22, borderRadius: 6, backgroundColor: 'rgba(240,244,247,1)', fontSize: 12, fontWeight: 500, color: '#6b8fa3' }}>
                 {contacts.length}人
               </span>

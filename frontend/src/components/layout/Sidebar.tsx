@@ -44,7 +44,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           className="flex items-center justify-center gap-2 w-full h-[48px] rounded-[12px] text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'rgba(196,61,61,1)', paddingLeft: 20, paddingRight: 20 }}
         >
-          <FlowChart className="w-[18px] h-[18px]" style={{ color: '#ffffff' }} />
+          <FlowChart className="w-[18px] h-[18px]" />
           <span className="text-[15px] font-semibold">写邮件</span>
         </a>
       </div>
@@ -61,7 +61,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                   padding: '12px 16px',
                 }}
               >
-                <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+                <item.icon className="w-[20px] h-[20px] shrink-0" />
                 <span className="flex-1 text-[14px]" style={{
                   color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                   fontWeight: active ? '600' : '500',
@@ -94,7 +94,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
               className="flex items-center gap-2 rounded-[8px] transition-colors"
               style={{ padding: '12px 16px', backgroundColor: active ? 'rgba(243,237,227,1)' : 'transparent' }}
             >
-              <item.icon className="w-[20px] h-[20px] shrink-0" style={{ color: active ? 'rgba(196,61,61,1)' : 'rgba(107,91,79,1)' }} />
+              <item.icon className="w-[20px] h-[20px] shrink-0" />
               <span className="flex-1 text-[14px]" style={{
                 color: active ? 'rgba(196,61,61,1)' : 'rgba(61,43,31,1)',
                 fontWeight: active ? '600' : '500',
@@ -136,7 +136,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
               style={{ border: '0.7px dashed rgba(201,169,110,1)' }}
             >
-              <Plus className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
+              <Plus className="w-[18px] h-[18px]" />
             </div>
             <span className="text-[13px] font-medium" style={{ color: 'rgba(201,169,110,1)' }}>添加账号</span>
           </a>

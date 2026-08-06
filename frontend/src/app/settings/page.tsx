@@ -159,14 +159,14 @@ function AccountPanel() {
                       title="编辑"
                       style={{ backgroundColor: 'rgba(243,237,227,1)' }}
                     >
-                      <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} />
+                      <Edit className="w-[18px] h-[18px] shrink-0" />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(a.id) }}
                       className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[rgba(253,242,242,1)]"
                       title="删除"
                       style={{ backgroundColor: 'rgba(253,242,242,1)' }}
                     >
-                      <Trash2 className="w-[18px] h-[18px]" style={{ color: 'rgba(196,61,61,1)' }} />
+                      <Trash2 className="w-[18px] h-[18px] shrink-0" />
                     </button>
                   </div>
                 </div>
@@ -294,7 +294,7 @@ function AppearancePanel() {
                   style={{ backgroundColor: c.value }}
                 >
                   {active && (
-                    <CheckCircleIcon className="w-5 h-5 text-white" />
+                    <CheckCircleIcon className="w-5 h-5 shrink-0 text-white" />
                   )}
                 </button>
               )
@@ -433,11 +433,11 @@ function StoragePanel() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ border: '0.7px solid rgba(229,217,196,1)', backgroundColor: 'rgba(251,247,240,1)' }}>
-              <Folder className="w-[18px] h-[18px]" style={{ color: 'rgba(201,169,110,1)' }} />
+              <Folder className="w-[18px] h-[18px] shrink-0" />
               <span className="text-[13px]" style={{ color: 'rgba(61,43,31,1)' }}>/mnt/nas/lzmail/archives</span>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'rgba(243,237,227,1)' }}>
-              <Edit className="w-[18px] h-[18px]" style={{ color: 'rgba(107,91,79,1)' }} />
+              <Edit className="w-[18px] h-[18px] shrink-0" />
             </div>
           </div>
         </div>

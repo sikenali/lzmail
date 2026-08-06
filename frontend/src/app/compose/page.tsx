@@ -123,7 +123,7 @@ export default function ComposePage() {
               <button onClick={handleSend} disabled={sending}
                 className="flex items-center gap-2 h-[47px] px-6 rounded-[12px] text-[14px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
-                {sending ? '发送中...' : '发送'} <Send className="w-[18px] h-[18px]" />
+                <Send className="w-[18px] h-[18px]" /> {sending ? '发送中...' : '发送'}
               </button>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function ComposePage() {
               <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date(Date.now() + 3600000).toISOString().slice(0, 16))}
                 className="flex items-center gap-2 h-8 px-4 rounded-[8px] transition-opacity hover:opacity-80"
                 style={{ backgroundColor: scheduleAt ? 'var(--danger-bg)' : 'var(--muted)', color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }}>
-                <Clock className="w-4 h-4" /> {scheduleAt ? '取消定时' : '定时发送'}
+                <Clock className="w-[18px] h-[18px]" /> {scheduleAt ? '取消定时' : '定时发送'}
               </button>
             </div>
 

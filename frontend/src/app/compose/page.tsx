@@ -112,7 +112,7 @@ function ComposePageInner() {
   const handleAttach = (files: FileList | null) => {
     if (!files) return
     Array.from(files).forEach(f => {
-      if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name} 超过25MB限制`); return }
+      if (f.size > 50 * 1024 * 1024) { toast.error(`${f.name} 超过50MB限制`); return }
       setAttachments(prev => [...prev, { name: f.name, size: f.size, file: f }])
     })
   }
@@ -300,7 +300,7 @@ function ComposePageInner() {
                   }}>
                   <Paperclip className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /> 添加附件
                 </label>
-                <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 25MB，支持拖拽上传</span>
+                <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 50MB，支持拖拽上传</span>
               </div>
               <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date(Date.now() + 3600000).toISOString().slice(0, 16))}
                 className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80"

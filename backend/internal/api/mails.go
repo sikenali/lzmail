@@ -156,7 +156,7 @@ func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	email, err := h.emails.GetByID(id)
 	if err != nil {
-		w.WriteHeader(http.StatusNoContent)
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
 	if err := h.emails.Delete(id); err != nil {

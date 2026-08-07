@@ -464,13 +464,17 @@ func buildSMTPAuth(account *models.Account, host string) (smtp.Auth, error) {
 }
 
 func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) error {
-	host, _, _ := net.SplitHostPort(addr)
-	portStr := strings.Split(addr, ":")[1]
-	port, _ := strconv.Atoi(portStr)
+	host, portStr, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf("invalid addr %s: %w", addr, err)
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return fmt.Errorf("invalid port in %s: %w", addr, err)
+	}
 
 	var c *smtp.Client
 	var conn net.Conn
-	var err error
 
 	if port == 465 {
 		conn, err = tls.Dial("tcp", addr, &tls.Config{ServerName: host, InsecureSkipVerify: false})

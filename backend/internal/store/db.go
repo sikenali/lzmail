@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 2
+const currentSchemaVersion = 3
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")

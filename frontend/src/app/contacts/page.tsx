@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
@@ -42,31 +42,45 @@ export default function ContactsPage() {
   const [sortAsc, setSortAsc] = useState(true)
   const [menuId, setMenuId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
+  const reqId = useRef(0)
 
   const load = useCallback(async (q = '', pg = 0, accountId: number | null = null) => {
+    const id = ++reqId.current
     setLoading(true)
     try {
       const data = q
         ? await api.contacts.search(q, accountId ?? undefined, PAGE_SIZE, pg * PAGE_SIZE)
         : await api.contacts.list(accountId ?? undefined, PAGE_SIZE, pg * PAGE_SIZE)
+      if (id !== reqId.current) return
       setContacts(data?.items || [])
       setTotal(data?.total || 0)
-    } catch { setContacts([]); setTotal(0) }
-    setLoading(false)
+    } catch {
+      if (id !== reqId.current) return
+      setContacts([]); setTotal(0)
+    } finally {
+      if (id === reqId.current) setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
     api.accounts.list().then(list => {
-      if (list && list.length > 0) {
-        setAccounts(list)
-        if (selectedAccountId === null) setSelectedAccountId(list[0].id)
+      const accs = list || []
+      setAccounts(accs)
+      if (accs.length > 0) {
+        setSelectedAccountId(prev => prev ?? accs[0].id)
+      } else {
+        setContacts([]); setTotal(0); setLoading(false)
       }
-    }).catch(() => {})
+    }).catch(() => {
+      setAccounts([]); setContacts([]); setTotal(0); setLoading(false)
+    })
   }, [])
 
   useEffect(() => {
     if (selectedAccountId !== null) {
       load(searchQ, page, selectedAccountId)
+    } else {
+      setLoading(false)
     }
   }, [selectedAccountId, page])
 

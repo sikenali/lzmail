@@ -288,6 +288,42 @@ func (s *EmailStore) Upsert(e *models.Email) (int64, error) {
 	return id, err
 }
 
+// BatchUpsert 批量 UPSERT 邮件记录，减少 DB round-trips
+func (s *EmailStore) BatchUpsert(emails []*models.Email) error {
+	if len(emails) == 0 {
+		return nil
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare(`
+		INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(account_id, uid, folder) DO UPDATE SET
+			subject=excluded.subject, from_addr=excluded.from_addr, from_name=excluded.from_name,
+			to_addr=excluded.to_addr, cc=excluded.cc, date=excluded.date,
+			body_preview=excluded.body_preview, is_read=excluded.is_read,
+			is_starred=excluded.is_starred, has_attachments=excluded.has_attachments,
+			archive_path=excluded.archive_path, message_id=excluded.message_id
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, e := range emails {
+		_, err := stmt.Exec(
+			e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC,
+			formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 // ReplaceAttachments 删除该邮件旧附件记录并写入新附件。
 func (s *EmailStore) ReplaceAttachments(emailID int64, atts []models.Attachment) error {
 	tx, err := s.db.Begin()

@@ -41,6 +41,8 @@ type Syncer struct {
 	doneCh      chan struct{}
 	statusMu    sync.RWMutex
 	status      string
+	connMu      sync.Mutex
+	conn        *client.Client
 }
 
 func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub, tokenSource *providers.TokenSource) *Syncer {
@@ -152,24 +154,25 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 }
 
 func (s *Syncer) idleSync() error {
-	c, err := s.connect()
+	c, err := s.ensureConn()
 	if err != nil {
 		return err
 	}
-	defer c.Logout()
 
 	if _, err := c.Select("INBOX", false); err != nil {
 		return fmt.Errorf("select INBOX: %w", err)
 	}
 
+	// 60s IDLE 续期，防止 NAT 路由断连无感知
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Idle(s.stopCh, nil)
+		done <- c.Idle(s.stopCh, &client.IdleOptions{LogoutTimeout: 60 * time.Second})
 	}()
 
 	select {
 	case err := <-done:
 		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			s.closeConn(err)
 			return err
 		}
 		s.syncAllFolders()
@@ -239,11 +242,11 @@ func (s *Syncer) publishProgress(status, folder string, total, processed, folder
 }
 
 func (s *Syncer) listFolders() ([]string, error) {
-	c, err := s.connect()
+	c, err := s.ensureConn()
 	if err != nil {
 		return nil, err
 	}
-	defer c.Logout()
+	defer s.closeConn(nil)
 
 	ch := make(chan *imap.MailboxInfo, 64)
 	errCh := make(chan error, 1)
@@ -265,12 +268,12 @@ func (s *Syncer) syncContactsFolder() {
 	if s.contactStore == nil {
 		return
 	}
-	c, err := s.connect()
+	c, err := s.ensureConn()
 	if err != nil {
 		log.Printf("[sync] account %s contacts connect failed: %v", s.account.Email, err)
 		return
 	}
-	defer c.Logout()
+	defer s.closeConn(nil)
 
 	contactsFolder := s.findContactsFolder(c)
 	if contactsFolder == "" {
@@ -402,12 +405,11 @@ func parseVCard(raw []byte) []models.Contact {
 // syncFolder 增量同步单个文件夹：用 UID 识别缺失消息，仅对新增/无正文的消息
 // 抓取 RFC822 正文，其余只刷新已读/星标标志。
 func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
-	c, err := s.connect()
+	c, err := s.ensureConn()
 	if err != nil {
 		log.Printf("[sync] account %s (%s) connect failed: %v", s.account.Email, s.account.Name, err)
 		return
 	}
-	defer c.Logout()
 
 	mbox, err := c.Select(folder, false)
 	if err != nil {
@@ -434,6 +436,7 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 	}
 
 	var needBody []uint32
+	var newEmails []*models.Email
 	for msg := range metaCh {
 		if msg.Envelope == nil {
 			continue
@@ -457,9 +460,7 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 		}
 		if !existing[msg.Uid] {
 			needBody = append(needBody, msg.Uid)
-			if _, err := s.emailStore.Upsert(email); err != nil {
-				log.Printf("[sync] account %s upsert failed: %v", s.account.Email, err)
-			}
+			newEmails = append(newEmails, email)
 			continue
 		}
 		if err := s.emailStore.UpdateFlags(s.account.ID, msg.Uid, folder, email.IsRead, email.IsStarred); err != nil {
@@ -468,6 +469,13 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 	}
 	if err := <-done; err != nil {
 		log.Printf("[sync] account %s fetch failed: %v", s.account.Email, err)
+	}
+
+	// 批量 UPSERT 新邮件（减少 DB round-trips）
+	if len(newEmails) > 0 {
+		if err := s.emailStore.BatchUpsert(newEmails); err != nil {
+			log.Printf("[sync] account %s batch upsert failed: %v", s.account.Email, err)
+		}
 	}
 
 	if len(needBody) > 0 {
@@ -566,9 +574,39 @@ func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
 }
 
 func (s *Syncer) connect() (*client.Client, error) {
+	s.connMu.Lock()
+	defer s.connMu.Unlock()
+	return s.connectLocked()
+}
+
+func (s *Syncer) ensureConn() (*client.Client, error) {
+	s.connMu.Lock()
+	defer s.connMu.Unlock()
+	if s.conn != nil {
+		if err := s.conn.Noop(); err == nil {
+			return s.conn, nil
+		}
+		s.conn.Logout()
+		s.conn = nil
+	}
+	return s.connectLocked()
+}
+
+func (s *Syncer) closeConn(lastErr error) {
+	s.connMu.Lock()
+	defer s.connMu.Unlock()
+	if s.conn != nil {
+		s.conn.Logout()
+		s.conn = nil
+	}
+	if lastErr != nil {
+		log.Printf("[sync] account %s conn closed (lastErr=%v)", s.account.Email, lastErr)
+	}
+}
+
+func (s *Syncer) connectLocked() (*client.Client, error) {
 	backoff := minRetryBackoff
 	maxAttempts := 3
-
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		if attempt > 0 {
 			log.Printf("[sync] account %s reconnecting in %v (attempt %d/%d)", s.account.Email, backoff, attempt+1, maxAttempts)
@@ -581,7 +619,10 @@ func (s *Syncer) connect() (*client.Client, error) {
 		}
 
 		addr := fmt.Sprintf("%s:%d", s.account.IMAPHost, s.account.IMAPPort)
-		dialer := &net.Dialer{Timeout: 15 * time.Second}
+		dialer := &net.Dialer{
+			Timeout:   15 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}
 		var c *client.Client
 		var err error
 		if s.account.IMAPPort == 993 {
@@ -618,6 +659,7 @@ func (s *Syncer) connect() (*client.Client, error) {
 				continue
 			}
 		}
+		s.conn = c
 		return c, nil
 	}
 	return nil, fmt.Errorf("failed to connect after %d attempts", maxAttempts)

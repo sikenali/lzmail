@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type Config struct {
@@ -25,11 +27,24 @@ type ClientCredentials struct {
 	ClientSecret string
 }
 
+func defaultArchiveDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "."
+	}
+	switch runtime.GOOS {
+	case "windows":
+		return filepath.Join(home, "Documents", "lzmail", "archives")
+	default:
+		return filepath.Join(home, "lzmail", "archives")
+	}
+}
+
 func Load() *Config {
 	return &Config{
 		Port:       getEnv("PORT", "8080"),
 		DataDir:    getEnv("DATA_DIR", "./data"),
-		ArchiveDir: getEnv("ARCHIVE_DIR", "./archives"),
+		ArchiveDir:   getEnv("ARCHIVE_DIR", defaultArchiveDir()),
 		StorageLimit: func() int64 {
 			v := getEnv("STORAGE_LIMIT_GB", "50")
 			var gb int64

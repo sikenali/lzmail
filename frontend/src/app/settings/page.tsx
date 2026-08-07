@@ -758,7 +758,7 @@ function StoragePanel() {
   const treeRef = useRef<HTMLDivElement>(null)
   const [storageRoot, setStorageRoot] = useState<StorageTreeNode | null>(null)
 
-  const archivePath = settings.archive_path || '/mnt/nas/lzmail/archives'
+  const archivePath = settings.archive_path || ''
 
   useEffect(() => {
     api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
@@ -858,7 +858,7 @@ function StoragePanel() {
                   <input value={pathInput} onChange={e => setPathInput(e.target.value)}
                     className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
                     style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
-                    placeholder="输入归档路径，如 /mnt/nas/lzmail/archives"
+                    placeholder="输入归档路径，如 ~/lzmail/archives"
                   />
                   <button onClick={handleSavePath}
                     className="px-3 h-9 rounded-lg text-[12px] font-medium"

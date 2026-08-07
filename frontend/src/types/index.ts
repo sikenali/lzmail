@@ -23,6 +23,7 @@ export interface Email {
   folder: string
   subject: string
   from: string
+  from_name: string
   to: string
   cc: string
   date: string

@@ -71,7 +71,9 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: brandColor }}>
               {senderInitials(email.from)}
             </div>
-            <span className="text-[14px] truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight }}>{email.from}</span>
+            <span className="text-[14px] truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight }}>
+              {email.from_name || email.from}
+            </span>
           </div>
           <span className="text-[11px] shrink-0" style={{ color: 'var(--muted-foreground)' }}>{timeStr}</span>
         </div>

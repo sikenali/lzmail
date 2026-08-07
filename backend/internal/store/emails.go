@@ -18,13 +18,13 @@ func NewEmailStore(db *sql.DB) *EmailStore {
 	return &EmailStore{db: db}
 }
 
-const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, '')`
+const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.from_name, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, '')`
 
 func scanEmail(scanner interface {
 	Scan(dest ...any) error
 }) (models.Email, error) {
 	var e models.Email
-	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand)
+	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.FromName, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand)
 	return e, err
 }
 
@@ -149,14 +149,14 @@ func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([
 		rows, err = s.db.Query(
 			`SELECT `+emailSelectCols+`
 			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
-			 WHERE e.account_id = ? AND (e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?)
+			 WHERE e.account_id = ? AND (e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?)
 			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
 			accountID, q, q, q, limit, offset)
 	} else {
 		rows, err = s.db.Query(
 			`SELECT `+emailSelectCols+`
 			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
-			 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?
+			 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?
 			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
 			q, q, q, limit, offset)
 	}
@@ -273,16 +273,16 @@ func formatDate(t time.Time) string {
 func (s *EmailStore) Upsert(e *models.Email) (int64, error) {
 	var id int64
 	err := s.db.QueryRow(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id)
-		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		 ON CONFLICT(account_id, uid, folder) DO UPDATE SET
-			subject=excluded.subject, from_addr=excluded.from_addr, to_addr=excluded.to_addr,
+			subject=excluded.subject, from_addr=excluded.from_addr, from_name=excluded.from_name, to_addr=excluded.to_addr,
 			cc=excluded.cc, date=excluded.date, body_preview=excluded.body_preview,
 			is_read=excluded.is_read, is_starred=excluded.is_starred,
 			has_attachments=excluded.has_attachments, archive_path=excluded.archive_path,
 			message_id=excluded.message_id
 		 RETURNING id`,
-		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC,
+		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC,
 		formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID,
 	).Scan(&id)
 	return id, err
@@ -352,9 +352,9 @@ func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview
 
 func (s *EmailStore) InsertSent(e *models.Email) error {
 	_, err := s.db.Exec(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, to_addr, cc, date, body_preview, is_read, has_attachments, archive_path, message_id)
-		 VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)`,
-		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.To, e.CC, formatDate(e.Date),
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, has_attachments, archive_path, message_id)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?,?)`,
+		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC, formatDate(e.Date),
 		e.BodyPreview, e.HasAttachments, e.ArchivePath, e.MessageID)
 	return err
 }

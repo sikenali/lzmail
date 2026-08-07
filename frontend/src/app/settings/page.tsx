@@ -310,7 +310,6 @@ function AccountPanel() {
     resetForm()
   }
 
-  const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e', yahoo: '#e53e3e' }
   const getSyncBadge = (a: Account) => {
     if (a.use_idle) return { label: 'IDLE · 实时', color: 'var(--success)', bg: 'var(--success-bg)', dotColor: 'var(--success)' }
     return { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }

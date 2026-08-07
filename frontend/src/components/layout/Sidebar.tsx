@@ -2,8 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit } from '@/lib/icons'
-import { getAccountAvatarBg } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit, getAccountAvatarBg } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 

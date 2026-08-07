@@ -1,6 +1,5 @@
 'use client'
-import { Search, Settings, User } from '@/lib/icons'
-import { getAccountAvatarBg } from '@/lib/icons'
+import { Search, Settings, User, getAccountAvatarBg } from '@/lib/icons'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'

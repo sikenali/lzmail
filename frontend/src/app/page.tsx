@@ -6,9 +6,8 @@ import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
-  ChevronRight
+  ChevronRight, getAccountAvatarBg
 } from '@/lib/icons'
-import { getAccountAvatarBg } from '@/lib/icons'
 import TrendChart from './TrendChart'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import type { MailStats, Email, Account } from '@/types'

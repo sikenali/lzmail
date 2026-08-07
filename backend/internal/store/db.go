@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 3
+const currentSchemaVersion = 4
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
@@ -131,7 +131,10 @@ func migrate(db *sql.DB) error {
 	if err := migrateToV2(db); err != nil {
 		return err
 	}
-	return migrateToV3(db)
+	if err := migrateToV3(db); err != nil {
+		return err
+	}
+	return migrateToV4(db)
 }
 
 // migrateToV3 重建 emails 表，把唯一键从 (account_id, uid) 扩展为
@@ -171,6 +174,19 @@ func migrateToV3(db *sql.DB) error {
 		DROP TABLE emails_old;
 	`)
 	return err
+}
+
+// migrateToV4 为 emails 表添加 from_name 列（发件人显示名）
+func migrateToV4(db *sql.DB) error {
+	exists, err := columnExists(db, "emails", "from_name")
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err := db.Exec(`ALTER TABLE emails ADD COLUMN from_name TEXT DEFAULT ''`)
+		return err
+	}
+	return nil
 }
 
 // migrateToV2 为已有数据库补充 OAuth2 相关列（幂等）

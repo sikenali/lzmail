@@ -8,7 +8,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1001, account_id: 1, uid: 101, folder: 'INBOX',
     subject: '【重要】版本更新通知：V2.3.0 已上线',
-    from: 'LZMail Team', to: 'user@example.com', cc: '',
+    from: 'noreply@lzmail.com', from_name: 'LZMail Team', to: 'user@example.com', cc: '',
     date: '2026-07-15T09:30:00+08:00',
     body_preview: '本次更新带来全新的邮件检索体验，支持多账户批量归档与更智能的智能分类功能，欢迎体验。',
     is_read: false, is_starred: false, has_attachments: false,
@@ -18,7 +18,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1002, account_id: 2, uid: 102, folder: 'INBOX',
     subject: '本周技术周报 & 团队 OKR 回顾',
-    from: '前端小组', to: 'user@example.com', cc: '',
+    from: 'tech@company.com', from_name: '前端小组', to: 'user@example.com', cc: '',
     date: '2026-07-14T18:02:00+08:00',
     body_preview: '各位好，本周前端小组完成了 3 个迭代需求，交付 8 个组件，修复线上缺陷 12 个，整体进度正常。',
     is_read: false, is_starred: false, has_attachments: true,
@@ -28,7 +28,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1003, account_id: 1, uid: 103, folder: 'INBOX',
     subject: '你的季度账单已生成',
-    from: 'Service Billing', to: 'user@example.com', cc: '',
+    from: 'billing@service.com', from_name: 'Service Billing', to: 'user@example.com', cc: '',
     date: '2026-07-14T10:15:00+08:00',
     body_preview: '您好，您本季度的账单明细如下，请于 7 月 30 日前完成核对与支付。',
     is_read: true, is_starred: false, has_attachments: true,
@@ -38,7 +38,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1004, account_id: 2, uid: 104, folder: 'INBOX',
     subject: '产品评审会会议纪要（7/13）',
-    from: '产品经理 Anna', to: 'user@example.com', cc: '',
+    from: 'anna@company.com', from_name: '产品经理 Anna', to: 'user@example.com', cc: '',
     date: '2026-07-13T16:45:00+08:00',
     body_preview: '会议讨论了两点：一是确定了下季度路线图优先级，二是评审了新版消息通知交互稿。',
     is_read: true, is_starred: true, has_attachments: false,
@@ -48,7 +48,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1005, account_id: 1, uid: 105, folder: 'INBOX',
     subject: '数据同步任务执行报告',
-    from: 'Noreply Report', to: 'user@example.com', cc: '',
+    from: 'reports@lzmail.com', from_name: 'Noreply Report', to: 'user@example.com', cc: '',
     date: '2026-07-13T09:00:00+08:00',
     body_preview: '本期共同步 2,418 封邮件，失败 3 封，均已重试成功。',
     is_read: false, is_starred: false, has_attachments: true,
@@ -58,7 +58,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1006, account_id: 2, uid: 106, folder: 'INBOX',
     subject: '欢迎加入 LZMail 内测计划 🎉',
-    from: 'LZMail Team', to: 'user@example.com', cc: '',
+    from: 'team@lzmail.com', from_name: 'LZMail Team', to: 'user@example.com', cc: '',
     date: '2026-07-12T14:20:00+08:00',
     body_preview: '恭喜你成为内测用户，我们将为你开放全部高级功能，期待你的反馈。',
     is_read: true, is_starred: false, has_attachments: false,
@@ -68,7 +68,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1007, account_id: 1, uid: 107, folder: 'INBOX',
     subject: '【公告】存储空间升级通知',
-    from: 'LZMail Admin', to: 'user@example.com', cc: '',
+    from: 'admin@lzmail.com', from_name: 'LZMail Admin', to: 'user@example.com', cc: '',
     date: '2026-07-11T11:30:00+08:00',
     body_preview: '为提供更好的服务，免费存储空间将由 10GB 升级至 50GB，已自动生效。',
     is_read: false, is_starred: true, has_attachments: false,
@@ -78,7 +78,7 @@ export const MOCK_EMAILS: Email[] = [
   {
     id: 1008, account_id: 2, uid: 108, folder: 'INBOX',
     subject: '本周社区精选：优秀实践分享',
-    from: 'LZMail 社区', to: 'user@example.com', cc: '',
+    from: 'community@lzmail.com', from_name: 'LZMail 社区', to: 'user@example.com', cc: '',
     date: '2026-07-10T20:10:00+08:00',
     body_preview: '本周社区精选了 5 篇高质量文章，涵盖性能优化、安全最佳实践等话题。',
     is_read: true, is_starred: false, has_attachments: true,

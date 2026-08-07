@@ -579,7 +579,7 @@ func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
 func (s *Syncer) connectOneShot() (*client.Client, error) {
 	s.connMu.Lock()
 	defer s.connMu.Unlock()
-	return s.connectLocked()
+	return s.dialLocked()
 }
 
 func (s *Syncer) ensureConn() (*client.Client, error) {
@@ -592,7 +592,12 @@ func (s *Syncer) ensureConn() (*client.Client, error) {
 		s.conn.Logout()
 		s.conn = nil
 	}
-	return s.connectLocked()
+	c, err := s.dialLocked()
+	if err != nil {
+		return nil, err
+	}
+	s.conn = c
+	return c, nil
 }
 
 func (s *Syncer) closeConn(lastErr error) {
@@ -607,7 +612,7 @@ func (s *Syncer) closeConn(lastErr error) {
 	}
 }
 
-func (s *Syncer) connectLocked() (*client.Client, error) {
+func (s *Syncer) dialLocked() (*client.Client, error) {
 	backoff := minRetryBackoff
 	maxAttempts := 3
 	for attempt := 0; attempt < maxAttempts; attempt++ {
@@ -662,7 +667,6 @@ func (s *Syncer) connectLocked() (*client.Client, error) {
 				continue
 			}
 		}
-		s.conn = c
 		return c, nil
 	}
 	return nil, fmt.Errorf("failed to connect after %d attempts", maxAttempts)

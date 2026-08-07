@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
 const brandGradient = 'linear-gradient(135deg, #3b82f6, #4f46e5)'
+const accountsChannel = new BroadcastChannel('lzmail_accounts')
 
 function AuthBadge({ account }: { account: Account }) {
   if (account.auth_method !== 'oauth2') return null
@@ -29,8 +30,16 @@ export function AccountSwitcher({
   const [accounts, setAccounts] = useState<Account[]>([])
   const [open, setOpen] = useState(false)
 
-  useEffect(() => {
+  const fetchAccounts = () => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
+  }
+
+  useEffect(() => {
+    fetchAccounts()
+    accountsChannel.addEventListener('message', (e) => {
+      if (e.data?.type === 'accounts:updated') fetchAccounts()
+    })
+    return () => accountsChannel.close()
   }, [])
 
   const activeAccount = current || accounts[0] || null

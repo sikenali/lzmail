@@ -24,6 +24,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
   const [searchQ, setSearchQ] = useState('')
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
+  const accountsChannel = new BroadcastChannel('lzmail_accounts')
 
   useSSE(undefined, undefined, (status) => {
     if (status === 'syncing') setSyncStatus('syncing')
@@ -32,9 +33,16 @@ export function Header({ onCompose }: { onCompose: () => void }) {
   })
 
   useEffect(() => {
-    api.accounts.list().then(d => {
-      if (d && d.length > 0) setUserAccount(d[0])
-    }).catch(() => {})
+    const fetch = () => {
+      api.accounts.list().then(d => {
+        if (d && d.length > 0) setUserAccount(d[0])
+      }).catch(() => {})
+    }
+    fetch()
+    accountsChannel.addEventListener('message', (e) => {
+      if (e.data?.type === 'accounts:updated') fetch()
+    })
+    return () => accountsChannel.close()
   }, [])
 
   const showSearch = pathname === '/' || pathname === '/mail' || pathname === '/contacts' || pathname.startsWith('/mail/')

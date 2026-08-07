@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useLayoutEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
@@ -233,22 +234,30 @@ function AccountPanel() {
     if (!form.email || !form.imap_host || !form.smtp_host) { alert('请填写必填项'); return }
     setSaving(true)
     try {
-      await api.accounts.create({
+      const result = await api.accounts.create({
         name: form.name, email: form.email, imap_host: form.imap_host,
         imap_port: form.imap_port, smtp_host: form.smtp_host, smtp_port: form.smtp_port,
         username: form.username, password: form.password || undefined, use_idle: form.use_idle,
-        auth_method: form.auth_method,
+        auth_method: form.auth_method || 'password',
         provider: form.provider || '',
         access_token: form.access_token || undefined,
         token_type: form.token_type || undefined,
         expiry: form.expiry || undefined,
         scope: form.scope || undefined,
       })
+      toast.success('账号添加成功，正在同步邮件…')
       setShowForm(false)
       setEditingId(null)
       resetForm()
       load()
-    } catch (e: any) { alert(e.message) }
+      // Broadcast account change to other components
+      new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' })
+      // Trigger sync for the new account
+      const newId = result?.id
+      if (newId) {
+        setTimeout(() => api.sync.account(newId).catch(() => {}), 500)
+      }
+    } catch (e: any) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 

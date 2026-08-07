@@ -186,12 +186,13 @@ func (s *EmailStore) Counts() (*FolderCounts, error) {
 	var c FolderCounts
 	err := s.db.QueryRow(`
 		SELECT
-			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'INBOX' AND is_read = 0), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Drafts'), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE is_starred = 1), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Sent'), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE folder = 'Trash'), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE is_read = 0), 0)
+			SUM(CASE WHEN folder='INBOX' AND is_read=0 THEN 1 ELSE 0 END),
+			SUM(CASE WHEN folder='Drafts' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN is_starred=1 THEN 1 ELSE 0 END),
+			SUM(CASE WHEN folder='Sent' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN folder='Trash' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END)
+		FROM emails
 	`).Scan(&c.InboxUnread, &c.Drafts, &c.Starred, &c.Sent, &c.Trash, &c.Unread)
 	if err != nil {
 		return nil, err

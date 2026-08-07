@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lzmail/backend/internal/archive"
@@ -43,6 +45,25 @@ type ComposeRequest struct {
 // processScheduledJobs 轮询数据库中的待发送任务并执行。
 // 定时任务持久化在 scheduled_emails 表，重启后不丢失。
 func processScheduledJobs() {
+	const workerCount = 3
+	jobCh := make(chan store.ScheduledEmail, 20)
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobCh {
+				if err := executeJob(&job); err != nil {
+					log.Printf("[send] scheduled job %d failed: %v", job.ID, err)
+					ScheduledStoreInstance.SetStatus(job.ID, "failed")
+					continue
+				}
+				ScheduledStoreInstance.SetStatus(job.ID, "sent")
+				log.Printf("[send] scheduled email sent: account %d -> %s", job.AccountID, job.To)
+			}
+		}()
+	}
+
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -56,17 +77,12 @@ func processScheduledJobs() {
 			continue
 		}
 		for _, j := range jobs {
-			go func(job store.ScheduledEmail) {
-				if err := executeJob(&job); err != nil {
-					log.Printf("[send] scheduled job %d failed: %v", job.ID, err)
-					ScheduledStoreInstance.SetStatus(job.ID, "failed")
-					return
-				}
-				ScheduledStoreInstance.SetStatus(job.ID, "sent")
-				log.Printf("[send] scheduled email sent: account %d -> %s", job.AccountID, job.To)
-			}(j)
+			jobCh <- j
 		}
 	}
+	// drain: close channel and wait for workers to finish current jobs
+	close(jobCh)
+	wg.Wait()
 }
 
 func init() {
@@ -132,8 +148,8 @@ func buildMessage(from, to, cc, subject, bodyText, bodyHTML string, attachments 
 	}
 
 	// With attachments: multipart/mixed wrapping an alternative part + attachments.
-	svcBoundary := fmt.Sprintf("=_%d", time.Now().UnixNano())
-	altBoundary := fmt.Sprintf("=_alt_%d", time.Now().UnixNano())
+	svcBoundary := "=_" + randomHex(16)
+	altBoundary := "=_alt_" + randomHex(16)
 	headers["Content-Type"] = fmt.Sprintf(`multipart/mixed; boundary="%s"`, svcBoundary)
 
 	for k, v := range headers {
@@ -208,20 +224,26 @@ func buildSinglePart(headers map[string]string, bodyText, bodyHTML string) []byt
 
 func encodeBase64(s string) string {
 	const maxLine = 76
-	encoded := make([]byte, len(s)*4/3+3)
-	n := 0
-	for i := 0; i < len(s); i += maxLine {
+	encoded := base64.StdEncoding.EncodeToString([]byte(s))
+	var result strings.Builder
+	result.Grow((len(encoded)+maxLine-1)/maxLine*maxLine + (len(encoded)+maxLine-1)/maxLine*2)
+	for i := 0; i < len(encoded); i += maxLine {
 		end := i + maxLine
-		if end > len(s) {
-			end = len(s)
+		if end > len(encoded) {
+			end = len(encoded)
 		}
-		n += copy(encoded[n:], s[i:end])
-		encoded[n] = '\r'
-		n++
-		encoded[n] = '\n'
-		n++
+		result.WriteString(encoded[i:end])
+		result.WriteString("\r\n")
 	}
-	return string(encoded[:n])
+	return result.String()
+}
+
+func randomHex(n int) string {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("%0*d", n*2, time.Now().UnixNano())
+	}
+	return fmt.Sprintf("%x", b)
 }
 
 func encodeHeader(s string) string {

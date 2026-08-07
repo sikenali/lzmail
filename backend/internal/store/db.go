@@ -104,7 +104,6 @@ func migrate(db *sql.DB) error {
 		UNIQUE(email, account_id)
 	);
 	CREATE INDEX IF NOT EXISTS idx_emails_account ON emails(account_id, date DESC);
-	CREATE INDEX IF NOT EXISTS idx_emails_folder ON emails(account_id, folder);
 	CREATE INDEX IF NOT EXISTS idx_emails_search ON emails(subject, from_addr, body_preview);
 	CREATE TABLE IF NOT EXISTS settings (
 		key TEXT PRIMARY KEY,

@@ -33,6 +33,7 @@ type Syncer struct {
 	archiveDir  string
 	sseHub      *sse.Hub
 	tokenSource *providers.TokenSource
+	syncMu      sync.Mutex
 	stopCh      chan struct{}
 	doneCh      chan struct{}
 	statusMu    sync.RWMutex
@@ -171,6 +172,8 @@ func (s *Syncer) idleSync() error {
 }
 
 func (s *Syncer) syncAllFolders() {
+	s.syncMu.Lock()
+	defer s.syncMu.Unlock()
 	s.publishSync("syncing")
 	folders, err := s.listFolders()
 	if err != nil {

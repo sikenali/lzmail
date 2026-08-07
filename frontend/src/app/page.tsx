@@ -125,7 +125,6 @@ export default function Dashboard() {
                 {card.trendUp != null ? (
                   <div className="flex items-center gap-1 mt-4">
                     {card.trendUp ? <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} /> : <TrendingDown className="w-3.5 h-3.5" style={{ color: 'var(--danger)' }} />}
-                    <span className="text-xs font-medium" style={{ color: card.trendUp ? 'var(--success)' : 'var(--danger)' }}>{card.trendUp ? '+12.5%' : '-3.2%'}</span>
                     <span className="text-xs ml-0.5" style={{ color: 'var(--muted-foreground)' }}>{card.note}</span>
                   </div>
                 ) : (

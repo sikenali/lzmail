@@ -7,10 +7,9 @@ import (
 )
 
 type bodyCacheEntry struct {
-	key      int64
-	html     string
-	expires  time.Time
-	listElem *list.Element
+	key     int64
+	html    string
+	expires time.Time
 }
 
 type bodyCache struct {

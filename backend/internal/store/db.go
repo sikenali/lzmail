@@ -245,8 +245,9 @@ func addIndexes(db *sql.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_emails_is_read ON emails(account_id, is_read)`,
 		`CREATE INDEX IF NOT EXISTS idx_emails_is_starred ON emails(account_id, is_starred)`,
 		`CREATE INDEX IF NOT EXISTS idx_emails_folder ON emails(account_id, folder, date DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_scheduled_send_at ON scheduled_emails(send_at, status)`,
+		`CREATE INDEX IF NOT EXISTS idx_scheduled_send_at ON scheduled_emails(status, send_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_contacts_account ON contacts(account_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_attachments_email ON attachments(email_id)`,
 	}
 	for _, idx := range indexes {
 		if _, err := db.Exec(idx); err != nil {

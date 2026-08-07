@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { api } from '@/lib/api'
-import type { Account, Email, Contact, MailStats } from '@/types'
 
 const DEBOUNCE_MS = 300
 

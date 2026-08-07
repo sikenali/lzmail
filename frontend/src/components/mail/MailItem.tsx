@@ -1,6 +1,7 @@
 'use client'
 import { Check, Paperclip, Star } from '@/lib/icons'
 import type { Email } from '@/types'
+import React from 'react'
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -25,7 +26,7 @@ const senderInitials = (name: string): string => {
   return (name || '?')[0]?.toUpperCase() || '?'
 }
 
-export function MailItem({ email, brand, selected = false, onSelect }: {
+const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected = false, onSelect }: {
   email: Email; brand?: string; selected?: boolean; onSelect: (id: number) => void
 }) {
   const bc = (brand || email.account_brand || '#c43d3d')
@@ -91,4 +92,8 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
       </div>
     </div>
   )
-}
+}, (prev, next) => {
+  return prev.email.id === next.email.id && prev.selected === next.selected && prev.brand === next.brand
+})
+
+export const MailItem = MemoizedMailItem

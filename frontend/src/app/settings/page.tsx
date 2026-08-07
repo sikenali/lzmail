@@ -1000,9 +1000,6 @@ function AboutPanel() {
     ]},
     { title: '运行信息', color: 'var(--teal)', items: [
       '运行时长：持续运行中',
-      'Goroutine 数：8',
-      '内存占用：~128 MB',
-      'API 版本：v1.3.0',
     ]},
   ]
 

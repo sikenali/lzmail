@@ -1,10 +1,10 @@
 'use client'
-import { Suspense, useEffect, useState, useCallback, useRef } from 'react'
+import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Underline, MailCheck, Search, Check, Tags, FolderMove, Mail, RefreshCw, Filter, Download } from '@/lib/icons'
+import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Underline, MailCheck, Search, Check, Tags, FolderMove, Mail, RefreshCw, Download } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
@@ -39,8 +39,16 @@ function MailPageInner() {
   const [loadingMore, setLoadingMore] = useState(false)
   const listRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const listCache = useRef<Record<string, Email[]>>({})
+  const scrollHandlerRef = useRef<() => void>(() => {})
 
-  useSSE(() => setRefresh(n => n + 1))
+  useSSE(() => {
+    if (folder === 'INBOX' && !debouncedSearch) {
+      fetchPage(0, false)
+    } else {
+      setRefresh(n => n + 1)
+    }
+  })
 
   const resetList = useCallback(() => {
     setEmails([])
@@ -53,11 +61,12 @@ function MailPageInner() {
   const fetchPage = useCallback(async (off: number, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true)
     try {
-      const data = debouncedSearch
+      const data = debouncedSearch && debouncedSearch.trim()
         ? await api.mails.search(debouncedSearch)
         : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, PAGE_SIZE, off)
       const items = data || []
       setEmails(prev => append ? [...prev, ...items] : items)
+      if (!append) listCache.current[`${folder}:${debouncedSearch}`] = items
       setOffset(off)
       setHasMore(items.length >= PAGE_SIZE)
     } catch { if (!append) setEmails([]) }
@@ -65,20 +74,36 @@ function MailPageInner() {
     setLoadingMore(false)
   }, [folder, debouncedSearch])
 
-  useEffect(() => { resetList(); fetchPage(0, false) }, [fetchPage, resetList, refresh])
+  useEffect(() => {
+    const cached = listCache.current[`${folder}:${debouncedSearch}`]
+    if (cached) {
+      setEmails(cached)
+      setOffset(0)
+      setHasMore(true)
+    } else {
+      resetList()
+    }
+    fetchPage(0, false)
+  }, [fetchPage, resetList, refresh])
 
   useEffect(() => {
-    const el = listRef.current
-    if (!el) return
-    const onScroll = () => {
+    scrollHandlerRef.current = () => {
       if (loadingMore || !hasMore || loading) return
+      const el = listRef.current
+      if (!el) return
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 120) {
         fetchPage(offset + PAGE_SIZE, true)
       }
     }
+  })
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const onScroll = () => scrollHandlerRef.current()
     el.addEventListener('scroll', onScroll)
     return () => el.removeEventListener('scroll', onScroll)
-  }, [loadingMore, hasMore, loading, offset, fetchPage])
+  }, [])
 
   const loadDetail = useCallback(async (id: number): Promise<EmailDetail | null> => {
     try {
@@ -99,11 +124,14 @@ function MailPageInner() {
     setSelectedId(id)
     const d = await loadDetail(id)
     if (d) {
-      api.mails.markRead(id).catch(() => {})
+      const email = emails.find(e => e.id === id)
+      if (email && !email.is_read) {
+        api.mails.markRead(id).catch(() => {})
+      }
       // 同步更新本地列表的 is_read 状态
       setEmails(prev => prev.map(e => e.id === id ? { ...e, is_read: true } : e))
     }
-  }, [loadDetail])
+  }, [loadDetail, emails])
 
   const resetDetail = () => {
     setSelectedId(null)
@@ -178,10 +206,10 @@ function MailPageInner() {
     if (idx > 0) handleSelect(emails[idx - 1].id)
   }
 
-  const sortedEmails = [...emails].sort((a, b) => {
+  const sortedEmails = useMemo(() => [...emails].sort((a, b) => {
     const r = new Date(b.date).getTime() - new Date(a.date).getTime()
     return sortAsc ? -r : r
-  })
+  }), [emails, sortAsc])
 
   return (
     <AppShell>
@@ -206,14 +234,10 @@ function MailPageInner() {
                      <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
                    </button>
                    </Tooltip>
-                   <Tooltip text="筛选">
-                   <button onClick={() => { /* TODO: filter panel */ }} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                     <Filter className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-                   </button>
-                   </Tooltip>
+
                </div>
             </div>
-            <form onSubmit={e => { e.preventDefault(); resetList(); fetchPage(0, false) }} className="relative mt-3">
+            <form onSubmit={e => e.preventDefault()} className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
                <input value={searchQ} onChange={e => setSearchQ(e.target.value)}
                  className="w-full h-10 pl-9 pr-4 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"

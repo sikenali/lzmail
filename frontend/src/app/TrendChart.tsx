@@ -4,17 +4,15 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 type TrendPoint = { date: string; receive: number; send: number }
 
 export default function TrendChart({ data }: { data: TrendPoint[] }) {
-  const chartData = data.length > 0
-    ? data.map(d => ({ name: d.date, receive: d.receive, send: d.send }))
-    : [
-        { name: '周一', receive: 8, send: 4 },
-        { name: '周二', receive: 14, send: 5 },
-        { name: '周三', receive: 6, send: 2 },
-        { name: '周四', receive: 11, send: 4 },
-        { name: '周五', receive: 18, send: 4 },
-        { name: '周六', receive: 4, send: 2 },
-        { name: '周日', receive: 7, send: 3 },
-      ]
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[192px] text-sm" style={{ color: 'var(--muted-foreground)' }}>
+        暂无趋势数据
+      </div>
+    )
+  }
+
+  const chartData = data.map(d => ({ name: d.date, receive: d.receive, send: d.send }))
 
   return (
     <ResponsiveContainer width="100%" height={192}>

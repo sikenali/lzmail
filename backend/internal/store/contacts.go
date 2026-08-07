@@ -89,22 +89,6 @@ func (s *ContactStore) Search(q string, accountID int64, limit, offset int) (*Co
 	return &ContactPageResult{Items: contacts, Total: total}, nil
 }
 
-func (s *ContactStore) List() ([]models.Contact, error) {
-	result, err := s.ListPage(0, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-	return result.Items, nil
-}
-
-func (s *ContactStore) SearchAll(q string) ([]models.Contact, error) {
-	result, err := s.Search(q, 0, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-	return result.Items, nil
-}
-
 func (s *ContactStore) Create(c *models.Contact) error {
 	result, err := s.db.Exec(`INSERT INTO contacts (name, email, phone, company, title, account_id) VALUES (?,?,?,?,?,?) ON CONFLICT(email, account_id) DO UPDATE SET name=excluded.name, phone=excluded.phone, company=excluded.company, title=excluded.title, updated_at=datetime('now')`, c.Name, c.Email, c.Phone, c.Company, c.Title, c.AccountID)
 	if err != nil {

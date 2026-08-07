@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -88,6 +87,10 @@ func (s *EmailStore) List(accountID int64, folder string, fromDate, toDate strin
 }
 
 func (s *EmailStore) ListAll(folder string, fromDate, toDate string, limit, offset int) ([]models.Email, error) {
+	// Safety limit: force max 200 per page to prevent unbounded results
+	if limit <= 0 || limit > 200 {
+		limit = 200
+	}
 	cond, fargs := buildListCond(folder, fromDate, toDate)
 	args := fargs
 	where := ""
@@ -151,14 +154,14 @@ func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([
 			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
 			 WHERE e.account_id = ? AND (e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?)
 			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
-			accountID, q, q, q, limit, offset)
+			accountID, q, q, q, q, limit, offset)
 	} else {
 		rows, err = s.db.Query(
 			`SELECT `+emailSelectCols+`
 			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
 			 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?
 			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
-			q, q, q, limit, offset)
+			q, q, q, q, limit, offset)
 	}
 	if err != nil {
 		return nil, err
@@ -194,7 +197,7 @@ type FolderCounts struct {
 }
 
 func (s *EmailStore) Counts() (*FolderCounts, error) {
-	var c FolderCounts
+	var inboxUnread, drafts, starred, sent, trash, unread int
 	err := s.db.QueryRow(`
 		SELECT
 			COALESCE(SUM(CASE WHEN folder='INBOX' AND is_read=0 THEN 1 ELSE 0 END), 0),
@@ -204,11 +207,11 @@ func (s *EmailStore) Counts() (*FolderCounts, error) {
 			COALESCE(SUM(CASE WHEN folder='Trash' THEN 1 ELSE 0 END), 0),
 			COALESCE(SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END), 0)
 		FROM emails
-	`).Scan(&c.InboxUnread, &c.Drafts, &c.Starred, &c.Sent, &c.Trash, &c.Unread)
+	`).Scan(&inboxUnread, &drafts, &starred, &sent, &trash, &unread)
 	if err != nil {
 		return nil, err
 	}
-	return &c, nil
+	return &FolderCounts{InboxUnread: inboxUnread, Drafts: drafts, Starred: starred, Sent: sent, Trash: trash, Unread: unread}, nil
 }
 
 func (s *EmailStore) Stats() (*MailStats, error) {
@@ -221,7 +224,7 @@ func (s *EmailStore) Stats() (*MailStats, error) {
 			COALESCE((SELECT COUNT(*) FROM accounts), 0),
 			COALESCE((SELECT COALESCE(SUM(size), 0) FROM attachments), 0),
 			COALESCE((SELECT value FROM settings WHERE key = 'storage_limit_bytes'), 0)
-	`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit)
+		`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -415,22 +418,4 @@ func (s *EmailStore) Delete(id int64) error {
 	return err
 }
 
-func (s *EmailStore) GetLastUIDByFolder(accountID int64, folder string) uint32 {
-	key := fmt.Sprintf("last_uid:%d:%s", accountID, folder)
-	var raw string
-	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&raw)
-	if err != nil {
-		return 0
-	}
-	uid, _ := strconv.ParseUint(raw, 10, 32)
-	return uint32(uid)
-}
 
-func (s *EmailStore) SaveLastUID(accountID int64, folder string, uid uint32) error {
-	key := fmt.Sprintf("last_uid:%d:%s", accountID, folder)
-	_, err := s.db.Exec(
-		`INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-		key, uid,
-	)
-	return err
-}

@@ -2,8 +2,6 @@ package oauth2
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -117,12 +115,4 @@ func (r *TokenResponse) ToTokenData() *models.OAuth2TokenData {
 	}
 }
 
-// NewPKCEVerifier 生成 PKCE code_verifier / code_challenge
-func NewPKCEVerifier() (string, string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", "", err
-	}
-	verifier := hex.EncodeToString(b)
-	return verifier, verifier, nil
-}
+

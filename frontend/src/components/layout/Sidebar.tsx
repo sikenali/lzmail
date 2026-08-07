@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit, getAccountAvatarBg } from '@/lib/icons'
 import { api } from '@/lib/api'
+import { useSSE } from '@/hooks/useSSE'
 import type { Account } from '@/types'
+import type { SyncStatusData } from '@/hooks/useSSE'
 
 const navItems = [
   { icon: LayoutDashboard, label: '仪表盘', href: '/', badgeKey: 'unread' },
@@ -31,6 +33,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [counts, setCounts] = useState<Record<string, number> | null>(null)
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
+  const [syncProgress, setSyncProgress] = useState<SyncStatusData | null>(null)
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const secondaryNavRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
@@ -41,6 +44,19 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     api.mails.counts().then(d => setCounts(d ?? null)).catch(() => {})
     api.sync.status().then(d => setSyncStatus(d ?? {})).catch(() => {})
   }, [])
+
+  useSSE(undefined, undefined, (data: SyncStatusData) => {
+    if (data.status === 'syncing') {
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      setSyncProgress(data)
+    } else if (data.status === 'error') {
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      setSyncProgress(null)
+    } else {
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      setSyncProgress(null)
+    }
+  })
 
   const isActive = (href: string) => {
     if (currentPath === href) return true
@@ -205,6 +221,26 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
             <span className="text-[13px] font-medium" style={{ color: 'var(--gold)' }}>添加账号</span>
           </a>
         </div>
+
+        {/* 同步进度条 */}
+        {syncProgress && syncProgress.status === 'syncing' && syncProgress.total && syncProgress.total > 0 && (
+          <div className="mt-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)' }}>
+            <div className="flex items-center gap-2">
+              <div className="w-[8px] h-2 rounded-full shrink-0" style={{ backgroundColor: 'var(--gold)' }} />
+              <span className="text-[11px] font-medium truncate" style={{ color: 'var(--foreground-secondary)' }}>
+                {syncProgress.folder ? `同步 ${syncProgress.folder}` : '同步中'}
+              </span>
+            </div>
+            <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+              <div className="h-full rounded-full transition-[width] duration-300"
+                style={{ width: `${Math.min(100, Math.round((syncProgress.processed || 0) / syncProgress.total * 100))}%`, backgroundColor: 'var(--gold)' }}
+              />
+            </div>
+            <div className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+              {syncProgress.processed}/{syncProgress.total} 封
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

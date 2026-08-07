@@ -8,7 +8,7 @@ import (
 
 // ApplyFlag 将本地已读/星标操作写回 IMAP 服务器（\Seen / \Flagged）。
 func (s *Syncer) ApplyFlag(folder string, uid uint32, flag string, set bool) error {
-	c, err := s.connect()
+	c, err := s.connectOneShot()
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (s *Syncer) ApplyFlag(folder string, uid uint32, flag string, set bool) err
 
 // MoveMessage 将邮件从 srcFolder 移动到 destFolder。
 func (s *Syncer) MoveMessage(srcFolder string, uid uint32, destFolder string) error {
-	c, err := s.connect()
+	c, err := s.connectOneShot()
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (s *Syncer) MoveMessage(srcFolder string, uid uint32, destFolder string) er
 
 // DeleteMessage 标记 \Deleted 并 expunge，从 IMAP 服务器删除。
 func (s *Syncer) DeleteMessage(folder string, uid uint32) error {
-	c, err := s.connect()
+	c, err := s.connectOneShot()
 	if err != nil {
 		return err
 	}

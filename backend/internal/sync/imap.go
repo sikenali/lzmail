@@ -204,6 +204,7 @@ func (s *Syncer) syncAllFolders() {
 	}
 	s.syncContactsFolder()
 	s.publishSync("ok")
+	s.closeConn(nil)
 }
 
 type syncProgress struct {
@@ -246,7 +247,6 @@ func (s *Syncer) listFolders() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer s.closeConn(nil)
 
 	ch := make(chan *imap.MailboxInfo, 64)
 	errCh := make(chan error, 1)
@@ -273,7 +273,6 @@ func (s *Syncer) syncContactsFolder() {
 		log.Printf("[sync] account %s contacts connect failed: %v", s.account.Email, err)
 		return
 	}
-	defer s.closeConn(nil)
 
 	contactsFolder := s.findContactsFolder(c)
 	if contactsFolder == "" {
@@ -322,6 +321,7 @@ func (s *Syncer) syncContactsFolder() {
 		bodyDone <- c.Fetch(bodySet, []imap.FetchItem{"RFC822"}, bodyCh)
 	}()
 
+	var newContacts []models.Contact
 	for msg := range bodyCh {
 		lit, ok := msg.Items["RFC822"].(imap.Literal)
 		if !ok {
@@ -333,18 +333,21 @@ func (s *Syncer) syncContactsFolder() {
 			continue
 		}
 		contacts := parseVCard(raw)
-		for _, contact := range contacts {
-			contact.AccountID = s.account.ID
-			if contact.Email == "" {
+		for i := range contacts {
+			contacts[i].AccountID = s.account.ID
+			if contacts[i].Email == "" {
 				continue
 			}
-			if err := s.contactStore.Create(&contact); err != nil {
-				log.Printf("[sync] account %s contacts upsert failed: %v", s.account.Email, err)
-			}
+			newContacts = append(newContacts, contacts[i])
 		}
 	}
 	if err := <-bodyDone; err != nil {
 		log.Printf("[sync] account %s contacts fetch body failed: %v", s.account.Email, err)
+	}
+	if len(newContacts) > 0 {
+		if err := s.contactStore.BatchUpsert(newContacts); err != nil {
+			log.Printf("[sync] account %s contacts batch upsert failed: %v", s.account.Email, err)
+		}
 	}
 }
 
@@ -573,7 +576,7 @@ func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
 	}
 }
 
-func (s *Syncer) connect() (*client.Client, error) {
+func (s *Syncer) connectOneShot() (*client.Client, error) {
 	s.connMu.Lock()
 	defer s.connMu.Unlock()
 	return s.connectLocked()

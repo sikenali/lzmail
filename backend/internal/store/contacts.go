@@ -89,6 +89,34 @@ func (s *ContactStore) Search(q string, accountID int64, limit, offset int) (*Co
 	return &ContactPageResult{Items: contacts, Total: total}, nil
 }
 
+func (s *ContactStore) BatchUpsert(contacts []models.Contact) error {
+	if len(contacts) == 0 {
+		return nil
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare(`
+		INSERT INTO contacts (name, email, phone, company, title, account_id)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(email, account_id) DO UPDATE SET
+			name=excluded.name, phone=excluded.phone, company=excluded.company,
+			title=excluded.title, updated_at=datetime('now')
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, c := range contacts {
+		if _, err := stmt.Exec(c.Name, c.Email, c.Phone, c.Company, c.Title, c.AccountID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *ContactStore) Create(c *models.Contact) error {
 	result, err := s.db.Exec(`INSERT INTO contacts (name, email, phone, company, title, account_id) VALUES (?,?,?,?,?,?) ON CONFLICT(email, account_id) DO UPDATE SET name=excluded.name, phone=excluded.phone, company=excluded.company, title=excluded.title, updated_at=datetime('now')`, c.Name, c.Email, c.Phone, c.Company, c.Title, c.AccountID)
 	if err != nil {

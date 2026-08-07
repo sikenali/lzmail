@@ -171,7 +171,7 @@ function AccountPanel() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [form, setForm] = useState({
      name: '', email: '', imap_host: '', imap_port: 993,
-     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
+     smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: true,
      access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password',
    })
    const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
@@ -187,7 +187,7 @@ function AccountPanel() {
   const activeProvider = configFor(provider === 'auto' ? detectProvider(form.email) : provider)
 
   const resetForm = () => {
-    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false, access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password' })
+    setForm({ name: '', email: '', imap_host: '', imap_port: 993, smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: true, access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password' })
     setProvider('auto')
   }
 

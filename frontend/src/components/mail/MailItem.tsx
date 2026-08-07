@@ -2,15 +2,6 @@
 import { Check, Paperclip, Star } from '@/lib/icons'
 import type { Email } from '@/types'
 
-const categoryTag = (email: Email): { label: string; bg: string; color: string } | null => {
-  const s = (email.subject || email.from || '').toLowerCase()
-  if (s.includes('azure') || s.includes('账单')) return { label: '工作', bg: '#fdf2f2', color: '#c43d3d' }
-  if (s.includes('github')) return { label: '工作', bg: '#fdf2f2', color: '#c43d3d' }
-  if (s.includes('旅行') || s.includes('攻略')) return { label: '旅行', bg: '#fef9f0', color: '#c9a96e' }
-  if (s.includes('release') || s.includes('update')) return { label: '订阅', bg: '#edf5f6', color: '#6b8fa3' }
-  return null
-}
-
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return ''
@@ -43,10 +34,9 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
   const subjectWeight = selected || unread ? '600' : '500'
   const senderWeight = selected || unread ? '600' : '500'
   const timeStr = formatTime(email.date)
-  const tag = categoryTag(email)
 
   return (
-    <div onClick={() => onSelect(email.id)}
+    <div onClick={() => onSelect(email.id)} title="查看详情"
       className="flex items-start gap-3 px-5 py-4 cursor-pointer transition-colors"
       style={{
         backgroundColor: selected ? 'var(--muted)' : 'transparent',
@@ -83,9 +73,6 @@ export function MailItem({ email, brand, selected = false, onSelect }: {
         <div className="text-[13px] leading-5 mt-0.5 line-clamp-2" style={{ color: 'var(--foreground-tertiary)' }}>{email.body_preview}</div>
 
         <div className="flex items-center gap-2 mt-2">
-          {tag && (
-            <span className="h-[18px] px-2 rounded-md flex items-center text-[10px] font-medium" style={{ backgroundColor: tag.bg, color: tag.color }}>{tag.label}</span>
-          )}
           {email.has_attachments && (
             <span className="flex items-center gap-0.5 text-[11px] text-[var(--muted-foreground)]">
               <Paperclip className="w-3 h-3" /> 附件

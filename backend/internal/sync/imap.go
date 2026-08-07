@@ -19,6 +19,7 @@ import (
 	"github.com/lzmail/backend/internal/sasl"
 	"github.com/lzmail/backend/internal/sse"
 	"github.com/lzmail/backend/internal/store"
+	"regexp"
 )
 
 const (
@@ -30,6 +31,7 @@ const (
 type Syncer struct {
 	account     *models.Account
 	emailStore  *store.EmailStore
+	contactStore *store.ContactStore
 	archiveDir  string
 	sseHub      *sse.Hub
 	tokenSource *providers.TokenSource
@@ -51,6 +53,11 @@ func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir
 		doneCh:      make(chan struct{}),
 		status:      "ok",
 	}
+}
+
+func (s *Syncer) WithContactStore(cs *store.ContactStore) *Syncer {
+	s.contactStore = cs
+	return s
 }
 
 func (s *Syncer) setStatus(status string) {
@@ -190,6 +197,7 @@ func (s *Syncer) syncAllFolders() {
 		}
 		s.syncFolder(folder)
 	}
+	s.syncContactsFolder()
 	s.publishSync("ok")
 }
 
@@ -220,6 +228,146 @@ func (s *Syncer) listFolders() ([]string, error) {
 		folders = append(folders, m.Name)
 	}
 	return folders, <-errCh
+}
+
+// syncFolder 增量同步单个文件夹：用 UID 识别缺失消息，仅对新增/无正文的消息
+// 抓取 RFC822 正文，其余只刷新已读/星标标志。
+func (s *Syncer) syncContactsFolder() {
+	if s.contactStore == nil {
+		return
+	}
+	c, err := s.connect()
+	if err != nil {
+		log.Printf("[sync] account %s contacts connect failed: %v", s.account.Email, err)
+		return
+	}
+	defer c.Logout()
+
+	contactsFolder := s.findContactsFolder(c)
+	if contactsFolder == "" {
+		return
+	}
+
+	mbox, err := c.Select(contactsFolder, false)
+	if err != nil {
+		log.Printf("[sync] account %s select %s failed: %v", s.account.Email, contactsFolder, err)
+		return
+	}
+	if mbox.Messages == 0 {
+		return
+	}
+
+	seqset := new(imap.SeqSet)
+	seqset.AddRange(1, mbox.Messages)
+
+	metaCh := make(chan *imap.Message, 10)
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, "RFC822"}, metaCh)
+	}()
+
+	var needBody []uint32
+	for msg := range metaCh {
+		if msg.Uid == 0 {
+			continue
+		}
+		needBody = append(needBody, msg.Uid)
+	}
+	if err := <-done; err != nil {
+		log.Printf("[sync] account %s contacts fetch meta failed: %v", s.account.Email, err)
+		return
+	}
+
+	if len(needBody) == 0 {
+		return
+	}
+
+	bodySet := new(imap.SeqSet)
+	bodySet.AddNum(needBody...)
+	bodyCh := make(chan *imap.Message, 5)
+	bodyDone := make(chan error, 1)
+	go func() {
+		bodyDone <- c.Fetch(bodySet, []imap.FetchItem{"RFC822"}, bodyCh)
+	}()
+
+	for msg := range bodyCh {
+		lit, ok := msg.Items["RFC822"].(imap.Literal)
+		if !ok {
+			continue
+		}
+		raw, err := io.ReadAll(lit)
+		if err != nil {
+			log.Printf("[sync] account %s contacts read failed: %v", s.account.Email, err)
+			continue
+		}
+		contacts := parseVCard(raw)
+		for _, contact := range contacts {
+			contact.AccountID = s.account.ID
+			if contact.Email == "" {
+				continue
+			}
+			if err := s.contactStore.Create(&contact); err != nil {
+				log.Printf("[sync] account %s contacts upsert failed: %v", s.account.Email, err)
+			}
+		}
+	}
+	if err := <-bodyDone; err != nil {
+		log.Printf("[sync] account %s contacts fetch body failed: %v", s.account.Email, err)
+	}
+}
+
+func (s *Syncer) findContactsFolder(c *client.Client) string {
+	patterns := []string{"CONTACTS", "ADDRESS BOOK", "-addressbook", "Contacts", "Contacts/"}
+	ch := make(chan *imap.MailboxInfo, 32)
+	errCh := make(chan error, 1)
+	go func() { errCh <- c.List("", "*", ch) }()
+	for m := range ch {
+		name := m.Name
+		for _, pat := range patterns {
+			if strings.EqualFold(name, pat) || strings.Contains(strings.ToUpper(name), "CONTACT") || strings.Contains(strings.ToUpper(name), "ADDRESS BOOK") {
+				return name
+			}
+		}
+	}
+	<-errCh
+	return ""
+}
+
+var vcardRe = regexp.MustCompile(`(?mi)^((?:FN|EMAIL|TEL|NOTE):[^\r\n]*(?:\r?\n[ \t].+)*)`)
+
+func parseVCard(raw []byte) []models.Contact {
+	var contacts []models.Contact
+	entries := strings.Split(string(raw), "END:VCARD")
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if !strings.Contains(entry, "BEGIN:VCARD") {
+			continue
+		}
+		c := models.Contact{}
+		lines := strings.Split(entry, "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if !strings.Contains(line, ":") {
+				continue
+			}
+			colon := strings.Index(line, ":")
+			key := line[:colon]
+			value := strings.TrimSpace(line[colon+1:])
+			key = regexp.MustCompile(`;[A-Z]+=.`).ReplaceAllString(key, "")
+			switch {
+			case strings.HasPrefix(key, "FN:") || key == "FN":
+				c.Name = value
+			case strings.HasPrefix(key, "EMAIL") || key == "EMAIL":
+				c.Email = value
+			case strings.HasPrefix(key, "TEL") || key == "TEL":
+				c.Phone = value
+			}
+		}
+		if c.Email != "" {
+			contacts = append(contacts, c)
+		}
+	}
+	return contacts
 }
 
 // syncFolder 增量同步单个文件夹：用 UID 识别缺失消息，仅对新增/无正文的消息

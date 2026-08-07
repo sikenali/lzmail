@@ -9,21 +9,33 @@ import (
 
 func (h *Handler) handleSearchContacts(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
-	contacts, err := h.contacts.Search(q)
+	accountID, _ := strconv.ParseInt(r.URL.Query().Get("account_id"), 10, 64)
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 10
+	}
+	result, err := h.contacts.Search(q, accountID, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, contacts)
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) handleListContacts(w http.ResponseWriter, r *http.Request) {
-	contacts, err := h.contacts.List()
+	accountID, _ := strconv.ParseInt(r.URL.Query().Get("account_id"), 10, 64)
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 10
+	}
+	result, err := h.contacts.ListPage(accountID, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, contacts)
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) handleCreateContact(w http.ResponseWriter, r *http.Request) {

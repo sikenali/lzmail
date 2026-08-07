@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 4
+const currentSchemaVersion = 5
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
@@ -134,7 +134,34 @@ func migrate(db *sql.DB) error {
 	if err := migrateToV3(db); err != nil {
 		return err
 	}
-	return migrateToV4(db)
+	if err := migrateToV4(db); err != nil {
+		return err
+	}
+	return migrateToV5(db)
+}
+
+// migrateToV5 为 contacts 表添加 phone、company、title 列（幂等）
+func migrateToV5(db *sql.DB) error {
+	cols := []struct {
+		column    string
+		statement string
+	}{
+		{"phone", `ALTER TABLE contacts ADD COLUMN phone TEXT DEFAULT ''`},
+		{"company", `ALTER TABLE contacts ADD COLUMN company TEXT DEFAULT ''`},
+		{"title", `ALTER TABLE contacts ADD COLUMN title TEXT DEFAULT ''`},
+	}
+	for _, c := range cols {
+		exists, err := columnExists(db, "contacts", c.column)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			if _, err := db.Exec(c.statement); err != nil {
+				return fmt.Errorf("add column %s: %w", c.column, err)
+			}
+		}
+	}
+	return nil
 }
 
 // migrateToV3 重建 emails 表，把唯一键从 (account_id, uid) 扩展为
@@ -219,6 +246,7 @@ func addIndexes(db *sql.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_emails_is_starred ON emails(account_id, is_starred)`,
 		`CREATE INDEX IF NOT EXISTS idx_emails_folder ON emails(account_id, folder, date DESC)`,
 		`CREATE INDEX IF NOT EXISTS idx_scheduled_send_at ON scheduled_emails(send_at, status)`,
+		`CREATE INDEX IF NOT EXISTS idx_contacts_account ON contacts(account_id)`,
 	}
 	for _, idx := range indexes {
 		if _, err := db.Exec(idx); err != nil {

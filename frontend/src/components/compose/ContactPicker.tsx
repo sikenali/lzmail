@@ -52,10 +52,10 @@ export default function ContactPicker({
 
   // 初始化加载全部联系人
   useEffect(() => {
-    api.contacts.list().then(list => {
-      if (list && list.length > 0) {
-        setAllContacts(list)
-        setFiltered(list.slice(0, MAX_DISPLAY))
+    api.contacts.list(undefined, 200, 0).then(result => {
+      if (result && result.items && result.items.length > 0) {
+        setAllContacts(result.items)
+        setFiltered(result.items.slice(0, MAX_DISPLAY))
       }
     }).catch(() => {})
   }, [])
@@ -78,8 +78,8 @@ export default function ContactPicker({
     }
     setLoading(true)
     try {
-      const result = await api.contacts.search(q)
-      setFiltered(result || [])
+      const result = await api.contacts.search(q, undefined, 50, 0)
+      setFiltered(result?.items || [])
     } catch {
       setFiltered([])
     }

@@ -1,10 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
-import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search } from '@/lib/icons'
+import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import type { Contact } from '@/types'
 
 const avatarColors: Record<string, { bg: string; text: string }> = {
@@ -24,12 +24,15 @@ function getAvatarStyle(name: string) {
 }
 
 const emptyForm = { name: '', email: '', phone: '', company: '', title: '' }
+const PAGE_SIZE = 10
 
 export default function ContactsPage() {
   const router = useRouter()
   const { settings } = useSettings()
   const [accounts, setAccounts] = useState<{ id: number; email: string }[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchQ, setSearchQ] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -38,31 +41,44 @@ export default function ContactsPage() {
   const [saving, setSaving] = useState(false)
   const [sortAsc, setSortAsc] = useState(true)
   const [menuId, setMenuId] = useState<number | null>(null)
+  const [page, setPage] = useState(0)
 
-  const load = async (q = '') => {
+  const load = useCallback(async (q = '', pg = 0, accountId: number | null = null) => {
     setLoading(true)
     try {
-      const data = q ? await api.contacts.search(q) : await api.contacts.list()
-      setContacts(data || [])
-    } catch { setContacts([]) }
+      const data = q
+        ? await api.contacts.search(q, accountId ?? undefined, PAGE_SIZE, pg * PAGE_SIZE)
+        : await api.contacts.list(accountId ?? undefined, PAGE_SIZE, pg * PAGE_SIZE)
+      setContacts(data?.items || [])
+      setTotal(data?.total || 0)
+    } catch { setContacts([]); setTotal(0) }
     setLoading(false)
-  }
-  useEffect(() => {
-    api.accounts.list().then(list => {
-      if (list && list.length > 0) setAccounts(list)
-    }).catch(() => {})
-    load()
   }, [])
 
-  // 搜索防抖
-  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  useEffect(() => {
+    api.accounts.list().then(list => {
+      if (list && list.length > 0) {
+        setAccounts(list)
+        if (selectedAccountId === null) setSelectedAccountId(list[0].id)
+      }
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (selectedAccountId !== null) {
+      load(searchQ, page, selectedAccountId)
+    }
+  }, [selectedAccountId, page])
+
   const handleSearch = (q: string) => {
     setSearchQ(q)
-    if (searchTimer) clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => load(q), 300)
+    setPage(0)
+    load(q, 0, selectedAccountId)
   }
 
   const density = settings.mail_density || 'comfortable'
+
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const openCreate = () => {
     setEditingId(null)
@@ -81,14 +97,15 @@ export default function ContactsPage() {
     if (!form.name || !form.email) { alert('请填写姓名和邮箱'); return }
     setSaving(true)
     const extra = { phone: form.phone, company: form.company, title: form.title }
+    const accountId = selectedAccountId ?? accounts[0]?.id ?? 0
     try {
       if (editingId) {
-        await api.contacts.update(editingId, { name: form.name, email: form.email, ...extra })
-        setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, ...extra } : c))
+        await api.contacts.update(editingId, { name: form.name, email: form.email, account_id: accountId, ...extra })
+        setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, account_id: accountId, ...extra } : c))
       } else {
-        const accountId = accounts.length > 0 ? accounts[0].id : 1
         const created = await api.contacts.create({ name: form.name, email: form.email, account_id: accountId, ...extra })
-        setContacts(prev => [...prev, { ...created, ...extra, id: created.id }])
+        setContacts(prev => [...prev, { ...created, ...extra, id: created.id, account_id: accountId }])
+        setTotal(t => t + 1)
       }
     } catch (e: any) {
       alert(e.message || '保存失败')
@@ -107,6 +124,7 @@ export default function ContactsPage() {
     try {
       await api.contacts.delete(c.id)
       setContacts(prev => prev.filter(x => x.id !== c.id))
+      setTotal(t => Math.max(0, t - 1))
     } catch {
       alert('删除失败')
     }
@@ -123,7 +141,7 @@ export default function ContactsPage() {
   return (
     <AppShell>
       <div className="px-10 py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
-        {/* 搜索 + 标题行 */}
+        {/* 标题行 */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex items-center gap-4 flex-1">
             <div className="shrink-0" style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
@@ -136,6 +154,19 @@ export default function ContactsPage() {
               </p>
             </div>
           </div>
+          {/* 账号选择器 */}
+          {accounts.length > 1 && (
+            <select
+              value={selectedAccountId ?? ''}
+              onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
+              className="h-[40px] px-3 rounded-[8px] text-[13px] outline-none"
+              style={{ backgroundColor: 'var(--muted)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
+            >
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>{a.email}</option>
+              ))}
+            </select>
+          )}
           {/* 搜索框 */}
           <div className="relative flex-1 max-w-[280px]" style={{ flexShrink: 0 }}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: 'rgba(184,168,138,1)' }} />
@@ -230,7 +261,7 @@ export default function ContactsPage() {
               <div className="shrink-0" style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
               <span style={{ fontSize: 16, fontWeight: 700, color: '#3d2b1f' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
               <span className="flex items-center justify-center" style={{ width: 42, height: 22, borderRadius: 6, backgroundColor: 'rgba(240,244,247,1)', fontSize: 12, fontWeight: 500, color: '#6b8fa3' }}>
-                {contacts.length}人
+                {total}人
               </span>
             </div>
             <button
@@ -330,6 +361,53 @@ export default function ContactsPage() {
               })
             )}
           </div>
+
+          {/* Pagination */}
+          {!loading && total > PAGE_SIZE && (
+            <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: '1px solid rgba(229,217,196,1)' }}>
+              <span style={{ fontSize: 13, color: '#8b7355' }}>共 {total} 条，第 {page + 1} / {totalPages} 页</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="flex items-center gap-1 h-8 px-3 rounded-[8px] text-[13px]"
+                  style={{ backgroundColor: 'rgba(243,237,227,1)', color: page === 0 ? 'rgba(184,168,138,0.4)' : '#6b5b4f', cursor: page === 0 ? 'default' : 'pointer' }}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> 上一页
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let p: number
+                  if (totalPages <= 5) {
+                    p = i
+                  } else if (page < 3) {
+                    p = i
+                  } else if (page > totalPages - 4) {
+                    p = totalPages - 5 + i
+                  } else {
+                    p = page - 2 + i
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className="h-8 w-8 rounded-[8px] text-[13px] flex items-center justify-center"
+                      style={{ backgroundColor: page === p ? 'rgba(107,143,163,1)' : 'rgba(243,237,227,1)', color: page === p ? '#fff' : '#6b5b4f' }}
+                    >
+                      {p + 1}
+                    </button>
+                  )
+                })}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="flex items-center gap-1 h-8 px-3 rounded-[8px] text-[13px]"
+                  style={{ backgroundColor: 'rgba(243,237,227,1)', color: page >= totalPages - 1 ? 'rgba(184,168,138,0.4)' : '#6b5b4f', cursor: page >= totalPages - 1 ? 'default' : 'pointer' }}
+                >
+                  下一页 <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Add/Edit contact modal */}

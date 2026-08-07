@@ -87,12 +87,20 @@ export const api = {
   },
 
   contacts: {
-    list: () => fetchJSON<Contact[]>('/api/v1/contacts'),
+    list: (accountId?: number, limit = 10, offset = 0) => {
+      const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+      if (accountId) params.set('account_id', String(accountId))
+      return fetchJSON<{ items: Contact[]; total: number }>(`/api/v1/contacts?${params}`)
+    },
     create: (data: Partial<Contact>) => fetchJSON<Contact>('/api/v1/contacts', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: number, data: Partial<Contact>) =>
       fetchJSON<Contact>(`/api/v1/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/contacts/${id}`, { method: 'DELETE' }),
-    search: (q: string) => fetchJSON<Contact[]>('/api/v1/contacts/search?q=' + encodeURIComponent(q)),
+    search: (q: string, accountId?: number, limit = 10, offset = 0) => {
+      const params = new URLSearchParams({ q, limit: String(limit), offset: String(offset) })
+      if (accountId) params.set('account_id', String(accountId))
+      return fetchJSON<{ items: Contact[]; total: number }>(`/api/v1/contacts/search?${params}`)
+    },
   },
 
   settings: {

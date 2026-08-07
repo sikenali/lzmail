@@ -188,7 +188,7 @@ func (s *Syncer) syncAllFolders() {
 			return
 		default:
 		}
-		if strings.Contains(folder, "Drafts") || strings.Contains(folder, "Sent") || strings.Contains(folder, "Trash") || strings.Contains(folder, "Archive") {
+		if strings.Contains(folder, "Drafts") || strings.Contains(folder, "Trash") || strings.Contains(folder, "Archive") {
 			continue
 		}
 		s.syncFolder(folder)
@@ -221,7 +221,7 @@ func (s *Syncer) listFolders() ([]string, error) {
 	var folders []string
 	for m := range ch {
 		name := m.Name
-		if !strings.Contains(name, "Drafts") && !strings.Contains(name, "Sent") && !strings.Contains(name, "Trash") && !strings.Contains(name, "Archive") {
+		if !strings.Contains(name, "Drafts") && !strings.Contains(name, "Trash") && !strings.Contains(name, "Archive") {
 			folders = append(folders, name)
 		}
 	}

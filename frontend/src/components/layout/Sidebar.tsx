@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, Plus, Settings, Contact, Edit } from '@/lib/icons'
+import { getAccountAvatarBg } from '@/lib/icons'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 
@@ -173,7 +174,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)', padding: '0 16px' }}>邮箱账号</div>
         <div style={{ paddingTop: 16 }} className="space-y-1">
           {accounts.map((a) => {
-            const ac = a.brand_color || '#ea4335'
+            const ac = getAccountAvatarBg(a)
             const syncState = syncStatus[a.id]
             const dotColor = syncState === 'syncing' ? 'var(--gold)' : syncState === 'error' ? 'var(--danger)' : 'var(--success)'
             return (

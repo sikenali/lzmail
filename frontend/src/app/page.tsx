@@ -8,6 +8,7 @@ import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
   ChevronRight
 } from '@/lib/icons'
+import { getAccountAvatarBg } from '@/lib/icons'
 import TrendChart from './TrendChart'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import type { MailStats, Email, Account } from '@/types'
@@ -201,7 +202,7 @@ export default function Dashboard() {
                 {accounts.length === 0 ? (
                   <div className="text-sm py-4 text-center" style={{ color: 'var(--muted-foreground)' }}>暂无已配置账号</div>
                 ) : accounts.map((a) => {
-                  const ac = a.brand_color || '#6366f1'
+                  const ac = getAccountAvatarBg(a)
                   const syncState = syncStatus[a.id]
                   const syncing = syncState === 'syncing'
                   const syncErr = syncState === 'error'

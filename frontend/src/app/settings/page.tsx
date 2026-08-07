@@ -18,6 +18,7 @@ import {
   Layout2,
   Eye, EyeOff, Mail,
 } from '@/lib/icons'
+import { getAccountAvatarBg } from '@/lib/icons'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 
 // ── Provider Logo Icon ──────────────────────────────────────
@@ -445,7 +446,7 @@ function AccountPanel() {
       ) : (
         <div className="space-y-3">
           {accounts.map(a => {
-            const ac = brandColorMap[a.name?.toLowerCase()] || a.brand_color || 'var(--primary)'
+            const ac = getAccountAvatarBg(a)
             const sync = getSyncBadge(a)
             const isExpanded = expandedId === a.id
             return (

@@ -1,5 +1,6 @@
 'use client'
 import { Search, Settings, User } from '@/lib/icons'
+import { getAccountAvatarBg } from '@/lib/icons'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
@@ -47,8 +48,8 @@ export function Header({ onCompose }: { onCompose: () => void }) {
     router.push(`/mail?q=${encodeURIComponent(q)}`)
   }
 
-  // Avatar color: use account brand_color if available, otherwise use accent color
-  const avatarBg = userAccount?.brand_color || settings.accent_color || 'var(--primary)'
+  // Avatar color: prefer brand_color, fall back to provider color
+  const avatarBg = userAccount ? getAccountAvatarBg(userAccount) : (settings.accent_color || 'var(--primary)')
   const avatarText = userAccount
     ? getInitials(userAccount.name || userAccount.email)
     : 'LZ'

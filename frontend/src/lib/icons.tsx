@@ -92,3 +92,19 @@ export const Layout2 = icon('ri-layout-2-line')
 export const Eye = icon('ri-eye-line')
 export const EyeOff = icon('ri-eye-off-line')
 export const CollapseVertical = icon('ri-collapse-vertical-fill')
+
+export const PROVIDER_AVATAR_BG: Record<string, string> = {
+  gmail:  '#ea4335',
+  outlook:'#0078d4',
+  qq:     '#12b7f5',
+  netease:'#e53e3e',
+  icloud: '#7c9a5f',
+  yahoo:  '#721c90',
+  other:  '#6366f1',
+}
+
+export function getAccountAvatarBg(account: { brand_color?: string; provider?: string; auth_method?: string }): string {
+  if (account.brand_color) return account.brand_color
+  const provider = (account.provider || '').toLowerCase()
+  return PROVIDER_AVATAR_BG[provider] || '#6366f1'
+}

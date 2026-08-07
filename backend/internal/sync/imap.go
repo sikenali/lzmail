@@ -215,7 +215,7 @@ func (s *Syncer) listFolders() ([]string, error) {
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- c.List("", "*", ch)
-		close(ch)
+		// c.List closes ch when done; do not close again
 	}()
 
 	var folders []string

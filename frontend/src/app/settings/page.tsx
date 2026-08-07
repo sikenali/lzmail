@@ -17,6 +17,7 @@ import {
   Layout2,
   Eye, EyeOff, Mail,
 } from '@/lib/icons'
+import { DeleteConfirm } from '@/components/DeleteConfirm'
 
 // ── Provider Logo Icon ──────────────────────────────────────
 const providerLogoStyle: Record<string, { bg: string; color: string }> = {
@@ -172,6 +173,7 @@ function AccountPanel() {
      smtp_host: '', smtp_port: 587, username: '', password: '', use_idle: false,
      access_token: '', token_type: '', expiry: '', scope: '', provider: '', auth_method: 'password',
    })
+   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
    const [saving, setSaving] = useState(false)
    const [provider, setProvider] = useState<ProviderKey>('auto')
    const [showPassword, setShowPassword] = useState(false)
@@ -251,11 +253,15 @@ function AccountPanel() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确定删除此账号？删除后相关邮件数据也将一并清除。')) return
+    setDeleteTarget(id)
+  }
+  const handleConfirmDelete = async () => {
+    if (deleteTarget === null) return
     try {
-      await api.accounts.delete(id)
+      await api.accounts.delete(deleteTarget)
       load()
     } catch (e: any) { alert(e.message) }
+    finally { setDeleteTarget(null) }
   }
 
   const handleEdit = (a: Account) => {
@@ -301,17 +307,10 @@ function AccountPanel() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
-          <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
-        </div>
-        <button onClick={() => { resetForm(); setShowForm(true); setEditingId(null) }}
-          className="flex items-center gap-2 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-[13px] font-medium hover:opacity-90"
-        >
-          <Plus className="w-4 h-4" /> 添加账号
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
+        <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
       </div>
 
       {showForm && (
@@ -425,7 +424,12 @@ function AccountPanel() {
             <Plus className="w-6 h-6" style={{ color: 'var(--gold)' }} />
           </div>
           <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>暂无邮箱账号</div>
-          <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>点击右上角「添加账号」配置你的邮箱</div>
+          <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>点击「添加账号」配置你的邮箱</div>
+          <button onClick={() => { resetForm(); setShowForm(true); setEditingId(null) }}
+            className="mt-4 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-[13px] font-medium hover:opacity-90 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> 添加账号
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -486,11 +490,17 @@ function AccountPanel() {
           })}
         </div>
       )}
+      <DeleteConfirm
+        open={deleteTarget !== null}
+        title="删除账号"
+        message="确定要删除此账号吗？删除后相关邮件数据也将一并清除。"
+        confirmText="删除"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }
-
-// ── 外观 ──────────────────────────────────────────────────
 function AppearancePanel() {
   const { settings, setSetting } = useSettings()
 
@@ -738,10 +748,10 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
           <div className="mt-[3px] space-y-[3px]">
             {node.children.map(child => renderNode(child, depth + 1))}
           </div>
-        )}
-      </div>
-    )
-  }
+      )}
+    </div>
+  )
+}
   return renderNode(root, 0)
 }
 

@@ -65,7 +65,7 @@ export function Header({ onCompose }: { onCompose: () => void }) {
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-[22px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>LZMail</span>
-          <span className="text-xs leading-none" style={{ color: 'var(--foreground-tertiary)' }}>非懒猫微服官方Web邮件客户端-懒猫微邮</span>
+          <span className="text-xs leading-none" style={{ color: 'var(--foreground-tertiary)' }}>Unofficial Web Client-懒猫微邮</span>
         </div>
       </div>
 

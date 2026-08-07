@@ -6,7 +6,7 @@ type Settings = Record<string, string>
 
 const defaults: Settings = {
   language: 'zh-CN',
-  font_size: 'medium',
+  font_size: 'small',
   reply_behavior: 'include',
   mail_density: 'comfortable',
   default_inbox: 'unified',

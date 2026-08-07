@@ -188,9 +188,6 @@ func (s *Syncer) syncAllFolders() {
 			return
 		default:
 		}
-		if strings.Contains(folder, "Drafts") || strings.Contains(folder, "Trash") || strings.Contains(folder, "Archive") {
-			continue
-		}
 		s.syncFolder(folder)
 	}
 	s.publishSync("ok")
@@ -220,10 +217,7 @@ func (s *Syncer) listFolders() ([]string, error) {
 
 	var folders []string
 	for m := range ch {
-		name := m.Name
-		if !strings.Contains(name, "Drafts") && !strings.Contains(name, "Trash") && !strings.Contains(name, "Archive") {
-			folders = append(folders, name)
-		}
+		folders = append(folders, m.Name)
 	}
 	return folders, <-errCh
 }
@@ -279,6 +273,7 @@ func (s *Syncer) syncFolder(folder string) {
 		}
 		if len(msg.Envelope.From) > 0 {
 			email.From = msg.Envelope.From[0].Address()
+			email.FromName = msg.Envelope.From[0].PersonalName
 		}
 		if len(msg.Envelope.To) > 0 {
 			email.To = joinAddresses(msg.Envelope.To)

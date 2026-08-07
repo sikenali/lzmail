@@ -45,9 +45,9 @@ export default function Dashboard() {
   useSSE(
     () => setRefresh(n => n + 1),
     undefined,
-    (status, accountId) => {
-      if (!accountId) return
-      setSyncStatus(prev => ({ ...prev, [Number(accountId)]: status }))
+    (data) => {
+      if (!data.account_id) return
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
     },
   )
 

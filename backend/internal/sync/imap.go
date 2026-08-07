@@ -2,6 +2,7 @@ package sync
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -189,16 +190,27 @@ func (s *Syncer) syncAllFolders() {
 		s.publishSync("error")
 	}
 
-	for _, folder := range folders {
+	for i, folder := range folders {
 		select {
 		case <-s.stopCh:
 			return
 		default:
 		}
-		s.syncFolder(folder)
+		s.publishProgress("syncing", folder, 0, 0, len(folders), i)
+		s.syncFolder(folder, len(folders), i)
 	}
 	s.syncContactsFolder()
 	s.publishSync("ok")
+}
+
+type syncProgress struct {
+	AccountID    int64  `json:"account_id"`
+	Status       string `json:"status"`
+	Folder       string `json:"folder,omitempty"`
+	Total        int    `json:"total,omitempty"`
+	Processed    int    `json:"processed,omitempty"`
+	FoldersTotal int    `json:"folders_total,omitempty"`
+	FoldersDone  int    `json:"folders_done,omitempty"`
 }
 
 func (s *Syncer) publishSync(status string) {
@@ -206,7 +218,24 @@ func (s *Syncer) publishSync(status string) {
 	if s.sseHub == nil {
 		return
 	}
-	s.sseHub.Publish("sync:status", fmt.Sprintf(`{"account_id":%d,"status":%q}`, s.account.ID, status))
+	s.publishProgress(status, "", 0, 0, 0, -1)
+}
+
+func (s *Syncer) publishProgress(status, folder string, total, processed, foldersTotal, foldersDone int) {
+	if s.sseHub == nil {
+		return
+	}
+	payload := syncProgress{
+		AccountID:    s.account.ID,
+		Status:       status,
+		Folder:       folder,
+		Total:        total,
+		Processed:    processed,
+		FoldersTotal: foldersTotal,
+		FoldersDone:  foldersDone,
+	}
+	b, _ := json.Marshal(payload)
+	s.sseHub.Publish("sync:status", string(b))
 }
 
 func (s *Syncer) listFolders() ([]string, error) {
@@ -372,7 +401,7 @@ func parseVCard(raw []byte) []models.Contact {
 
 // syncFolder 增量同步单个文件夹：用 UID 识别缺失消息，仅对新增/无正文的消息
 // 抓取 RFC822 正文，其余只刷新已读/星标标志。
-func (s *Syncer) syncFolder(folder string) {
+func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 	c, err := s.connect()
 	if err != nil {
 		log.Printf("[sync] account %s (%s) connect failed: %v", s.account.Email, s.account.Name, err)
@@ -442,34 +471,50 @@ func (s *Syncer) syncFolder(folder string) {
 	}
 
 	if len(needBody) > 0 {
-		s.fetchBodies(c, folder, needBody)
+		s.fetchBodies(c, folder, needBody, foldersTotal, foldersDone)
 	}
 }
 
-// fetchBodies 抓取指定 UID 的 RFC822 原文，落盘并解析正文预览与附件。
-func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32) {
-	set := new(imap.SeqSet)
-	set.AddNum(uids...)
+const bodyBatchSize = 200
 
-	bodyCh := make(chan *imap.Message, 5)
-	done := make(chan error, 1)
-	go func() {
-		done <- c.UidFetch(set, []imap.FetchItem{imap.FetchUid, imap.FetchRFC822}, bodyCh)
-	}()
-	for msg := range bodyCh {
-		lit, ok := msg.Items[imap.FetchRFC822].(imap.Literal)
-		if !ok {
-			continue
+// fetchBodies 分批抓取指定 UID 的 RFC822 原文，落盘并解析正文预览与附件。
+// 每批完成后发布进度事件，避免一次性拉取海量正文导致内存与服务端压力过大。
+func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32, foldersTotal, foldersDone int) {
+	total := len(uids)
+	processed := 0
+	for start := 0; start < total; start += bodyBatchSize {
+		end := start + bodyBatchSize
+		if end > total {
+			end = total
 		}
-		raw, err := io.ReadAll(lit)
-		if err != nil {
-			log.Printf("[sync] account %s read body uid=%d failed: %v", s.account.Email, msg.Uid, err)
-			continue
+		batch := uids[start:end]
+
+		set := new(imap.SeqSet)
+		set.AddNum(batch...)
+
+		bodyCh := make(chan *imap.Message, 5)
+		done := make(chan error, 1)
+		go func() {
+			done <- c.UidFetch(set, []imap.FetchItem{imap.FetchUid, imap.FetchRFC822}, bodyCh)
+		}()
+		for msg := range bodyCh {
+			lit, ok := msg.Items[imap.FetchRFC822].(imap.Literal)
+			if !ok {
+				continue
+			}
+			raw, err := io.ReadAll(lit)
+			if err != nil {
+				log.Printf("[sync] account %s read body uid=%d failed: %v", s.account.Email, msg.Uid, err)
+				continue
+			}
+			s.saveBody(folder, msg.Uid, raw)
 		}
-		s.saveBody(folder, msg.Uid, raw)
-	}
-	if err := <-done; err != nil {
-		log.Printf("[sync] account %s fetch bodies failed: %v", s.account.Email, err)
+		if err := <-done; err != nil {
+			log.Printf("[sync] account %s fetch bodies failed: %v", s.account.Email, err)
+		}
+
+		processed = end
+		s.publishProgress("syncing", folder, total, processed, foldersTotal, foldersDone)
 	}
 }
 

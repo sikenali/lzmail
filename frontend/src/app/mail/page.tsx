@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
@@ -34,21 +34,51 @@ function MailPageInner() {
   const [folderMoveOpen, setFolderMoveOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sortAsc, setSortAsc] = useState(false)
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   useSSE(() => setRefresh(n => n + 1))
 
-  const loadEmails = useCallback(async () => {
-    setLoading(true)
+  const resetList = useCallback(() => {
+    setEmails([])
+    setOffset(0)
+    setHasMore(true)
+  }, [])
+
+  const PAGE_SIZE = 50
+
+  const fetchPage = useCallback(async (off: number, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true)
     try {
       const data = debouncedSearch
         ? await api.mails.search(debouncedSearch)
-        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, 50, 0)
-      setEmails(data || [])
-    } catch { setEmails([]) }
+        : await api.mails.list(undefined, folder === 'ALL' ? '' : folder, PAGE_SIZE, off)
+      const items = data || []
+      setEmails(prev => append ? [...prev, ...items] : items)
+      setOffset(off)
+      setHasMore(items.length >= PAGE_SIZE)
+    } catch { if (!append) setEmails([]) }
     setLoading(false)
+    setLoadingMore(false)
   }, [folder, debouncedSearch])
 
-  useEffect(() => { loadEmails() }, [loadEmails, refresh])
+  useEffect(() => { resetList(); fetchPage(0, false) }, [fetchPage, resetList, refresh])
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const onScroll = () => {
+      if (loadingMore || !hasMore || loading) return
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 120) {
+        fetchPage(offset + PAGE_SIZE, true)
+      }
+    }
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [loadingMore, hasMore, loading, offset, fetchPage])
 
   const loadDetail = useCallback(async (id: number): Promise<EmailDetail | null> => {
     try {
@@ -183,7 +213,7 @@ function MailPageInner() {
                    </Tooltip>
                </div>
             </div>
-            <form onSubmit={e => { e.preventDefault(); loadEmails() }} className="relative mt-3">
+            <form onSubmit={e => { e.preventDefault(); resetList(); fetchPage(0, false) }} className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
                <input value={searchQ} onChange={e => setSearchQ(e.target.value)}
                  className="w-full h-10 pl-9 pr-4 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"
@@ -209,8 +239,8 @@ function MailPageInner() {
           </div>
 
           {/* Email list */}
-          <div className="flex-1 overflow-auto">
-            {loading ? (
+          <div ref={listRef} className="flex-1 overflow-auto">
+            {loading && emails.length === 0 ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-3 border-b">
                   <div className="w-8 h-8 rounded-full skeleton shrink-0" />
@@ -228,6 +258,12 @@ function MailPageInner() {
                   <MailItem email={email} brand={(email as any).account_brand} selected={selectedId === email.id} onSelect={handleSelect} />
                 </div>
               ))
+            )}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>加载更多...</div>
+            )}
+            {!hasMore && emails.length > 0 && (
+              <div className="flex items-center justify-center py-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>已加载全部邮件</div>
             )}
           </div>
         </div>

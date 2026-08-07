@@ -14,7 +14,17 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyncStatus?: (status: string, accountId: string) => void) {
+export interface SyncStatusData {
+  account_id: string
+  status: string
+  folder?: string
+  total?: number
+  processed?: number
+  folders_total?: number
+  folders_done?: number
+}
+
+export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyncStatus?: (data: SyncStatusData) => void) {
   const eventSourceRef = useRef<EventSource | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onMailNewRef = useRef(onMailNew)
@@ -41,7 +51,7 @@ export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyn
         es.addEventListener('sync:status', (e) => {
           try {
             const data = JSON.parse(e.data)
-            onSyncStatusRef.current?.(data.status, String(data.account_id ?? ''))
+            onSyncStatusRef.current?.(data)
           } catch {}
         })
 

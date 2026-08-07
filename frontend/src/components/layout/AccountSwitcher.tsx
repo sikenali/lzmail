@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ChevronUp, Plus } from '@/lib/icons'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
+import type { SyncStatusData } from '@/hooks/useSSE'
 import type { Account } from '@/types'
 
 const brandGradient = 'linear-gradient(135deg, #3b82f6, #4f46e5)'
@@ -31,15 +32,31 @@ export function AccountSwitcher({
   const [accounts, setAccounts] = useState<Account[]>([])
   const [open, setOpen] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
+  const [syncProgress, setSyncProgress] = useState<{ folder?: string; processed: number; total: number; foldersDone: number; foldersTotal: number } | null>(null)
 
   const fetchAccounts = () => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
   }
 
-  useSSE(undefined, undefined, (status) => {
-    if (status === 'syncing') setSyncStatus('syncing')
-    else if (status === 'error') setSyncStatus('error')
-    else setSyncStatus('ok')
+  useSSE(undefined, undefined, (data: SyncStatusData) => {
+    if (data.status === 'syncing') {
+      setSyncStatus('syncing')
+      if (data.total && data.total > 0) {
+        setSyncProgress({
+          folder: data.folder,
+          processed: data.processed || 0,
+          total: data.total,
+          foldersDone: data.folders_done || 0,
+          foldersTotal: data.folders_total || 0,
+        })
+      }
+    } else if (data.status === 'error') {
+      setSyncStatus('error')
+      setSyncProgress(null)
+    } else {
+      setSyncStatus('ok')
+      setSyncProgress(null)
+    }
   })
 
   useEffect(() => {
@@ -83,14 +100,22 @@ export function AccountSwitcher({
 
       {/* 同步状态指示器：有账号时显示在账号列表下方 */}
       {hasAccounts && (
-        <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg"
+        <div className="mt-2 px-3 py-2 rounded-lg"
           style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success-bg)' : syncStatus === 'error' ? 'var(--danger-bg)' : 'var(--accent)' }}>
-          <div className="w-[8px] h-2 rounded-full shrink-0"
-            style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
-          <span className="text-[11px] font-medium"
-            style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
-            {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : '同步中'}
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-[8px] h-2 rounded-full shrink-0"
+              style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
+            <span className="text-[11px] font-medium truncate"
+              style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
+              {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : syncProgress ? `同步 ${syncProgress.folder || ''} ${syncProgress.processed}/${syncProgress.total}` : '同步中'}
+            </span>
+          </div>
+          {syncStatus === 'syncing' && syncProgress && syncProgress.total > 0 && (
+            <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
+              <div className="h-full rounded-full transition-[width] duration-300"
+                style={{ width: `${Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))}%`, backgroundColor: 'var(--gold)' }} />
+            </div>
+          )}
         </div>
       )}
 

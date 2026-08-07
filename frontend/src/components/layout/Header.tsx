@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useSSE } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
@@ -22,15 +21,8 @@ export function Header({ onCompose }: { onCompose: () => void }) {
   const { settings } = useSettings()
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
-  const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const accountsChannel = new BroadcastChannel('lzmail_accounts')
-
-  useSSE(undefined, undefined, (status) => {
-    if (status === 'syncing') setSyncStatus('syncing')
-    else if (status === 'error') setSyncStatus('error')
-    else setSyncStatus('ok')
-  })
 
   useEffect(() => {
     const fetch = () => {
@@ -46,7 +38,6 @@ export function Header({ onCompose }: { onCompose: () => void }) {
   }, [])
 
   const showSearch = pathname === '/' || pathname === '/mail' || pathname === '/contacts' || pathname.startsWith('/mail/')
-  const showSync = pathname !== '/contacts'
   const showSettings = pathname !== '/settings'
 
   const submitSearch = (e: React.FormEvent) => {
@@ -78,34 +69,6 @@ export function Header({ onCompose }: { onCompose: () => void }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {showSearch && (
-          <form onSubmit={submitSearch} className="relative w-[320px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: 'var(--foreground-tertiary)' }} />
-            <input
-              value={searchQ}
-              onChange={e => setSearchQ(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 rounded-lg outline-none text-sm"
-              style={{
-                backgroundColor: 'var(--muted)',
-                border: '0.7px solid var(--card-border)',
-                color: 'var(--foreground)',
-              }}
-              placeholder="搜索邮件、联系人..."
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
-          </form>
-        )}
-
-        {showSync && (
-          <div className="flex items-center gap-2 px-3 h-8 rounded-lg" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success-bg)' : syncStatus === 'error' ? 'var(--danger-bg)' : 'var(--accent)' }}>
-            <div className="w-[9px] h-2 rounded-full" style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
-            <span className="text-xs font-medium" style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
-              {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : '同步中'}
-            </span>
-          </div>
-        )}
-
         {showSettings && (
           <Link href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--muted)' }}>
             <Settings className="w-5 h-5" style={{ color: 'var(--foreground-secondary)' }} />

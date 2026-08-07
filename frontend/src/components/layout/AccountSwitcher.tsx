@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronUp, Plus } from '@/lib/icons'
 import { api } from '@/lib/api'
+import { useSSE } from '@/hooks/useSSE'
 import type { Account } from '@/types'
 
 const brandGradient = 'linear-gradient(135deg, #3b82f6, #4f46e5)'
@@ -29,10 +30,17 @@ export function AccountSwitcher({
 }) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [open, setOpen] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'ok' | 'error'>('ok')
 
   const fetchAccounts = () => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
   }
+
+  useSSE(undefined, undefined, (status) => {
+    if (status === 'syncing') setSyncStatus('syncing')
+    else if (status === 'error') setSyncStatus('error')
+    else setSyncStatus('ok')
+  })
 
   useEffect(() => {
     fetchAccounts()
@@ -43,6 +51,7 @@ export function AccountSwitcher({
   }, [])
 
   const activeAccount = current || accounts[0] || null
+  const hasAccounts = accounts.length > 0
 
   return (
     <div className="border-t px-4 py-3" style={{ borderColor: 'var(--border)' }}>
@@ -71,6 +80,20 @@ export function AccountSwitcher({
           </button>
         )}
       </div>
+
+      {/* 同步状态指示器：有账号时显示在账号列表下方 */}
+      {hasAccounts && (
+        <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg"
+          style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success-bg)' : syncStatus === 'error' ? 'var(--danger-bg)' : 'var(--accent)' }}>
+          <div className="w-[8px] h-2 rounded-full shrink-0"
+            style={{ backgroundColor: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }} />
+          <span className="text-[11px] font-medium"
+            style={{ color: syncStatus === 'ok' ? 'var(--success)' : syncStatus === 'error' ? 'var(--danger)' : 'var(--gold)' }}>
+            {syncStatus === 'ok' ? '已同步' : syncStatus === 'error' ? '同步失败' : '同步中'}
+          </span>
+        </div>
+      )}
+
       {open && accounts.length > 1 && (
         <div className="mt-1 space-y-0.5">
           {accounts.map(a => (

@@ -35,7 +35,7 @@ function ProviderLogo({ provider, size = 18 }: { provider: string; size?: number
   return (
     <span className="shrink-0 flex items-center justify-center rounded"
       style={{ width: size, height: size, backgroundColor: s.bg, color: s.color }}>
-      <Mail className="w-3 h-3" style={{ display: 'block' }} />
+      <Mail className="w-3 h-3" />
     </span>
   )
 }
@@ -431,12 +431,7 @@ function AccountPanel() {
             <Plus className="w-6 h-6" style={{ color: 'var(--gold)' }} />
           </div>
           <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>暂无邮箱账号</div>
-          <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>点击「添加账号」配置你的邮箱</div>
-          <button onClick={() => { resetForm(); setShowForm(true); setEditingId(null) }}
-            className="mt-4 px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-[13px] font-medium hover:opacity-90 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> 添加账号
-          </button>
+          <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>点击右上角「添加账号」配置你的邮箱</div>
         </div>
       ) : (
         <div className="space-y-3">

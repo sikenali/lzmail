@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Underline, MailCheck, Search, Check, Tags, FolderMove, Mail, RefreshCw, Download } from '@/lib/icons'
+import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Underline, MailCheck, Search, Check, Tags, FolderMove, Mail, RefreshCw, Download, ArrowUpDown, Calendar, User, FileText } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
@@ -34,6 +34,9 @@ function MailPageInner() {
   const [folderMoveOpen, setFolderMoveOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sortAsc, setSortAsc] = useState(false)
+  const [sortMode, setSortMode] = useState<'date' | 'name' | 'subject'>('date')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement | null>(null)
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -207,9 +210,20 @@ function MailPageInner() {
   }
 
   const sortedEmails = useMemo(() => [...emails].sort((a, b) => {
-    const r = new Date(b.date).getTime() - new Date(a.date).getTime()
-    return sortAsc ? -r : r
-  }), [emails, sortAsc])
+    let cmp = 0
+    if (sortMode === 'name') {
+      const nameA = (a.from_name || a.from || '').toLowerCase()
+      const nameB = (b.from_name || b.from || '').toLowerCase()
+      cmp = nameA.localeCompare(nameB)
+    } else if (sortMode === 'subject') {
+      const subA = (a.subject || '').toLowerCase()
+      const subB = (b.subject || '').toLowerCase()
+      cmp = subA.localeCompare(subB)
+    } else {
+      cmp = new Date(a.date).getTime() - new Date(b.date).getTime()
+    }
+    return sortAsc ? cmp : -cmp
+  }), [emails, sortAsc, sortMode])
 
   return (
     <AppShell>
@@ -247,7 +261,7 @@ function MailPageInner() {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-1 px-4 py-2.5 border-b" style={{ borderColor: 'var(--card-border)' }}>
+          <div className="flex gap-1 px-4 py-2.5 border-b items-center" style={{ borderColor: 'var(--card-border)' }}>
             {filterTabs.map((t) => (
               <button key={t.value} onClick={() => { setFolder(t.value); setSearchQ('') }}
                 className={`px-3 h-7 rounded-[6px] text-xs whitespace-nowrap transition-colors ${folder === t.value ? 'font-medium' : ''}`}
@@ -257,9 +271,55 @@ function MailPageInner() {
                 }}
               >{t.label}</button>
             ))}
-            <button onClick={() => setSortAsc(a => !a)} className="ml-auto flex items-center gap-1 px-2 text-xs text-[var(--muted-foreground)] hover:bg-[var(--muted)] rounded-[8px]">
-              排序 {sortAsc ? '↑' : '↓'} <ChevronDown className="w-3 h-3" />
-            </button>
+            {/* 排序下拉 */}
+            <div ref={sortRef} className="ml-auto relative">
+              <button onClick={() => setSortOpen(o => !o)}
+                className="flex items-center gap-1.5 px-3 h-7 rounded-[6px] text-xs transition-colors"
+                style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">排序：{sortMode === 'date' ? '日期' : sortMode === 'name' ? '名称' : '主题'}</span>
+                <span className="text-[10px]">{sortAsc ? '↑' : '↓'}</span>
+                <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${sortOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
+              </button>
+              {sortOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setSortOpen(false)} />
+                  <div className="absolute right-0 top-full z-50 mt-1 w-[160px] rounded-[10px] py-1 shadow-lg"
+                    style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
+                    {([
+                      { value: 'date', label: '按日期', icon: Calendar },
+                      { value: 'name', label: '按名称', icon: User },
+                      { value: 'subject', label: '按主题', icon: FileText },
+                    ] as const).map(opt => {
+                      const Icon = opt.icon
+                      const active = sortMode === opt.value
+                      return (
+                        <button key={opt.value}
+                          onClick={() => { setSortMode(opt.value); setSortOpen(false) }}
+                          className="w-full px-3 py-2 flex items-center gap-2 text-[13px] transition-colors hover:bg-[var(--muted)]"
+                          style={{ color: active ? 'var(--primary)' : 'var(--foreground)' }}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" style={{ color: active ? 'var(--primary)' : 'var(--foreground-tertiary)' }} />
+                          <span className="flex-1 text-left">{opt.label}</span>
+                          {active && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--primary)' }} />}
+                        </button>
+                      )
+                    })}
+                    <div className="h-px my-1" style={{ backgroundColor: 'var(--card-border)' }} />
+                    <button onClick={() => { setSortAsc(a => !a); setSortOpen(false) }}
+                      className="w-full px-3 py-2 flex items-center gap-2 text-[13px] transition-colors hover:bg-[var(--muted)]"
+                      style={{ color: 'var(--foreground)' }}
+                    >
+                      <span className="w-4 h-4 flex items-center justify-center shrink-0" style={{ color: 'var(--foreground-tertiary)' }}>
+                        {sortAsc ? '↑' : '↓'}
+                      </span>
+                      <span className="flex-1 text-left">{sortAsc ? '升序' : '降序'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Email list */}

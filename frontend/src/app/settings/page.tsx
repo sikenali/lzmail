@@ -5,7 +5,9 @@ import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
+import { useSSE } from '@/hooks/useSSE'
 import type { Account, MailStats, StorageTreeNode } from '@/types'
+import type { SyncStatusData } from '@/hooks/useSSE'
 import {
   User, Palette, Archive, Info,
   Plus, Trash2, Check, Edit,
@@ -179,8 +181,20 @@ function AccountPanel() {
    const [saving, setSaving] = useState(false)
    const [provider, setProvider] = useState<ProviderKey>('auto')
    const [showPassword, setShowPassword] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
+  const [syncProgress, setSyncProgress] = useState<SyncStatusData | null>(null)
 
-   const oauthProviders = ['gmail', 'outlook'] as const
+  useSSE(undefined, undefined, (data: SyncStatusData) => {
+    if (data.status === 'syncing') {
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      setSyncProgress(data)
+    } else {
+      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      setSyncProgress(null)
+    }
+  })
+
+  const oauthProviders = ['gmail', 'outlook'] as const
 
   const configFor = (key: ProviderKey) =>
     key === 'auto' || key === 'other' ? null : PROVIDER_CONFIG[key]
@@ -446,25 +460,36 @@ function AccountPanel() {
         <div className="space-y-3">
           {accounts.map(a => {
             const ac = getAccountAvatarBg(a)
-            const sync = getSyncBadge(a)
+            const isSyncing = syncStatus[a.id] === 'syncing'
+            const syncState = isSyncing
+              ? { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
+              : getSyncBadge(a)
             const isExpanded = expandedId === a.id
+            const progressPct = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.total
+              ? Math.min(100, Math.round((syncProgress.processed || 0) / syncProgress.total * 100))
+              : 0
             return (
-              <div key={a.id} className="rounded-[16px] overflow-hidden" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
+              <div key={a.id} className="rounded-[16px] overflow-hidden relative" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
+                {/* 同步进度背景条 */}
+                {isSyncing && (
+                  <div className="absolute left-0 bottom-0 h-[3px] transition-all duration-300" style={{ width: `${progressPct}%`, backgroundColor: 'var(--gold)' }} />
+                )}
                 <div className="px-5 py-4 flex items-center justify-between cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : a.id)}>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: ac }}>
                       {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
                     </div>
-                    <div>
-                      <div className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
-                      <div className="text-[12px]" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                    <div className="min-w-0">
+                      <div className="text-[14px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
+                      <div className="text-[12px] truncate" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
+                    </div>
+                    {/* 同步状态徽章 - 移到账号信息右边 */}
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0" style={{ backgroundColor: syncState.bg, color: syncState.color }}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'animate-pulse' : ''}`} style={{ backgroundColor: syncState.dotColor }} />
+                      {isSyncing ? `${progressPct}%` : syncState.label}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium" style={{ backgroundColor: sync.bg, color: sync.color }}>
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sync.dotColor }} />
-                      {sync.label}
-                    </div>
                     <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }}
                       className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--muted)] transition-colors" title="编辑">
                       <Edit className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
@@ -1028,7 +1053,7 @@ function AboutPanel() {
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-[24px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>LZMail</h2>
-              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>v0.0.99</span>
+              <span className="text-xs px-3 py-1 rounded-lg font-semibold" style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success)' }}>v1.0.0</span>
             </div>
             <p className="text-[14px] mt-2" style={{ color: 'var(--foreground-tertiary)' }}>统一管理 Gmail、Outlook、QQ邮箱、网易、iCloud 等多平台邮件，数据完全存储于本地，隐私可控。</p>
             <p className="text-[13px] mt-1" style={{ color: 'var(--muted-foreground)' }}>@2026 Web邮件客户端 Powered by LightOS</p>

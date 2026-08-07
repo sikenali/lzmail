@@ -41,7 +41,7 @@ services:
 
     labels:
       - "com.lzmail.description=LZMail Email Client"
-      - "com.lzmail.version=0.0.99"
+      - "com.lzmail.version=1.0.0"
 
 volumes:
   lzmail_data:

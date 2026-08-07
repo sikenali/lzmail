@@ -34,9 +34,9 @@ func defaultArchiveDir() string {
 	}
 	switch runtime.GOOS {
 	case "windows":
-		return filepath.Join(home, "Documents", "lzmail", "archives")
+		return filepath.Join(home, "Documents", "lzmail", "data")
 	default:
-		return filepath.Join(home, "lzmail", "archives")
+		return filepath.Join(home, "lzmail", "data")
 	}
 }
 

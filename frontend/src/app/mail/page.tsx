@@ -4,7 +4,8 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
-import { Mail, RefreshCw, Filter, ChevronDown, ChevronUp, Archive, Trash2, MailCheck, Clock, Paperclip, Search, Check, Tags, FolderMove, Star, Bold, Italic, Underline, Send, Download } from '@/lib/icons'
+import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Underline, MailCheck, Search, Check, Tags, FolderMove, Mail, RefreshCw, Filter, Download } from '@/lib/icons'
+import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -169,13 +170,13 @@ function MailPageInner() {
                 </div>
               </div>
                <div className="flex items-center gap-2">
-                 <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
-                 </button>
-                 <button className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                   <Filter className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-                 </button>
-              </div>
+                  <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
+                  </button>
+                  <button onClick={() => { /* TODO: filter panel */ }} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                    <Filter className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
+                  </button>
+               </div>
             </div>
             <form onSubmit={e => { e.preventDefault(); loadEmails() }} className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
@@ -242,7 +243,7 @@ function MailPageInner() {
                   <div className="w-px h-6 bg-[var(--card-border)]" />
                   <div className="flex items-center gap-1 relative">
                   <button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
-                  <button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                  <button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }} title={detail.email.is_read ? '标记未读' : '标记已读'}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button>
                   {folderMoveOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setFolderMoveOpen(false)} />
@@ -288,14 +289,20 @@ function MailPageInner() {
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold shrink-0"
-                  style={{ backgroundColor: (detail.email as any).account_brand || '#ea4335' }}
+                  style={{ backgroundColor: getAccountAvatarBg(detail.email as any) }}
                 >
-                  {(detail.email.from?.[0] || '?').toUpperCase()}
+                  {(() => {
+                    const name = (detail.email.from_name || detail.email.from).trim()
+                    if (!name) return '?'
+                    const parts = name.replace(/@.*$/, '').replace(/[._-]/g, ' ').trim().split(/\s+/).filter(Boolean)
+                    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+                    return parts[0]?.[0]?.toUpperCase() || '?'
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[15px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{detail.email.from}</span>
+                      <span className="text-[15px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{detail.email.from_name || detail.email.from}</span>
                       <span className="text-[13px] hidden md:inline" style={{ color: 'var(--foreground-tertiary)' }}>&lt;{detail.email.from}&gt;</span>
                     </div>
                     <div className="text-xs shrink-0" style={{ color: 'var(--muted-foreground)' }}>
@@ -357,7 +364,7 @@ function MailPageInner() {
                 <div className="flex items-center justify-between mt-2 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
                   <div className="flex items-center gap-1">
                     {[Bold, Italic, Underline].map((Icon, i) => (
-                      <button key={i} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
+                      <button key={i} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]" title={['加粗', '斜体', '下划线'][i]}>
                         <Icon className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} />
                       </button>
                     ))}

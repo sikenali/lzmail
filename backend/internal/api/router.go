@@ -41,7 +41,7 @@ func (rl *rateLimiter) allow() bool {
 
 var (
 	searchLimiter = &rateLimiter{limit: 20, window: time.Minute}
-	listLimiter   = &rateLimiter{limit: 60, window: time.Minute}
+	listLimiter   = &rateLimiter{limit: 300, window: time.Minute}
 )
 
 type logResponseWriter struct {
@@ -162,7 +162,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/storage/list", h.handleListStorageDirs)
 	mux.HandleFunc("GET /api/v1/storage/tree", h.handleStorageTree)
 
-	mux.HandleFunc("POST /api/v1/sync", rateLimitMiddleware(listLimiter, h.handleSync))
+	mux.HandleFunc("POST /api/v1/sync", h.handleSync)
 	mux.HandleFunc("GET /api/v1/sync/status", h.handleSyncStatus)
 
 	mux.HandleFunc("GET /api/v1/events", h.handleSSE)

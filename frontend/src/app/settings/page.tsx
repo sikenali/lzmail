@@ -15,18 +15,37 @@ import {
   GitRepository, BookRead, ChatSmile3, AlarmWarning,
   LayoutRow, CollapseVertical,
   Layout2,
-  Eye, EyeOff,
+  Eye, EyeOff, Mail,
 } from '@/lib/icons'
 
-// ── Custom Select Component ─────────────────────────────────────
+// ── Provider Logo Icon ──────────────────────────────────────
+const providerLogoStyle: Record<string, { bg: string; color: string }> = {
+  gmail:  { bg: '#ea4335', color: 'white' },
+  outlook:{ bg: '#0078d4', color: 'white' },
+  qq:     { bg: '#12b7f5', color: 'white' },
+  netease:{ bg: '#e53e3e', color: 'white' },
+  icloud: { bg: '#7c9a5f', color: 'white' },
+  yahoo:  { bg: '#721c90', color: 'white' },
+  other:  { bg: '#5b6abf', color: 'white' },
+  auto:   { bg: 'var(--muted)', color: 'var(--foreground-tertiary)' },
+}
+function ProviderLogo({ provider, size = 18 }: { provider: string; size?: number }) {
+  const s = providerLogoStyle[provider] || providerLogoStyle.auto
+  return (
+    <span className="shrink-0 flex items-center justify-center rounded"
+      style={{ width: size, height: size, backgroundColor: s.bg, color: s.color }}>
+      <Mail className="w-3 h-3" style={{ display: 'block' }} />
+    </span>
+  )
+}
 function CustomSelect({
-  value, options, onChange, width = 120,
-}: {
-  value: string
-  options: Array<{ value: string; label: string }>
-  onChange: (v: string) => void
-  width?: number
-}) {
+   value, options, onChange, width = 120,
+ }: {
+   value: string
+   options: Array<{ value: string; label: string; provider?: string }>
+   onChange: (v: string) => void
+   width?: number
+ }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -44,25 +63,27 @@ function CustomSelect({
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 w-full h-9 px-3 rounded-lg text-sm outline-none transition-colors hover:bg-[var(--muted)]"
-        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
-      >
-        <span className="flex-1 text-left truncate">{selected?.label || value}</span>
+         style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+       >
+         {'provider' in (selected || {}) && (selected as any).provider ? <ProviderLogo provider={(selected as any).provider} size={16} /> : null}
+         <span className="flex-1 text-left truncate">{selected?.label || value}</span>
         <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
       </button>
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 w-full rounded-lg overflow-hidden shadow-lg"
-          style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: width }}
-        >
-          {options.map(opt => (
-            <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
-              className="w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)]"
-              style={{ color: opt.value === value ? 'var(--primary)' : 'var(--foreground)' }}
-            >
-              {opt.value === value && <Check className="w-3.5 h-3.5 inline mr-2 shrink-0" style={{ color: 'var(--primary)' }} />}
-              {opt.label}
-            </button>
-          ))}
-        </div>
+         <div className="absolute z-50 top-full mt-1 left-0 w-full rounded-lg overflow-hidden shadow-lg"
+           style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: width }}
+         >
+           {options.map(opt => (
+             <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
+               className="w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)] flex items-center gap-2"
+               style={{ color: opt.value === value ? 'var(--primary)' : 'var(--foreground)' }}
+             >
+               {opt.value === value && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--primary)' }} />}
+               {'provider' in opt && (opt as any).provider ? <ProviderLogo provider={(opt as any).provider} size={18} /> : null}
+               {opt.label}
+             </button>
+           ))}
+         </div>
       )}
     </div>
   )
@@ -101,8 +122,8 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
     usernameHint: 'QQ 邮箱完整地址', passwordTip: '授权码（非QQ密码）',
     guide: '进入 QQ 邮箱 → 设置 → 账户，开启「IMAP/SMTP 服务」后生成授权码，此处填写授权码而非 QQ 登录密码。',
   },
-  netease: {
-    label: '网易163', brand: '#e53e3e',
+   netease: {
+     label: '网易126', brand: '#e53e3e',
     domains: ['163.com', '126.com', 'yeah.net', 'vip.163.com'],
     imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465,
     nameHint: '网易邮箱账号', emailHint: 'xxx@163.com',
@@ -128,7 +149,7 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
 }
 
 const PROVIDER_LABELS: Record<ProviderKey, string> = {
-  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易163', icloud: 'iCloud', yahoo: 'Yahoo', other: '自定义',
+  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易126', icloud: 'iCloud', yahoo: '网易126', other: 'Exchange',
 }
 
 function detectProvider(email: string): ProviderKey {
@@ -273,7 +294,7 @@ function AccountPanel() {
     resetForm()
   }
 
-  const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e' }
+  const brandColorMap: Record<string, string> = { gmail: '#ea4335', outlook: '#0078d4', qq: '#12b7f5', netease: '#e53e3e', yahoo: '#e53e3e' }
   const getSyncBadge = (a: Account) => {
     if (a.use_idle) return { label: 'IDLE · 实时', color: 'var(--success)', bg: 'var(--success-bg)', dotColor: 'var(--success)' }
     return { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
@@ -309,16 +330,16 @@ function AccountPanel() {
                 if (key === 'auto' || key === 'other') setProvider(key)
                 else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
               }}
-              options={[
-                { value: 'auto', label: '自动识别' },
-                { value: 'gmail', label: 'Gmail' },
-                { value: 'outlook', label: 'Outlook / Hotmail' },
-                { value: 'qq', label: 'QQ邮箱' },
-                { value: 'netease', label: '网易 163' },
-                { value: 'icloud', label: 'iCloud' },
-                { value: 'yahoo', label: 'Yahoo' },
-                { value: 'other', label: '其他/自定义' },
-              ]}
+             options={[
+                 { value: 'auto', label: '自动识别', provider: 'auto' },
+                 { value: 'gmail', label: 'Gmail', provider: 'gmail' },
+                 { value: 'outlook', label: 'Outlook', provider: 'outlook' },
+                 { value: 'qq', label: 'QQ邮箱', provider: 'qq' },
+                 { value: 'netease', label: '网易126', provider: 'netease' },
+                 { value: 'icloud', label: 'iCloud', provider: 'icloud' },
+                 { value: 'yahoo', label: '网易126', provider: 'yahoo' },
+                 { value: 'other', label: 'Exchange', provider: 'other' },
+               ]}
             />
             {activeProvider && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
@@ -449,7 +470,7 @@ function AccountPanel() {
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
                         { label: '同步状态', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },
                         ...(a.auth_method === 'oauth2' && a.provider ? [
-                          { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider },
+                          { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider === 'netease' || a.provider === 'yahoo' ? '网易126' : a.provider === 'other' ? 'Exchange' : a.provider },
                         ] : []),
                       ].map(item => (
                         <div key={item.label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--accent)' }}>

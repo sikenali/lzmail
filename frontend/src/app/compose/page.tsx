@@ -46,11 +46,13 @@ function ComposePageInner() {
     const bccParam = searchParams?.get('bcc')
     const subjectParam = searchParams?.get('subject')
     const bodyParam = searchParams?.get('body')
+    const accountIdParam = searchParams?.get('account_id')
     if (toParam) setTo(toParam)
     if (ccParam) { setCc(ccParam); setShowCc(true) }
     if (bccParam) { setBcc(bccParam); setShowBcc(true) }
     if (subjectParam) setSubject(subjectParam)
     if (bodyParam) setBody(bodyParam)
+    if (accountIdParam) setAccountId(Number(accountIdParam))
   }, [searchParams])
 
   const handleSend = async () => {

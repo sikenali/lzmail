@@ -141,14 +141,25 @@ func (s *EmailStore) GetAttachmentsByEmailID(emailID int64) ([]models.Attachment
 	return atts, nil
 }
 
-func (s *EmailStore) Search(query string, limit, offset int) ([]models.Email, error) {
+func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([]models.Email, error) {
 	q := "%" + query + "%"
-	rows, err := s.db.Query(
-		`SELECT `+emailSelectCols+`
-		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
-		 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?
-		 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
-		q, q, q, limit, offset)
+	var rows *sql.Rows
+	var err error
+	if accountID > 0 {
+		rows, err = s.db.Query(
+			`SELECT `+emailSelectCols+`
+			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
+			 WHERE e.account_id = ? AND (e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?)
+			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+			accountID, q, q, q, limit, offset)
+	} else {
+		rows, err = s.db.Query(
+			`SELECT `+emailSelectCols+`
+			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
+			 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.body_preview LIKE ?
+			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+			q, q, q, limit, offset)
+	}
 	if err != nil {
 		return nil, err
 	}

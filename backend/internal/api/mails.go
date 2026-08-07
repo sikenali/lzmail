@@ -182,13 +182,14 @@ func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "query required"})
 		return
 	}
+	accountID, _ := strconv.ParseInt(r.URL.Query().Get("account_id"), 10, 64)
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit == 0 {
 		limit = 50
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	emails, err := h.emails.Search(q, limit, offset)
+	emails, err := h.emails.Search(q, accountID, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

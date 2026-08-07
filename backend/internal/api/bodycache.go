@@ -28,6 +28,33 @@ var globalBodyCache = &bodyCache{
 	maxSize: 500,
 }
 
+func init() {
+	go globalBodyCache.cleanupLoop()
+}
+
+func (c *bodyCache) cleanupLoop() {
+	ticker := time.NewTicker(2 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		c.cleanupExpired()
+	}
+}
+
+func (c *bodyCache) cleanupExpired() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	now := time.Now()
+	for elem := c.order.Front(); elem != nil; {
+		next := elem.Next()
+		entry := elem.Value.(*bodyCacheEntry)
+		if now.After(entry.expires) {
+			delete(c.entries, entry.key)
+			c.order.Remove(elem)
+		}
+		elem = next
+	}
+}
+
 func (c *bodyCache) get(emailID int64) (string, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

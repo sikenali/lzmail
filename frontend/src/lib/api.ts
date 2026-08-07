@@ -54,8 +54,11 @@ export const api = {
       return fetchJSON<Email[]>(`/api/v1/mails?${params}`)
     },
     get: (id: number) => fetchJSON<EmailDetail>(`/api/v1/mails/${id}`),
-    search: (q: string, limit = 50, offset = 0) =>
-      fetchJSON<Email[]>(`/api/v1/mails/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
+    search: (q: string, accountId?: number, limit = 50, offset = 0) => {
+      const params = new URLSearchParams({ q: q, limit: String(limit), offset: String(offset) })
+      if (accountId) params.set('account_id', String(accountId))
+      return fetchJSON<Email[]>(`/api/v1/mails/search?${params}`)
+    },
     stats: () => fetchJSON<MailStats>('/api/v1/mails/stats'),
     counts: () => fetchJSON<{ inbox_unread: number; drafts: number; starred: number; sent: number; trash: number; unread: number }>('/api/v1/mails/counts'),
     trend: (days = 7) => fetchJSON<Array<{date: string; receive: number; send: number}>>(`/api/v1/mails/trend?days=${days}`),

@@ -1,9 +1,0 @@
-{
-  "isError": true,
-  "content": [
-    {
-      "type": "text",
-      "text": "{\"status\":\"error\",\"error_message\":\"工具执行失败: selected_layer_id 参数不能为空\"}"
-    }
-  ]
-}

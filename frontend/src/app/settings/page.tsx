@@ -154,7 +154,7 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
 }
 
 const PROVIDER_LABELS: Record<ProviderKey, string> = {
-  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易126', icloud: 'iCloud', yahoo: '网易126', other: 'Exchange',
+  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易126', icloud: 'iCloud', yahoo: 'Yahoo', other: 'Exchange',
 }
 
 function detectProvider(email: string): ProviderKey {
@@ -366,7 +366,7 @@ function AccountPanel() {
                  { value: 'qq', label: 'QQ邮箱', provider: 'qq' },
                  { value: 'netease', label: '网易126', provider: 'netease' },
                  { value: 'icloud', label: 'iCloud', provider: 'icloud' },
-                 { value: 'yahoo', label: '网易126', provider: 'yahoo' },
+                  { value: 'yahoo', label: 'Yahoo', provider: 'yahoo' },
                  { value: 'other', label: 'Exchange', provider: 'other' },
                ]}
             />
@@ -464,10 +464,16 @@ function AccountPanel() {
             const syncState = isSyncing
               ? { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
               : getSyncBadge(a)
-            const isExpanded = expandedId === a.id
-            const progressPct = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.total
-              ? Math.min(100, Math.round((syncProgress.processed || 0) / syncProgress.total * 100))
-              : 0
+             const isExpanded = expandedId === a.id
+             const progressPct = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.total
+               ? Math.min(100, Math.round((syncProgress.processed || 0) / syncProgress.total * 100))
+               : 0
+             const folderProgress = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.folders_total
+               ? `${syncProgress.folders_done}/${syncProgress.folders_total}`
+               : null
+             const currentFolder = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.folder
+               ? syncProgress.folder
+               : null
             return (
               <div key={a.id} className="rounded-[16px] overflow-hidden relative" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
                 {/* 同步进度背景条 */}
@@ -483,11 +489,16 @@ function AccountPanel() {
                       <div className="text-[14px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
                       <div className="text-[12px] truncate" style={{ color: 'var(--foreground-tertiary)' }}>{a.email}</div>
                     </div>
-                    {/* 同步状态徽章 - 移到账号信息右边 */}
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0" style={{ backgroundColor: syncState.bg, color: syncState.color }}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'animate-pulse' : ''}`} style={{ backgroundColor: syncState.dotColor }} />
-                      {isSyncing ? `${progressPct}%` : syncState.label}
-                    </div>
+                     {/* 同步状态徽章 - 移到账号信息右边 */}
+                     <div className="flex flex-col items-end gap-0.5 shrink-0">
+                       <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium" style={{ backgroundColor: syncState.bg, color: syncState.color }}>
+                         <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'animate-pulse' : ''}`} style={{ backgroundColor: syncState.dotColor }} />
+                         {isSyncing ? `${progressPct}%` : syncState.label}
+                       </div>
+                       {isSyncing && currentFolder && (
+                         <div className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{currentFolder} {folderProgress ? `(${folderProgress})` : ''}</div>
+                       )}
+                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <button onClick={(e) => { e.stopPropagation(); handleEdit(a) }}
@@ -510,7 +521,7 @@ function AccountPanel() {
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
                         { label: '同步状态', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },
                         ...(a.auth_method === 'oauth2' && a.provider ? [
-                          { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider === 'netease' || a.provider === 'yahoo' ? '网易126' : a.provider === 'other' ? 'Exchange' : a.provider },
+                          { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider === 'netease' ? '网易126' : a.provider === 'yahoo' ? 'Yahoo' : a.provider === 'other' ? 'Exchange' : a.provider },
                         ] : []),
                       ].map(item => (
                         <div key={item.label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--accent)' }}>

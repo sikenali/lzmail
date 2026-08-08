@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"math/rand"
 	"net"
 	"strings"
 	"sync"
@@ -142,6 +143,14 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 
 		if err := s.idleSync(); err != nil {
 			log.Printf("[sync] account %s idle failed: %v", s.account.Email, err)
+			// Exponential backoff on error to avoid hammering a down server
+			jitter := time.Duration(rand.Intn(5)) * time.Second
+			select {
+			case <-s.stopCh:
+				return
+			case <-time.After(10*time.Second + jitter):
+			}
+			continue
 		}
 
 		select {

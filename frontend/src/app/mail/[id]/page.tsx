@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
@@ -113,7 +114,7 @@ export default function MailPage() {
   const forward = () => {
     if (!detail) return
     const body = detail.body_html || detail.email.body_preview || ''
-    router.push(`/compose?account_id=${detail.email.account_id}&subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}`)
+    router.push(`/compose?account_id=${detail.email.account_id}&subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}&body=${encodeURIComponent(detail.email.body_preview || '')}`)
   }
 
   if (loading) {

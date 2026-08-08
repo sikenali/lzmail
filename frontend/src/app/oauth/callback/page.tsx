@@ -63,7 +63,8 @@ function OAuthCallbackInner() {
     setStatus('loading')
     setMessage('正在保存账号...')
     try {
-      const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+      const expSec = (Number.isFinite(tokenData.expires_in) && tokenData.expires_in > 0) ? tokenData.expires_in : 3600
+      const expiresAt = new Date(Date.now() + expSec * 1000).toISOString()
       const isGmail = tokenData.provider === 'gmail'
       await api.accounts.create({
         name,

@@ -7,7 +7,7 @@ import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import type { Account, Contact } from '@/types'
+import type { Account, Contact, ComposePayload } from '@/types'
 import ContactPicker from '@/components/compose/ContactPicker'
 
 function ComposePageInner() {
@@ -46,11 +46,13 @@ function ComposePageInner() {
     const bccParam = searchParams?.get('bcc')
     const subjectParam = searchParams?.get('subject')
     const accountIdParam = searchParams?.get('account_id')
+    const bodyParam = searchParams?.get('body')
     if (toParam) setTo(toParam)
     if (ccParam) setCc(ccParam)
     if (bccParam) setBcc(bccParam)
     if (subjectParam) setSubject(subjectParam)
     if (accountIdParam) setAccountId(Number(accountIdParam))
+    if (bodyParam) { setBody(bodyParam); editorRef.current?.setContent?.(bodyParam) }
   }, [searchParams])
 
   // 账号加载完成后应用URL参数中的account_id(若初始值不在列表中)
@@ -74,7 +76,7 @@ function ComposePageInner() {
           uploadedAttachments.push({ filename: uploaded.filename, path: uploaded.path })
         }
       }
-      const data: any = {
+      const data: ComposePayload = {
         account_id: accountId,
         to,
         cc,

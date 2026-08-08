@@ -97,7 +97,15 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
     </div>
   )
 }, (prev, next) => {
-  return prev.email.id === next.email.id && prev.selected === next.selected && prev.brand === next.brand
+  return prev.email.id === next.email.id &&
+    prev.selected === next.selected &&
+    prev.brand === next.brand &&
+    prev.email.is_read === next.email.is_read &&
+    prev.email.is_starred === next.email.is_starred &&
+    prev.email.subject === next.email.subject &&
+    prev.email.body_preview === next.email.body_preview &&
+    prev.email.from_name === next.email.from_name &&
+    prev.email.has_attachments === next.email.has_attachments
 })
 
 export const MailItem = MemoizedMailItem

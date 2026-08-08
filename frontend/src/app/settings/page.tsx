@@ -822,10 +822,11 @@ function StoragePanel() {
     api.storage.tree(archivePath).then(res => setStorageRoot(res.root)).catch(() => setStorageRoot(null))
   }, [archivePath])
 
-  // 初始加载时设置pathInput
+  // archivePath 异步加载完成后同步到 pathInput（仅在尚未编辑时同步）
+  const pathInputTouched = useRef(false)
   useEffect(() => {
-    setPathInput(archivePath)
-  }, [])
+    if (archivePath && !pathInputTouched.current) setPathInput(archivePath)
+  }, [archivePath])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -881,6 +882,7 @@ function StoragePanel() {
   const storageBytes = stats?.storage_bytes ?? 0
   const totalEmails = stats?.total_emails ?? 0
   const storageCap = stats?.storage_limit || 0
+  const storagePct = storageCap > 0 ? Math.min((storageBytes / storageCap) * 100, 100) : 0
 
   function formatBytes(b: number): string {
     if (b === 0) return '0 B'
@@ -917,7 +919,7 @@ function StoragePanel() {
             ) : (
               <div className="flex-1 max-w-[600px] ml-8">
                 <div className="flex items-center gap-2">
-                  <input value={pathInput} onChange={e => setPathInput(e.target.value)}
+                  <input value={pathInput} onChange={e => { pathInputTouched.current = true; setPathInput(e.target.value) }}
                     className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
                     style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
                     placeholder="输入归档路径，如 ~/lzmail/archives"
@@ -995,7 +997,7 @@ function StoragePanel() {
                 <span style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span>
               </div>
               <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((storageBytes / storageCap) * 100, 100)}%`, backgroundColor: 'var(--gold)' }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, backgroundColor: 'var(--gold)' }} />
               </div>
             </div>
           </div>

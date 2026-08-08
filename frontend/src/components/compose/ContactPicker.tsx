@@ -42,7 +42,11 @@ export default function ContactPicker({
 
   // 解析已有值
   useEffect(() => {
-    if (value && allContacts.length > 0) {
+    if (!value) {
+      setSelected(new Set())
+      return
+    }
+    if (allContacts.length > 0) {
       const emails = value.split(',').map(s => s.trim()).filter(Boolean)
       const ids = new Set<string>()
       allContacts.forEach(c => { if (emails.includes(c.email)) ids.add(String(c.id)) })
@@ -66,7 +70,10 @@ export default function ContactPicker({
       }
     }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
   }, [])
 
   const doSearch = async (q: string) => {

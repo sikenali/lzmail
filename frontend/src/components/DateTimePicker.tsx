@@ -64,7 +64,9 @@ export function DateTimePicker({ value, onChange, className }: {
       const rect = ref.current?.getBoundingClientRect()
       if (rect) setAlignRight(rect.right + 268 > (window.innerWidth || document.documentElement.clientWidth))
     }
-  }, [open, value])
+    // 仅在打开面板时用 value 初始化各选区；打开后父级 value 变化不应覆盖用户的输入。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

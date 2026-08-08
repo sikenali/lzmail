@@ -70,7 +70,7 @@ function CustomSelect({
         className="flex items-center gap-2 w-full h-9 px-3 rounded-lg text-sm outline-none transition-colors hover:bg-[var(--muted)]"
          style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
        >
-         {'provider' in (selected || {}) && (selected as any).provider ? <ProviderLogo provider={(selected as any).provider} size={16} /> : null}
+         {'provider' in (selected || {}) && selected?.provider ? <ProviderLogo provider={selected.provider} size={16} /> : null}
          <span className="flex-1 text-left truncate">{selected?.label || value}</span>
         <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
       </button>
@@ -84,7 +84,7 @@ function CustomSelect({
                style={{ color: opt.value === value ? 'var(--primary)' : 'var(--foreground)' }}
              >
                {opt.value === value && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--primary)' }} />}
-               {'provider' in opt && (opt as any).provider ? <ProviderLogo provider={(opt as any).provider} size={18} /> : null}
+               {'provider' in opt && opt.provider ? <ProviderLogo provider={opt.provider} size={18} /> : null}
                {opt.label}
              </button>
            ))}
@@ -636,7 +636,7 @@ function AppearancePanel() {
           </div>
           <div className="flex items-center" style={{ gap: '12px' }}>
             <button onClick={() => {
-              const idx = sizes.indexOf(settings.font_size as any)
+              const idx = sizes.indexOf((settings.font_size || 'medium') as 'small'|'medium'|'large')
               const next = sizes[Math.max(0, idx - 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
@@ -648,7 +648,7 @@ function AppearancePanel() {
               </span>
             </div>
             <button onClick={() => {
-              const idx = sizes.indexOf(settings.font_size as any)
+              const idx = sizes.indexOf((settings.font_size || 'medium') as 'small'|'medium'|'large')
               const next = sizes[Math.min(sizes.length - 1, idx + 1)]
               setSetting('font_size', next)
             }} className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>

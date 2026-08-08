@@ -420,7 +420,7 @@ function MailPageInner() {
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold shrink-0"
-                  style={{ backgroundColor: getAccountAvatarBg(detail.email) }}
+                  style={{ backgroundColor: getAccountAvatarBg({ brand_color: detail.email.account_brand }) }}
                 >
                   {(() => {
                     const name = (detail.email.from_name || detail.email.from).trim()

@@ -108,9 +108,9 @@ function ComposePageInner() {
     try {
       await api.compose({
         account_id: accountId,
-        to, cc, bcc, subject, body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
+        to, cc, bcc, subject,         body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
         draft: true,
-      } as any)
+      })
       toast.success('草稿已保存')
     } catch (err: any) {
       toast.error(err?.message || '保存失败')

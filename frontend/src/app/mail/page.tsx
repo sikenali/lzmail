@@ -189,7 +189,6 @@ function MailPageInner() {
     await api.mails.delete(selectedId).catch(() => {})
     resetDetail()
     setRefresh(n => n + 1)
-    router.refresh()
   }
 
   const handleRefresh = () => {

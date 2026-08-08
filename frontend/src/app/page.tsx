@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   useSSE(
     () => setRefresh(n => n + 1),
-    undefined,
+    () => setRefresh(n => n + 1),
     (data) => {
       if (!data.account_id) return
       setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
@@ -67,7 +67,7 @@ export default function Dashboard() {
   const unreadEmails = stats?.unread_emails ?? 0
   const todaySent = stats?.today_emails ?? 0
   const storageBytes = stats?.storage_bytes ?? 0
-  const storageCap = (stats as any)?.storage_limit || 50 * 1024 * 1024 * 1024
+  const storageCap = stats?.storage_limit || 0
   const storagePct = storageCap > 0 ? Math.round(((storageBytes / storageCap) * 100)) : 0
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -285,5 +285,3 @@ export default function Dashboard() {
     </AppShell>
   )
 }
-
-

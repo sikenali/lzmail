@@ -7,6 +7,19 @@ import (
 	"sync/atomic"
 )
 
+// chClosed returns a channel that receives when ch is closed.
+// Used to detect closed client channels without panicking on send.
+func chClosed(ch chan string) <-chan struct{} {
+	closed := make(chan struct{})
+	go func() {
+		for range ch {
+			// consume, do nothing
+		}
+		close(closed)
+	}()
+	return closed
+}
+
 type publishMsg struct {
 	id   uint64
 	data string
@@ -51,6 +64,8 @@ func (h *Hub) Run() {
 			for ch := range h.clients {
 				select {
 				case ch <- formatted:
+				case <-chClosed(ch):
+					delete(h.clients, ch)
 				default:
 				}
 			}

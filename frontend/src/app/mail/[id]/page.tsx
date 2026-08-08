@@ -77,6 +77,12 @@ export default function MailPage() {
     setDetail({ ...detail, email: { ...detail.email, is_starred: starred } })
   }
 
+  const handleArchive = async () => {
+    if (!detail) return
+    await api.mails.move(detail.email.id, 'Archive').catch(() => {})
+    router.push('/mail')
+  }
+
   const handleDelete = async () => {
     if (!detail) return
     await api.mails.delete(detail.email.id).catch(() => {})
@@ -108,7 +114,7 @@ export default function MailPage() {
 
   const forward = () => {
     if (!detail) return
-    const body = (detail as any).body_html || (detail.email.body_preview || '')
+    const body = detail.body_html || detail.email.body_preview || ''
     router.push(`/compose?account_id=${detail.email.account_id}&subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}&body=${encodeURIComponent(body)}`)
   }
 
@@ -138,8 +144,8 @@ export default function MailPage() {
             <Star className={`w-4 h-4 ${email.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} style={{ color: email.is_starred ? undefined : 'var(--foreground-tertiary)' }} />
           </button>
           <div className="w-px h-5 mx-1 shrink-0" style={{ backgroundColor: 'var(--card-border)' }} />
-          <button onClick={handleDelete} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="归档"><Archive className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
-          <button onClick={() => { const el = document.getElementById('reply-area'); el?.scrollIntoView({ behavior: 'smooth' }) }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
+           <button onClick={handleArchive} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="归档"><Archive className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
+           <button onClick={() => { replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="滚动到回复"><MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronUp className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
+import { toast } from 'sonner'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import type { Contact } from '@/types'
 
@@ -108,7 +109,7 @@ export default function ContactsPage() {
   }
 
   const saveContact = async () => {
-    if (!form.name || !form.email) { alert('请填写姓名和邮箱'); return }
+    if (!form.name || !form.email) { toast.error('请填写姓名和邮箱'); return }
     setSaving(true)
     const extra = { phone: form.phone, company: form.company, title: form.title }
     const accountId = selectedAccountId ?? accounts[0]?.id ?? 0
@@ -116,13 +117,15 @@ export default function ContactsPage() {
       if (editingId) {
         await api.contacts.update(editingId, { name: form.name, email: form.email, account_id: accountId, ...extra })
         setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, account_id: accountId, ...extra } : c))
+        toast.success('联系人已更新')
       } else {
         const created = await api.contacts.create({ name: form.name, email: form.email, account_id: accountId, ...extra })
         setContacts(prev => [...prev, { ...created, ...extra, id: created.id, account_id: accountId }])
         setTotal(t => t + 1)
+        toast.success('联系人已添加')
       }
     } catch (e: any) {
-      alert(e.message || '保存失败')
+      toast.error(e.message || '保存失败')
       if (editingId) {
         setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, ...extra } : c))
       }
@@ -134,13 +137,13 @@ export default function ContactsPage() {
   }
 
   const deleteContact = async (c: Contact) => {
-    if (!confirm(`确定删除联系人「${c.name}」？`)) return
     try {
       await api.contacts.delete(c.id)
       setContacts(prev => prev.filter(x => x.id !== c.id))
       setTotal(t => Math.max(0, t - 1))
+      toast.success('已删除联系人')
     } catch {
-      alert('删除失败')
+      toast.error('删除失败')
     }
     setMenuId(null)
   }

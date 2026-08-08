@@ -156,7 +156,11 @@ func (h *Handler) handleMarkStar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return
+	}
 	email, err := h.emails.GetByID(id)
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})

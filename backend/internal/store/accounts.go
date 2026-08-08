@@ -152,7 +152,9 @@ func (s *AccountStore) Create(a *models.Account) error {
 func (s *AccountStore) Update(a *models.Account) error {
 	var storedPassword, storedToken string
 	row := s.db.QueryRow(`SELECT password, oauth2_token FROM accounts WHERE id = ?`, a.ID)
-	_ = row.Scan(&storedPassword, &storedToken)
+	if err := row.Scan(&storedPassword, &storedToken); err != nil {
+		return fmt.Errorf("query existing account: %w", err)
+	}
 	if a.Password != "" {
 		encrypted, err := crypto.Encrypt(a.Password)
 		if err != nil {

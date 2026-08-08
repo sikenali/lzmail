@@ -81,6 +81,7 @@ export default function MailPage() {
   const handleArchive = async () => {
     if (!detail) return
     await api.mails.move(detail.email.id, 'Archive').catch(() => {})
+    toast.success('邮件已归档')
     router.push('/mail')
   }
 

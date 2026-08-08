@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
-import { Paperclip, AlarmWarning, Send, X, Plus, ChevronDown, Clock } from '@/lib/icons'
+import { Paperclip, Send, X, Plus, ChevronDown, Clock } from '@/lib/icons'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import { useRouter, useSearchParams } from 'next/navigation'

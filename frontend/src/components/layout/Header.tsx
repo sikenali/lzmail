@@ -22,9 +22,9 @@ export function Header({ onCompose }: { onCompose: () => void }) {
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
-  const accountsChannel = new BroadcastChannel('lzmail_accounts')
 
   useEffect(() => {
+    const accountsChannel = new BroadcastChannel('lzmail_accounts')
     const fetch = () => {
       api.accounts.list().then(d => {
         if (d && d.length > 0) setUserAccount(d[0])

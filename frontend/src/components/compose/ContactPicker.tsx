@@ -50,7 +50,6 @@ export default function ContactPicker({
     }
   }, [value, allContacts])
 
-  // 初始化加载全部联系人
   useEffect(() => {
     api.contacts.list(undefined, 200, 0).then(result => {
       if (result && result.items && result.items.length > 0) {

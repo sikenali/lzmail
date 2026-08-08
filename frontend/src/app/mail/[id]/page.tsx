@@ -63,7 +63,8 @@ export default function MailPage() {
   const replyBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const numId = parseInt(id)
+    const numId = parseInt(id, 10)
+    if (isNaN(numId)) { setDetail(null); setLoading(false); return }
     api.mails.get(numId).then(d => {
       setDetail(d)
       api.mails.markRead(numId).catch(() => {})

@@ -10,6 +10,7 @@ import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { forwardRef, useImperativeHandle } from 'react'
+import { toast } from 'sonner'
 import { Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon, Table as TableIcon, Code, List, ListOrdered, Quote, Heading1, Heading2 } from '@/lib/icons'
 
 interface RichTextEditorProps {
@@ -61,16 +62,22 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
 
     const setLink = () => {
       const url = window.prompt('输入链接地址')
-      if (url) {
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+      if (!url) return
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        toast.error('请输入有效的URL地址')
+        return
       }
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
     }
 
     const insertImage = () => {
       const url = window.prompt('输入图片地址')
-      if (url) {
-        editor.chain().focus().setImage({ src: url }).run()
+      if (!url) return
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        toast.error('请输入有效的图片URL')
+        return
       }
+      editor.chain().focus().setImage({ src: url }).run()
     }
 
     const insertTable = () => {

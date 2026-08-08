@@ -48,8 +48,8 @@ function ComposePageInner() {
     const bodyParam = searchParams?.get('body')
     const accountIdParam = searchParams?.get('account_id')
     if (toParam) setTo(toParam)
-    if (ccParam) { setCc(ccParam); setShowCc(true) }
-    if (bccParam) { setBcc(bccParam); setShowBcc(true) }
+    if (ccParam) setCc(ccParam)
+    if (bccParam) setBcc(bccParam)
     if (subjectParam) setSubject(subjectParam)
     if (bodyParam) setBody(bodyParam)
     if (accountIdParam) setAccountId(Number(accountIdParam))
@@ -58,6 +58,7 @@ function ComposePageInner() {
   const handleSend = async () => {
     if (!to) { toast.error('请输入收件人'); return }
     if (!accountId) { toast.error('请选择发件账号'); return }
+    if (!subject) { toast.error('请输入邮件主题'); return }
     setSending(true)
     try {
       // 上传附件（如果有）

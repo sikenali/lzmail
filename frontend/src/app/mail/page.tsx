@@ -11,6 +11,7 @@ import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { Skeleton } from '@/components/Skeleton'
 import { Tooltip } from '@/components/Tooltip'
+import { toast } from 'sonner'
 
 function MailPageInner() {
   const router = useRouter()
@@ -50,6 +51,10 @@ function MailPageInner() {
       fetchPage(0, false)
     } else {
       setRefresh(n => n + 1)
+    }
+  }, () => {
+    if (folder === 'INBOX' && !debouncedSearch) {
+      fetchPage(0, false)
     }
   })
 
@@ -140,6 +145,7 @@ function MailPageInner() {
     setSelectedId(null)
     setDetail(null)
     setReplyText('')
+    listRef.current?.scrollTo(0, 0)
   }
 
   const handleMove = async (folder: string) => {
@@ -170,7 +176,10 @@ function MailPageInner() {
         body_html: '',
       })
       setReplyText('')
-    } catch { }
+      toast.success('回复已发送')
+    } catch (e: any) {
+      toast.error(e.message || '发送失败')
+    }
   }
 
   const handleArchive = async () => {
@@ -445,6 +454,7 @@ function MailPageInner() {
                 className="text-[15px] leading-7"
                 style={{ color: 'var(--foreground)' }}
                 dangerouslySetInnerHTML={{ __html: detail.body_html || `<p>${detail.email.body_preview || '(无正文内容)'}</p>` }}
+                suppressHydrationWarning
               />
 
               {/* Attachments */}

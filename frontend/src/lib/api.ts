@@ -3,22 +3,32 @@ import type { Account, Email, Contact, MailStats, EmailDetail, ComposePayload, S
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
-  })
-  if (!res.ok) {
-    const body = await res.text()
-    let msg = `HTTP ${res.status}`
-    try { const j = JSON.parse(body); msg = j.error || msg } catch {}
-    throw new Error(msg)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      signal: controller.signal,
+      ...init,
+    })
+    clearTimeout(timeout)
+    if (!res.ok) {
+      const body = await res.text()
+      let msg = `HTTP ${res.status}`
+      try { const j = JSON.parse(body); msg = j.error || msg } catch {}
+      throw new Error(msg)
+    }
+    if (res.status === 204) return undefined as T
+    const text = await res.text()
+    if (!text) return undefined as T
+    const parsed: T = JSON.parse(text)
+    if (parsed === null) return undefined as T
+    return parsed
+  } catch (e: any) {
+    clearTimeout(timeout)
+    if (e.name === 'AbortError') throw new Error('请求超时，请稍后重试')
+    throw e
   }
-  if (res.status === 204) return undefined as T
-  const text = await res.text()
-  if (!text) return undefined as T
-  const parsed: T = JSON.parse(text)
-  if (parsed === null) return undefined as T
-  return parsed
 }
 
 export const api = {

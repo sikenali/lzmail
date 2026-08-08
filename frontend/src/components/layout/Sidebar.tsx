@@ -23,11 +23,6 @@ const secondaryNavItems = [
   { icon: Settings, label: '设置', href: '/settings' },
 ]
 
-// Sidebar remounts on every route change; keep each pill's last position in module
-// scope so a fresh mount can slide continuously from the previous nav item.
-let lastSliderPos: { top: number; height: number } | null = null
-let lastSecondarySliderPos: { top: number; height: number } | null = null
-
 export function Sidebar({ currentPath }: { currentPath: string }) {
   const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -36,8 +31,11 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   const [syncProgress, setSyncProgress] = useState<SyncStatusData | null>(null)
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const secondaryNavRefs = useRef<(HTMLAnchorElement | null)[]>([])
-  const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPos)
-  const [secondarySliderPos, setSecondarySliderPos] = useState<{ top: number; height: number } | null>(lastSecondarySliderPos)
+  // 用ref代替模块级变量，避免多实例共享
+  const lastSliderPosRef = useRef<{ top: number; height: number } | null>(null)
+  const lastSecondarySliderPosRef = useRef<{ top: number; height: number } | null>(null)
+  const [sliderPos, setSliderPos] = useState<{ top: number; height: number } | null>(lastSliderPosRef.current)
+  const [secondarySliderPos, setSecondarySliderPos] = useState<{ top: number; height: number } | null>(lastSecondarySliderPosRef.current)
 
   useEffect(() => {
     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {})
@@ -78,7 +76,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     const el = navRefs.current[activeIndex]
     if (!el) return
     const target = { top: el.offsetTop, height: el.offsetHeight }
-    lastSliderPos = target
+    lastSliderPosRef.current = target
     setSliderPos(target)
   }, [activeIndex])
 
@@ -86,7 +84,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
     const el = secondaryNavRefs.current[secondaryActiveIndex]
     if (!el) return
     const target = { top: el.offsetTop, height: el.offsetHeight }
-    lastSecondarySliderPos = target
+    lastSecondarySliderPosRef.current = target
     setSecondarySliderPos(target)
   }, [secondaryActiveIndex])
 

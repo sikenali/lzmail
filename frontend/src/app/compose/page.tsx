@@ -55,6 +55,13 @@ function ComposePageInner() {
     if (accountIdParam) setAccountId(Number(accountIdParam))
   }, [searchParams])
 
+  // 账号加载完成后应用URL参数中的account_id(若初始值不在列表中)
+  useEffect(() => {
+    if (accountId === 0 && accounts.length > 0) {
+      setAccountId(accounts[0].id)
+    }
+  }, [accounts])
+
   const handleSend = async () => {
     if (!to) { toast.error('请输入收件人'); return }
     if (!accountId) { toast.error('请选择发件账号'); return }

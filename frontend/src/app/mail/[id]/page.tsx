@@ -87,6 +87,7 @@ export default function MailPage() {
   const handleDelete = async () => {
     if (!detail) return
     await api.mails.delete(detail.email.id).catch(() => {})
+    toast.success('邮件已删除')
     router.push('/mail')
   }
   const handleReply = async () => {

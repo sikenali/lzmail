@@ -3,19 +3,23 @@ package sync
 import (
 	"fmt"
 	"sync"
+
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/providers"
 	"github.com/lzmail/backend/internal/store"
 	"github.com/lzmail/backend/internal/sse"
 )
 
+const maxConcurrentSyncs = 3 // 限制同时同步的账号数，避免IMAP连接风暴
+
 type Engine struct {
-	mu         sync.Mutex
-	syncers    map[int64]*Syncer
-	emailStore *store.EmailStore
-	archiveDir string
-	sseHub     *sse.Hub
-	oauth      *providers.Manager
+	mu            sync.Mutex
+	syncers       map[int64]*Syncer
+	emailStore    *store.EmailStore
+	archiveDir    string
+	sseHub        *sse.Hub
+	oauth         *providers.Manager
+	syncSem       chan struct{} // 限制并发同步数
 }
 
 func NewEngine(emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub, oauth *providers.Manager) *Engine {
@@ -25,6 +29,7 @@ func NewEngine(emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub,
 		archiveDir: archiveDir,
 		sseHub:     sseHub,
 		oauth:      oauth,
+		syncSem:    make(chan struct{}, maxConcurrentSyncs),
 	}
 }
 
@@ -62,13 +67,17 @@ func (e *Engine) StartAll(accounts []models.Account) {
 
 func (e *Engine) RefreshAll() {
 	e.mu.Lock()
-	syncers := make(map[int64]*Syncer, len(e.syncers))
-	for id, s := range e.syncers {
-		syncers[id] = s
+	syncers := make([]*Syncer, 0, len(e.syncers))
+	for _, s := range e.syncers {
+		syncers = append(syncers, s)
 	}
 	e.mu.Unlock()
 	for _, s := range syncers {
-		go s.ForceSync()
+		e.syncSem <- struct{}{}
+		go func(syncer *Syncer) {
+			defer func() { <-e.syncSem }()
+			syncer.ForceSync()
+		}(s)
 	}
 }
 
@@ -76,9 +85,14 @@ func (e *Engine) RefreshAccount(accountID int64) {
 	e.mu.Lock()
 	s, ok := e.syncers[accountID]
 	e.mu.Unlock()
-	if ok {
-		go s.ForceSync()
+	if !ok {
+		return
 	}
+	e.syncSem <- struct{}{}
+	go func() {
+		defer func() { <-e.syncSem }()
+		s.ForceSync()
+	}()
 }
 
 func (e *Engine) Statuses() map[int64]string {

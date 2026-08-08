@@ -153,10 +153,6 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
   },
 }
 
-const PROVIDER_LABELS: Record<ProviderKey, string> = {
-  auto: '自动识别', gmail: 'Gmail', outlook: 'Outlook', qq: 'QQ邮箱', netease: '网易126', icloud: 'iCloud', yahoo: 'Yahoo', other: 'Exchange',
-}
-
 function detectProvider(email: string): ProviderKey {
   const domain = (email || '').split('@')[1]?.toLowerCase().trim() || ''
   if (!domain) return 'auto'

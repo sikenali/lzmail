@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   useSSE(
     () => setRefresh(n => n + 1),
-    () => setRefresh(n => n + 1),
+    undefined,
     (data) => {
       if (!data.account_id) return
       setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
@@ -84,9 +84,9 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { icon: Mail, iconBg: '#fdf2f2', iconColor: '#c43d3d', trendUp: true, label: '总邮件数', note: '较上月' },
-    { icon: MailOpen, iconBg: '#fef9f0', iconColor: '#c9a96e', trendUp: false, label: '未读邮件', note: '较昨日' },
-    { icon: Send, iconBg: '#edf5ec', iconColor: '#5b8c5a', trendUp: true, label: '已发送', note: '较上月' },
+    { icon: Mail, iconBg: '#fdf2f2', iconColor: '#c43d3d', trendUp: true, trendNote: '较上月', label: '总邮件数', note: '较上月' },
+    { icon: MailOpen, iconBg: '#fef9f0', iconColor: '#c9a96e', trendUp: true, trendNote: '较昨日', label: '未读邮件', note: '较昨日' },
+    { icon: Send, iconBg: '#edf5ec', iconColor: '#5b8c5a', trendUp: true, trendNote: '较上月', label: '已发送', note: '较上月' },
     { icon: Paperclip, iconBg: '#f0f4f7', iconColor: '#6b8fa3', trendUp: null, label: '附件总量', note: '本地 NAS 存储' },
   ]
   const statValues = [

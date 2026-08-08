@@ -52,10 +52,6 @@ function MailPageInner() {
     } else {
       setRefresh(n => n + 1)
     }
-  }, () => {
-    if (folder === 'INBOX' && !debouncedSearch) {
-      fetchPage(0, false)
-    }
   })
 
   const resetList = useCallback(() => {

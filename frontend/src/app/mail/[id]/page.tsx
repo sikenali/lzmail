@@ -118,7 +118,7 @@ export default function MailPage() {
   const forward = () => {
     if (!detail) return
     const body = detail.body_html || detail.email.body_preview || ''
-    router.push(`/compose?account_id=${detail.email.account_id}&subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}&body=${encodeURIComponent(body)}`)
+    router.push(`/compose?account_id=${detail.email.account_id}&subject=${encodeURIComponent('Fwd: ' + (detail.email.subject || ''))}`)
   }
 
   if (loading) {

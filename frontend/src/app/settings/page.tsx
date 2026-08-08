@@ -824,6 +824,11 @@ function StoragePanel() {
     api.storage.tree(archivePath).then(res => setStorageRoot(res.root)).catch(() => setStorageRoot(null))
   }, [archivePath])
 
+  // 初始加载时设置pathInput
+  useEffect(() => {
+    setPathInput(archivePath)
+  }, [])
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (treeRef.current && !treeRef.current.contains(e.target as Node)) {

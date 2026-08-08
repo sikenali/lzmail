@@ -45,19 +45,12 @@ function ComposePageInner() {
     const ccParam = searchParams?.get('cc')
     const bccParam = searchParams?.get('bcc')
     const subjectParam = searchParams?.get('subject')
-    const bodyParam = searchParams?.get('body')
     const accountIdParam = searchParams?.get('account_id')
     if (toParam) setTo(toParam)
     if (ccParam) setCc(ccParam)
     if (bccParam) setBcc(bccParam)
     if (subjectParam) setSubject(subjectParam)
     if (accountIdParam) setAccountId(Number(accountIdParam))
-    // body 通过编辑器 setContent 而非直接 setBody
-    if (bodyParam && editorRef.current) {
-      editorRef.current.setContent(bodyParam)
-    } else if (bodyParam) {
-      setBody(bodyParam)
-    }
   }, [searchParams])
 
   // 账号加载完成后应用URL参数中的account_id(若初始值不在列表中)

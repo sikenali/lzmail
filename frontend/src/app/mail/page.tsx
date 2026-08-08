@@ -76,7 +76,7 @@ function MailPageInner() {
     } catch { if (!append) setEmails([]) }
     setLoading(false)
     setLoadingMore(false)
-  }, [folder, debouncedSearch])
+  }, [folder, debouncedSearch, offset])
 
   useEffect(() => {
     const cached = listCache.current[`${folder}:${debouncedSearch}`]

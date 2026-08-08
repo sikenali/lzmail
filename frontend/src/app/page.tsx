@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
@@ -8,9 +9,10 @@ import {
   Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
   ChevronRight, getAccountAvatarBg
 } from '@/lib/icons'
-import TrendChart from './TrendChart'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import type { MailStats, Email, Account } from '@/types'
+
+const TrendChart = dynamic(() => import('./TrendChart'), { ssr: false })
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -284,4 +286,4 @@ export default function Dashboard() {
   )
 }
 
-export const dynamic = 'force-dynamic'
+

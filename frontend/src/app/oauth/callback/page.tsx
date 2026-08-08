@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 
-export default function OAuthCallbackPage() {
+function OAuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'form'>('loading')
@@ -139,5 +139,20 @@ export default function OAuthCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
+        <div className="text-center space-y-4" style={{ color: 'var(--foreground)' }}>
+          <div className="text-4xl">⏳</div>
+          <div className="text-lg font-medium">正在处理 OAuth 授权...</div>
+        </div>
+      </div>
+    }>
+      <OAuthCallbackInner />
+    </Suspense>
   )
 }

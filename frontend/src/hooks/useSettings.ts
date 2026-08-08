@@ -31,12 +31,12 @@ const defaults: Settings = {
   auto_cleanup: 'true',
   animations: 'true',
   archive_path: (() => {
+    if (typeof navigator === 'undefined') return ''
     const isWin = navigator.userAgent.includes('Windows')
     const ua = navigator.userAgent
     const winMatch = ua.match(/Windows NT \d+\.\d+;.*?; (.+?)\)/)
     const user = isWin ? (winMatch ? winMatch[1] : 'User') : (typeof process !== 'undefined' && process.env?.USER ? process.env.USER : 'user')
-    const base = isWin ? `C:\\Users\\${user}\\Documents\\lzmail\\archives` : `/home/${user}/lzmail/archives`
-    return base
+    return isWin ? `C:\\Users\\${user}\\Documents\\lzmail\\archives` : `/home/${user}/lzmail/archives`
   })(),
 }
 

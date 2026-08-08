@@ -283,8 +283,9 @@ function AccountPanel() {
     if (deleteTarget === null) return
     try {
       await api.accounts.delete(deleteTarget)
+      toast.success('账号已删除')
       load()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.error(e.message || '删除失败') }
     finally { setDeleteTarget(null) }
   }
 

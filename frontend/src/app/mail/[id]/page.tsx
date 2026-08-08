@@ -108,8 +108,9 @@ export default function MailPage() {
   }
 
   const focusReply = () => {
-    if (detail && !detail.email.from) return
+    if (!detail) return
     replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => replyBoxRef.current?.querySelector('textarea')?.focus(), 300)
   }
 
   const forward = () => {
@@ -145,7 +146,7 @@ export default function MailPage() {
           </button>
           <div className="w-px h-5 mx-1 shrink-0" style={{ backgroundColor: 'var(--card-border)' }} />
            <button onClick={handleArchive} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="归档"><Archive className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
-           <button onClick={() => { replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="滚动到回复"><MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
+           <button onClick={() => { replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); replyBoxRef.current?.querySelector('textarea')?.focus() }} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]" title="回复"><Reply className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--accent)] rounded-[8px]"><ChevronUp className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} /></button>
@@ -236,7 +237,7 @@ export default function MailPage() {
                 className="w-full border-0"
                 style={{ minHeight: '400px', backgroundColor: '#fff' }}
                 title="邮件正文"
-                sandbox="allow-same-origin"
+                sandbox="allow-scripts"
               />
             </div>
           ) : (

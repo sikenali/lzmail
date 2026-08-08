@@ -88,7 +88,7 @@ function ComposePageInner() {
       await api.compose(data)
       toast.success('邮件已发送')
       setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
-      router.push('/')
+      router.push('/mail')
     } catch (err: any) {
       toast.error(err?.message || '发送失败')
     }
@@ -304,7 +304,7 @@ function ComposePageInner() {
                 </label>
                 <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>最大 50MB，支持拖拽上传</span>
               </div>
-              <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date(Date.now() + 3600000).toISOString().slice(0, 16))}
+              <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date().toISOString().slice(0, 10) + 'T' + new Date().toTimeString().slice(0, 5))}
                 className="flex items-center gap-2 h-[32px] px-3 rounded-[8px] transition-all hover:opacity-80"
                 style={{ backgroundColor: scheduleAt ? 'var(--danger-bg)' : 'var(--muted)', borderColor: scheduleAt ? 'var(--danger)' : 'transparent', borderWidth: scheduleAt ? 0 : 0, borderStyle: 'solid' }}>
                 <Clock className="w-4 h-4" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: scheduleAt ? 'var(--danger)' : 'var(--foreground-secondary)' }} />

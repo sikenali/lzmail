@@ -52,6 +52,11 @@ func processScheduledJobs() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[send] worker panic recovered: %v", r)
+				}
+			}()
 			for job := range jobCh {
 				if err := executeJob(&job); err != nil {
 					log.Printf("[send] scheduled job %d failed: %v", job.ID, err)

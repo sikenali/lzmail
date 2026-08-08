@@ -44,21 +44,22 @@ func encryptionKey() []byte {
 		}
 		if err := os.MkdirAll(filepath.Dir(keyFile), 0755); err != nil {
 			log.Printf("[WARN] unable to create key dir: %v", err)
-			return key
+			return nil
 		}
 		if err := os.WriteFile(keyFile, []byte(hex.EncodeToString(key)), 0600); err != nil {
 			log.Printf("[WARN] unable to persist encryption key: %v", err)
+			return nil
 		}
 		return key
 	}
-	log.Println("[WARN] ENCRYPTION_KEY not set and no key file - passwords stored in plaintext (development mode)")
+	log.Printf("[FATAL] ENCRYPTION_KEY not set and no key file - cannot securely store credentials. Set ENCRYPTION_KEY env var or run in data directory mode.")
 	return nil
 }
 
 func Encrypt(plaintext string) (string, error) {
 	key := encryptionKey()
 	if key == nil {
-		return plaintext, nil
+		return "", fmt.Errorf("encryption key unavailable, cannot encrypt")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -79,7 +80,7 @@ func Encrypt(plaintext string) (string, error) {
 func Decrypt(encoded string) (string, error) {
 	key := encryptionKey()
 	if key == nil {
-		return encoded, nil
+		return "", fmt.Errorf("encryption key unavailable, cannot decrypt")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {

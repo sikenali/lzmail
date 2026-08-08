@@ -2,9 +2,11 @@ package sse
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"sync/atomic"
+	"time"
 )
 
 // chClosed returns a channel that receives when ch is closed.
@@ -75,7 +77,11 @@ func (h *Hub) Run() {
 
 func (h *Hub) Publish(event string, data string) {
 	id := h.counter.Add(1)
-	h.publish <- publishMsg{id: id, data: fmt.Sprintf("%s\ndata: %s", event, data)}
+	select {
+	case h.publish <- publishMsg{id: id, data: fmt.Sprintf("%s\ndata: %s", event, data)}:
+	case <-time.After(3 * time.Second):
+		log.Printf("[sse] publish timeout dropped event=%s", event)
+	}
 }
 
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {

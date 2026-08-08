@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { Skeleton } from '@/components/Skeleton'
+import { sanitizeHTML } from '@/lib/sanitize'
 import { Tooltip } from '@/components/Tooltip'
 import { toast } from 'sonner'
 
@@ -452,7 +453,7 @@ function MailPageInner() {
               <div
                 className="text-[15px] leading-7"
                 style={{ color: 'var(--foreground)' }}
-                dangerouslySetInnerHTML={{ __html: detail.body_html || `<p>${detail.email.body_preview || '(无正文内容)'}</p>` }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(detail.body_html || '<p>' + (detail.email.body_preview || '(无正文内容)') + '</p>') }}
                 suppressHydrationWarning
               />
 

@@ -6,14 +6,14 @@ import (
 
 // allowedSettingsKeys 允许客户端更新的设置键白名单
 var allowedSettingsKeys = map[string]bool{
-	"language":        true,
-	"font_size":       true,
-	"mail_density":    true,
-	"layout_density":  true,
-	"theme":           true,
-	"accent_color":    true,
-	"animations":      true,
-	"archive_path":    true,
+	"language":          true,
+	"font_size":         true,
+	"mail_density":      true,
+	"layout_density":    true,
+	"theme":             true,
+	"accent_color":      true,
+	"animations":        true,
+	"archive_path":      true,
 	"auto_cleanup_days": true,
 }
 

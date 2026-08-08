@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -35,18 +36,22 @@ func newOAuthStateStore() *oauthStateStore {
 	return s
 }
 
-// isValidRedirectURL 校验回调URL是否为合法地址（同域或http/https）。
-func isValidRedirectURL(url string) bool {
-	if url == "" {
+// isValidRedirectURL 校验回调URL是否为合法地址：仅允许相对路径或与请求同源的地址，
+// 防止开放重定向攻击（return_url 会被用作 OAuth 的 redirect_uri）。
+func isValidRedirectURL(rawURL, reqHost string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	// 相对路径（以 / 开头）允许
+	if !u.IsAbs() {
 		return true
 	}
-	lower := strings.ToLower(url)
-	// 允许相对路径和同域路径
-	if strings.HasPrefix(lower, "/") {
-		return true
+	// 仅允许 http/https，且主机必须与请求同源
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
 	}
-	// 允许http/https，其他协议拒绝
-	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
+	return strings.EqualFold(u.Host, reqHost)
 }
 
 func (s *oauthStateStore) add() (string, error) {
@@ -96,12 +101,12 @@ func (h *Handler) handleOAuthInit(w http.ResponseWriter, r *http.Request) {
 	// 将回调 URL 编码到 state 中（state 原样回传）
 	returnURL := r.URL.Query().Get("return_url")
 	if returnURL != "" {
-		// 校验 return_url 必须在预定义域名内，防止开放重定向攻击
-		if !isValidRedirectURL(returnURL) {
+		// 校验 return_url 必须为相对路径或与请求同源，防止开放重定向攻击
+		if !isValidRedirectURL(returnURL, r.Host) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid return_url"})
 			return
 		}
-		authURL = authURL + "&redirect_uri=" + returnURL
+		authURL = authURL + "&redirect_uri=" + url.QueryEscape(returnURL)
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"auth_url": authURL, "state": state})
 }

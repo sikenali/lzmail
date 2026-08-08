@@ -13,11 +13,11 @@ type bodyCacheEntry struct {
 }
 
 type bodyCache struct {
-	mu       sync.Mutex
-	entries  map[int64]*list.Element
-	order    *list.List
-	ttl      time.Duration
-	maxSize  int
+	mu      sync.Mutex
+	entries map[int64]*list.Element
+	order   *list.List
+	ttl     time.Duration
+	maxSize int
 }
 
 var globalBodyCache = &bodyCache{

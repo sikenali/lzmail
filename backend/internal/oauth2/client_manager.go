@@ -114,5 +114,3 @@ func (r *TokenResponse) ToTokenData() *models.OAuth2TokenData {
 		Scope:        r.Scope,
 	}
 }
-
-

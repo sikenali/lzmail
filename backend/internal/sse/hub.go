@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 )
+
 type publishMsg struct {
 	id   uint64
 	data string

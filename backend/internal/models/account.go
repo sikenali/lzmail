@@ -35,23 +35,23 @@ func (t *OAuth2TokenData) Unmarshal(s string) error {
 }
 
 type Account struct {
-	ID          int64            `json:"id"`
-	Name        string           `json:"name"`
-	Email       string           `json:"email"`
-	IMAPHost    string           `json:"imap_host"`
-	IMAPPort    int              `json:"imap_port"`
-	SMTPHost    string           `json:"smtp_host"`
-	SMTPPort    int              `json:"smtp_port"`
-	AuthType    string           `json:"auth_type"`
-	AuthMethod  string           `json:"auth_method"`
-	Provider    string           `json:"provider"`
-	Username    string           `json:"username"`
-	Password    string           `json:"-"`
-	OAuth2Token string           `json:"-"`
-	UseIDLE     bool             `json:"use_idle"`
-	BrandColor  string           `json:"brand_color"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Email       string    `json:"email"`
+	IMAPHost    string    `json:"imap_host"`
+	IMAPPort    int       `json:"imap_port"`
+	SMTPHost    string    `json:"smtp_host"`
+	SMTPPort    int       `json:"smtp_port"`
+	AuthType    string    `json:"auth_type"`
+	AuthMethod  string    `json:"auth_method"`
+	Provider    string    `json:"provider"`
+	Username    string    `json:"username"`
+	Password    string    `json:"-"`
+	OAuth2Token string    `json:"-"`
+	UseIDLE     bool      `json:"use_idle"`
+	BrandColor  string    `json:"brand_color"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (a *Account) IsOAuth2() bool {

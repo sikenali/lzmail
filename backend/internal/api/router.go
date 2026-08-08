@@ -2,14 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/lzmail/backend/internal/models"
+	"github.com/lzmail/backend/internal/providers"
+	"github.com/lzmail/backend/internal/sse"
+	"github.com/lzmail/backend/internal/store"
 	"log"
 	"net/http"
 	"sync"
 	"time"
-	"github.com/lzmail/backend/internal/models"
-	"github.com/lzmail/backend/internal/providers"
-	"github.com/lzmail/backend/internal/store"
-	"github.com/lzmail/backend/internal/sse"
 )
 
 type rateLimiter struct {
@@ -99,7 +99,9 @@ type Handler struct {
 	oauthStates *oauthStateStore
 }
 
-var AccountStoreInstance interface{ GetByID(int64) (*models.Account, error) }
+var AccountStoreInstance interface {
+	GetByID(int64) (*models.Account, error)
+}
 var EmailStoreInstance interface{ InsertSent(*models.Email) error }
 var OAuthManagerInstance *providers.Manager
 var ScheduledStoreInstance *store.ScheduledStore

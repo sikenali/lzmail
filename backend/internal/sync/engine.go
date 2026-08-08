@@ -6,20 +6,20 @@ import (
 
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/providers"
-	"github.com/lzmail/backend/internal/store"
 	"github.com/lzmail/backend/internal/sse"
+	"github.com/lzmail/backend/internal/store"
 )
 
 const maxConcurrentSyncs = 3 // 限制同时同步的账号数，避免IMAP连接风暴
 
 type Engine struct {
-	mu            sync.Mutex
-	syncers       map[int64]*Syncer
-	emailStore    *store.EmailStore
-	archiveDir    string
-	sseHub        *sse.Hub
-	oauth         *providers.Manager
-	syncSem       chan struct{} // 限制并发同步数
+	mu         sync.Mutex
+	syncers    map[int64]*Syncer
+	emailStore *store.EmailStore
+	archiveDir string
+	sseHub     *sse.Hub
+	oauth      *providers.Manager
+	syncSem    chan struct{} // 限制并发同步数
 }
 
 func NewEngine(emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub, oauth *providers.Manager) *Engine {

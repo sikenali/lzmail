@@ -1,11 +1,11 @@
 package api
 
 import (
+	"github.com/lzmail/backend/internal/models"
+	"github.com/lzmail/backend/internal/providers"
 	"net/http"
 	"strconv"
 	"time"
-	"github.com/lzmail/backend/internal/models"
-	"github.com/lzmail/backend/internal/providers"
 )
 
 type CreateAccountRequest struct {
@@ -123,7 +123,6 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusCreated, a)
 }
-
 
 // UpdateAccountRequest 用指针字段区分「未提供」与「置空/置 false」。
 type UpdateAccountRequest struct {

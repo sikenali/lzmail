@@ -374,18 +374,18 @@ func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, 
 	}
 	preview = previewFromText(req.BodyText)
 	h.emails.InsertSent(&models.Email{
-		AccountID:     req.AccountID,
-		UID:           uid,
-		Folder:        folder,
-		Subject:       req.Subject,
-		From:          account.Email,
-		To:            req.To,
-		Date:          when,
-		IsRead:        true,
-		BodyPreview:   preview,
+		AccountID:      req.AccountID,
+		UID:            uid,
+		Folder:         folder,
+		Subject:        req.Subject,
+		From:           account.Email,
+		To:             req.To,
+		Date:           when,
+		IsRead:         true,
+		BodyPreview:    preview,
 		HasAttachments: len(req.Attachments) > 0,
-		ArchivePath:   path,
-		MessageID:     fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
+		ArchivePath:    path,
+		MessageID:      fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
 	})
 }
 

@@ -179,12 +179,12 @@ func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([
 }
 
 type MailStats struct {
-	TotalEmails   int    `json:"total_emails"`
-	UnreadEmails  int    `json:"unread_emails"`
-	TodayEmails   int    `json:"today_emails"`
-	AccountCount  int    `json:"account_count"`
-	StorageBytes  int64  `json:"storage_bytes"`
-	StorageLimit  int64  `json:"storage_limit"`
+	TotalEmails  int   `json:"total_emails"`
+	UnreadEmails int   `json:"unread_emails"`
+	TodayEmails  int   `json:"today_emails"`
+	AccountCount int   `json:"account_count"`
+	StorageBytes int64 `json:"storage_bytes"`
+	StorageLimit int64 `json:"storage_limit"`
 }
 
 type FolderCounts struct {
@@ -425,5 +425,3 @@ func (s *EmailStore) Delete(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM emails WHERE id = ?`, id)
 	return err
 }
-
-

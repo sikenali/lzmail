@@ -1,11 +1,10 @@
 package api
 
 import (
+	"github.com/lzmail/backend/internal/models"
 	"net/http"
 	"strconv"
-	"github.com/lzmail/backend/internal/models"
 )
-
 
 func (h *Handler) handleSearchContacts(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")

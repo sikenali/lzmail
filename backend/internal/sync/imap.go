@@ -31,19 +31,19 @@ const (
 )
 
 type Syncer struct {
-	account     *models.Account
-	emailStore  *store.EmailStore
+	account      *models.Account
+	emailStore   *store.EmailStore
 	contactStore *store.ContactStore
-	archiveDir  string
-	sseHub      *sse.Hub
-	tokenSource *providers.TokenSource
-	syncMu      sync.Mutex
-	stopCh      chan struct{}
-	doneCh      chan struct{}
-	statusMu    sync.RWMutex
-	status      string
-	connMu      sync.Mutex
-	conn        *client.Client
+	archiveDir   string
+	sseHub       *sse.Hub
+	tokenSource  *providers.TokenSource
+	syncMu       sync.Mutex
+	stopCh       chan struct{}
+	doneCh       chan struct{}
+	statusMu     sync.RWMutex
+	status       string
+	connMu       sync.Mutex
+	conn         *client.Client
 }
 
 func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir string, sseHub *sse.Hub, tokenSource *providers.TokenSource) *Syncer {

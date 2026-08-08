@@ -1,19 +1,19 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
 	"github.com/lzmail/backend/internal/api"
-	"github.com/lzmail/backend/internal/crypto"
 	"github.com/lzmail/backend/internal/config"
+	"github.com/lzmail/backend/internal/crypto"
 	"github.com/lzmail/backend/internal/external_oauth"
 	"github.com/lzmail/backend/internal/oauth2"
 	"github.com/lzmail/backend/internal/providers"
 	"github.com/lzmail/backend/internal/sse"
-	"github.com/lzmail/backend/internal/sync"
 	"github.com/lzmail/backend/internal/store"
+	"github.com/lzmail/backend/internal/sync"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {

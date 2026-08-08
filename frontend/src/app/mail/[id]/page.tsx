@@ -234,7 +234,7 @@ export default function MailPage() {
                 className="w-full border-0"
                 style={{ minHeight: '400px', backgroundColor: '#fff' }}
                 title="邮件正文"
-                sandbox="allow-scripts"
+                sandbox=""
               />
             </div>
           ) : (

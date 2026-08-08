@@ -7,8 +7,13 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 function parseValue(value: string): Date {
   if (!value) return new Date()
-  const d = new Date(value)
-  return isNaN(d.getTime()) ? new Date() : d
+  // value is in local time (formatted with local getHours/getMinutes),
+  // but new Date(isoWithoutTz) parses as UTC, causing timezone drift.
+  // Parse components manually to preserve local time.
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!match) return new Date()
+  const [, yy, mm, dd, hh, mi] = match
+  return new Date(parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10), parseInt(hh, 10), parseInt(mi, 10))
 }
 
 function TimeStepper({ label, value, step }: { label: string; value: number; step: (d: number) => void }) {

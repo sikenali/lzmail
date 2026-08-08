@@ -55,10 +55,14 @@ func processScheduledJobs() {
 			for job := range jobCh {
 				if err := executeJob(&job); err != nil {
 					log.Printf("[send] scheduled job %d failed: %v", job.ID, err)
-					ScheduledStoreInstance.SetStatus(job.ID, "failed")
+					if ScheduledStoreInstance != nil {
+						ScheduledStoreInstance.SetStatus(job.ID, "failed")
+					}
 					continue
 				}
-				ScheduledStoreInstance.SetStatus(job.ID, "sent")
+				if ScheduledStoreInstance != nil {
+					ScheduledStoreInstance.SetStatus(job.ID, "sent")
+				}
 				log.Printf("[send] scheduled email sent: account %d -> %s", job.AccountID, job.To)
 			}
 		}()
@@ -90,6 +94,9 @@ func init() {
 }
 
 func executeJob(job *store.ScheduledEmail) error {
+	if AccountStoreInstance == nil {
+		return fmt.Errorf("account store not initialized")
+	}
 	account, err := AccountStoreInstance.GetByID(job.AccountID)
 	if err != nil {
 		return fmt.Errorf("account %d not found", job.AccountID)
@@ -353,16 +360,17 @@ func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, 
 	var path string
 	var preview string
 	msg := buildMessage(account.Email, req.To, req.Cc, req.Subject, req.BodyText, req.BodyHTML, req.Attachments)
+	uid := uint32(time.Now().UnixNano() % 0xFFFFFFFF)
 	if len(msg) > 0 {
 		w := archive.NewWriter(h.archiveDir)
-		if p, err := w.Save(req.AccountID, uint32(time.Now().UnixNano()%0xFFFFFFFF), when, msg); err == nil {
+		if p, err := w.Save(req.AccountID, uid, when, msg); err == nil {
 			path = p
 		}
 	}
 	preview = previewFromText(req.BodyText)
 	h.emails.InsertSent(&models.Email{
 		AccountID:     req.AccountID,
-		UID:           uint32(time.Now().UnixNano() % 0xFFFFFFFF),
+		UID:           uid,
 		Folder:        folder,
 		Subject:       req.Subject,
 		From:          account.Email,

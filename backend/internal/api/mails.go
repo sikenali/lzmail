@@ -50,7 +50,10 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	atts, _ := h.emails.GetAttachmentsByEmailID(id)
+	atts, err := h.emails.GetAttachmentsByEmailID(id)
+	if err != nil {
+		log.Printf("[mail] get attachments %d failed: %v", id, err)
+	}
 
 	bodyHTML := ""
 	if email.ArchivePath != "" {

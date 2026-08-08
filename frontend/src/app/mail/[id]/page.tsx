@@ -3,19 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import type { EmailDetail } from '@/types'
-import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, MoreHorizontal, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Link, Eye } from '@/lib/icons'
+import { ArrowLeft, Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, Bold, Italic, Link, Eye } from '@/lib/icons'
 import { toast } from 'sonner'
-import { getAccountAvatarBg } from '@/lib/icons'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function shiftColor(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
-  return `rgb(${Math.max(0, r - 40)}, ${Math.max(0, g - 40)}, ${Math.max(0, b - 40)})`
 }
 
 function getAvatarBg(email: EmailDetail['email']): string {

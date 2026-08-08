@@ -181,13 +181,11 @@ function AccountPanel() {
   const [syncProgress, setSyncProgress] = useState<SyncStatusData | null>(null)
 
   useSSE(undefined, undefined, (data: SyncStatusData) => {
-    if (data.status === 'syncing') {
-      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
-      setSyncProgress(data)
-    } else {
-      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
-      setSyncProgress(null)
-    }
+    if (!data.account_id) return
+    const id = Number(data.account_id)
+    setSyncStatus(prev => ({ ...prev, [id]: data.status }))
+    if (data.status === 'syncing') setSyncProgress(data)
+    else setSyncProgress(null)
   })
 
   const oauthProviders = ['gmail', 'outlook'] as const

@@ -155,6 +155,7 @@ function MailPageInner() {
   const handleMarkRead = async () => {
     if (!selectedId) return
     await api.mails.markRead(selectedId).catch(() => {})
+    toast.success(detail?.email.is_read ? '已标记为未读' : '已标记为已读')
     resetDetail()
     setRefresh(n => n + 1)
   }
@@ -181,6 +182,7 @@ function MailPageInner() {
   const handleArchive = async () => {
     if (!selectedId) return
     await api.mails.move(selectedId, 'Archive').catch(() => {})
+    toast.success('邮件已归档')
     resetDetail()
     setRefresh(n => n + 1)
   }
@@ -192,6 +194,7 @@ function MailPageInner() {
   const handleDelete = async () => {
     if (!selectedId) return
     await api.mails.delete(selectedId).catch(() => {})
+    toast.success('邮件已删除')
     resetDetail()
     setRefresh(n => n + 1)
   }

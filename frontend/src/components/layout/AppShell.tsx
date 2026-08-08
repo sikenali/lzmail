@@ -8,8 +8,7 @@ import type { Account } from '@/types'
 function SidebarWithPath() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const qs = searchParams ? searchParams.toString() : ''
-  const fullPath = qs ? `${pathname}?${qs}` : pathname
+  const fullPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
   return <Sidebar currentPath={fullPath} />
 }
 

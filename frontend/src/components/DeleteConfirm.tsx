@@ -12,7 +12,17 @@ interface DeleteConfirmProps {
 }
 
 export function DeleteConfirm({ open, title = '确认删除', message = '确定要删除吗？此操作不可撤销。', confirmText = '删除', onConfirm, onCancel }: DeleteConfirmProps) {
+  const [confirming, setConfirming] = useState(false)
   if (!open) return null
+  const handleConfirm = async () => {
+    setConfirming(true)
+    try {
+      await onConfirm()
+      onCancel()
+    } finally {
+      setConfirming(false)
+    }
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
@@ -33,17 +43,19 @@ export function DeleteConfirm({ open, title = '确认删除', message = '确定�
         <div className="flex justify-end gap-2 mt-5">
           <button
             onClick={onCancel}
-            className="px-4 h-9 rounded-lg text-[13px] font-medium transition-colors"
+            disabled={confirming}
+            className="px-4 h-9 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50"
             style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}
           >
             取消
           </button>
           <button
-            onClick={() => { onConfirm(); onCancel() }}
-            className="px-4 h-9 rounded-lg text-[13px] font-medium text-white transition-opacity hover:opacity-85"
+            onClick={handleConfirm}
+            disabled={confirming}
+            className="px-4 h-9 rounded-lg text-[13px] font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
             style={{ backgroundColor: 'var(--danger)' }}
           >
-            {confirmText}
+            {confirming ? '处理中...' : confirmText}
           </button>
         </div>
       </div>

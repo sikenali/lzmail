@@ -75,7 +75,10 @@ func main() {
 
 	oauthManager := setupOAuth(cfg, accountStore)
 	syncEngine := sync.NewEngine(emailStore, archiveDir, sseHub, oauthManager)
-	accounts, _ := accountStore.List()
+	accounts, err := accountStore.List()
+	if err != nil {
+		log.Printf("[WARN] failed to list accounts on startup: %v", err)
+	}
 	syncEngine.StartAll(accounts)
 
 	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub, archiveDir, syncEngine, oauthManager)

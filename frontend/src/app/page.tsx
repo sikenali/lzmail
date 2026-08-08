@@ -70,11 +70,7 @@ export default function Dashboard() {
   const storageCap = stats?.storage_limit || 0
   const storagePct = storageCap > 0 ? Math.round(((storageBytes / storageCap) * 100)) : 0
 
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const t = new Date()
-    const pad = (n: number) => String(n).padStart(2, '0')
-    return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}`
-  })
+  const [selectedDate, setSelectedDate] = useState('')
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',

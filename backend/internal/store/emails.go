@@ -358,10 +358,9 @@ func (s *EmailStore) ReplaceAttachments(emailID int64, atts []models.Attachment)
 }
 
 // UIDsWithBody 返回该账号/文件夹下已保存正文归档的 UID 集合。
-// 使用 EXISTS 子查询仅匹配缺失正文的邮件，避免全表扫描 large 表时返回大量无用数据。
 func (s *EmailStore) UIDsWithBody(accountID int64, folder string) (map[uint32]bool, error) {
 	rows, err := s.db.Query(
-		`SELECT uid FROM emails WHERE account_id = ? AND folder = ? AND archive_path != ''`,
+		`SELECT uid FROM emails WHERE account_id = ? AND folder = ? AND archive_path IS NOT NULL AND archive_path != ''`,
 		accountID, folder)
 	if err != nil {
 		return nil, err

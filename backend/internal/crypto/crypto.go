@@ -12,10 +12,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 // keyFile 是持久化的加密密钥文件路径（ENCRYPTION_KEY 未设置时自动生成）。
 var keyFile string
+
+// genKeyMu 保护密钥生成和文件写入的并发安全。
+var genKeyMu sync.Mutex
 
 // SetKeyFile 设置自动生成的密钥文件路径，由入口在启动时调用。
 func SetKeyFile(path string) {
@@ -32,6 +36,8 @@ func encryptionKey() []byte {
 		}
 	}
 	if keyFile != "" {
+		genKeyMu.Lock()
+		defer genKeyMu.Unlock()
 		if data, err := os.ReadFile(keyFile); err == nil {
 			if decoded, err := hex.DecodeString(string(bytes.TrimSpace(data))); err == nil && len(decoded) == 32 {
 				return decoded

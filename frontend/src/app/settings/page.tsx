@@ -246,7 +246,7 @@ function AccountPanel() {
   useEffect(() => { load() }, [])
 
   const handleCreate = async () => {
-    if (!form.email || !form.imap_host || !form.smtp_host) { alert('请填写必填项'); return }
+    if (!form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
     setSaving(true)
     try {
       const result = await api.accounts.create({
@@ -302,7 +302,7 @@ function AccountPanel() {
   }
 
   const handleSaveEdit = async () => {
-    if (!editingId || !form.email || !form.imap_host || !form.smtp_host) { alert('请填写必填项'); return }
+    if (!editingId || !form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
     setSaving(true)
     try {
       await api.accounts.update(editingId, {
@@ -315,7 +315,7 @@ function AccountPanel() {
       setShowForm(false)
       setEditingId(null)
       load()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.error(e.message || '保存失败') }
     finally { setSaving(false) }
   }
 

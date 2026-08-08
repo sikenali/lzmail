@@ -60,12 +60,11 @@ func (h *Hub) Run() {
 			delete(h.clients, ch)
 			close(ch)
 		case msg := <-h.publish:
-			formatted := fmt.Sprintf("id: %d\nevent: %s\n\n", msg.id, msg.data)
-			h.eventRing[h.ringPos%len(h.eventRing)] = storedEvent{id: msg.id, data: formatted}
+			h.eventRing[h.ringPos%len(h.eventRing)] = storedEvent{id: msg.id, data: msg.data}
 			h.ringPos++
 			for ch := range h.clients {
 				select {
-				case ch <- formatted:
+				case ch <- msg.data:
 				case <-chClosed(ch):
 					delete(h.clients, ch)
 				default:
@@ -77,8 +76,9 @@ func (h *Hub) Run() {
 
 func (h *Hub) Publish(event string, data string) {
 	id := h.counter.Add(1)
+	formatted := fmt.Sprintf("id: %d\nevent: %s\ndata: %s\n\n", id, event, data)
 	select {
-	case h.publish <- publishMsg{id: id, data: fmt.Sprintf("%s\ndata: %s", event, data)}:
+	case h.publish <- publishMsg{id: id, data: formatted}:
 	case <-time.After(3 * time.Second):
 		log.Printf("[sse] publish timeout dropped event=%s", event)
 	}

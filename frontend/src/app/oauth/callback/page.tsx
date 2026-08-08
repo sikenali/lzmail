@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
+import { AppShell } from '@/components/layout/AppShell'
 
 function OAuthCallbackInner() {
   const router = useRouter()
@@ -89,68 +90,74 @@ function OAuthCallbackInner() {
   if (status === 'form' && tokenData) {
     const isGmail = tokenData.provider === 'gmail'
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--background)' }}>
-        <div className="w-full max-w-sm rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
-          <div className="text-center">
-            <div className="text-3xl mb-2">{isGmail ? '📧' : '📬'}</div>
-            <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>授权成功</div>
-            <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>请完善账号信息并保存</div>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>账号名称</label>
-              <input value={name} onChange={e => setName(e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+      <AppShell>
+        <div className="flex items-center justify-center py-20" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
+            <div className="text-center">
+              <div className="text-3xl mb-2">{isGmail ? '📧' : '📬'}</div>
+              <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>授权成功</div>
+              <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>请完善账号信息并保存</div>
             </div>
-            <div>
-              <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>邮箱地址（用于 IMAP/SMTP 登录）</label>
-              <input value={email} onChange={e => setEmail(e.target.value)} placeholder={`user@${isGmail ? 'gmail.com' : 'outlook.com'}`}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>账号名称</label>
+                <input value={name} onChange={e => setName(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                  style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+              </div>
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>邮箱地址（用于 IMAP/SMTP 登录）</label>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder={`user@${isGmail ? 'gmail.com' : 'outlook.com'}`}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                  style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+              </div>
+              <button onClick={handleSubmit}
+                className="w-full h-10 rounded-lg text-sm font-medium text-white hover:opacity-90"
+                style={{ backgroundColor: 'var(--primary)' }}>
+                保存账号
+              </button>
+              <button onClick={() => router.push('/settings')}
+                className="w-full h-9 rounded-lg text-sm"
+                style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}>
+                取消
+              </button>
             </div>
-            <button onClick={handleSubmit}
-              className="w-full h-10 rounded-lg text-sm font-medium text-white hover:opacity-90"
-              style={{ backgroundColor: 'var(--primary)' }}>
-              保存账号
-            </button>
-            <button onClick={() => router.push('/settings')}
-              className="w-full h-9 rounded-lg text-sm"
-              style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}>
-              取消
-            </button>
           </div>
         </div>
-      </div>
+      </AppShell>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="text-center space-y-4" style={{ color: 'var(--foreground)' }}>
-        <div className="text-4xl">{status === 'loading' ? '⏳' : status === 'success' ? '✅' : '❌'}</div>
-        <div className="text-lg font-medium">{message}</div>
-        {status === 'error' && (
-          <button onClick={() => router.push('/settings')}
-            className="px-4 py-2 rounded-lg text-sm"
-            style={{ border: '1px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}>
-            返回设置
-          </button>
-        )}
+    <AppShell>
+      <div className="flex items-center justify-center py-20" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+        <div className="text-center space-y-4" style={{ color: 'var(--foreground)' }}>
+          <div className="text-4xl">{status === 'loading' ? '⏳' : status === 'success' ? '✅' : '❌'}</div>
+          <div className="text-lg font-medium">{message}</div>
+          {status === 'error' && (
+            <button onClick={() => router.push('/settings')}
+              className="px-4 py-2 rounded-lg text-sm"
+              style={{ border: '1px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}>
+              返回设置
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </AppShell>
   )
 }
 
 export default function OAuthCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
-        <div className="text-center space-y-4" style={{ color: 'var(--foreground)' }}>
-          <div className="text-4xl">⏳</div>
-          <div className="text-lg font-medium">正在处理 OAuth 授权...</div>
+      <AppShell>
+        <div className="flex items-center justify-center py-20" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+          <div className="text-center space-y-4" style={{ color: 'var(--foreground)' }}>
+            <div className="text-4xl">⏳</div>
+            <div className="text-lg font-medium">正在处理 OAuth 授权...</div>
+          </div>
         </div>
-      </div>
+      </AppShell>
     }>
       <OAuthCallbackInner />
     </Suspense>

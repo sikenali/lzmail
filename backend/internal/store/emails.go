@@ -217,14 +217,22 @@ func (s *EmailStore) Counts() (*FolderCounts, error) {
 func (s *EmailStore) Stats() (*MailStats, error) {
 	var st MailStats
 	err := s.db.QueryRow(`
+		WITH base AS (
+			SELECT
+				COUNT(*) AS total,
+				SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) AS unread,
+				SUM(CASE WHEN date >= date('now', 'start of day') THEN 1 ELSE 0 END) AS today,
+				COALESCE(SUM(size), 0) AS storage_bytes
+			FROM emails LEFT JOIN attachments ON attachments.email_id = emails.id
+		)
 		SELECT
-			COALESCE((SELECT COUNT(*) FROM emails), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE is_read = 0), 0),
-			COALESCE((SELECT COUNT(*) FROM emails WHERE date >= date('now', 'start of day')), 0),
+			COALESCE((SELECT total FROM base), 0),
+			COALESCE((SELECT unread FROM base), 0),
+			COALESCE((SELECT today FROM base), 0),
 			COALESCE((SELECT COUNT(*) FROM accounts), 0),
-			COALESCE((SELECT COALESCE(SUM(size), 0) FROM attachments), 0),
+			COALESCE((SELECT storage_bytes FROM base), 0),
 			COALESCE((SELECT value FROM settings WHERE key = 'storage_limit_bytes'), 0)
-		`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit)
+	`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -350,6 +358,7 @@ func (s *EmailStore) ReplaceAttachments(emailID int64, atts []models.Attachment)
 }
 
 // UIDsWithBody 返回该账号/文件夹下已保存正文归档的 UID 集合。
+// 使用 EXISTS 子查询仅匹配缺失正文的邮件，避免全表扫描 large 表时返回大量无用数据。
 func (s *EmailStore) UIDsWithBody(accountID int64, folder string) (map[uint32]bool, error) {
 	rows, err := s.db.Query(
 		`SELECT uid FROM emails WHERE account_id = ? AND folder = ? AND archive_path != ''`,

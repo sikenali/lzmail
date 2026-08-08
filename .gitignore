@@ -17,3 +17,4 @@ config/
 !backend/internal/sasl/
 !backend/internal/external_oauth/
 !frontend/src/app/oauth/
+lzmail-server

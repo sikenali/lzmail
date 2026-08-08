@@ -84,9 +84,9 @@ function MailPageInner() {
       setEmails(cached)
       setOffset(0)
       setHasMore(true)
-    } else {
-      resetList()
+      return
     }
+    resetList()
     fetchPage(0, false)
   }, [fetchPage, resetList, refresh])
 

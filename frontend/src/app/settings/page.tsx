@@ -261,15 +261,16 @@ function AccountPanel() {
       setEditingId(null)
       resetForm()
       load()
-      // Broadcast account change to other components
       new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' })
-      // Trigger sync for the new account
       const newId = result?.id
       if (newId) {
         setTimeout(() => api.sync.account(newId).catch(() => {}), 500)
       }
-    } catch (e: any) { toast.error(e.message) }
-    finally { setSaving(false) }
+    } catch (e: any) {
+      toast.error(e.message || '添加失败')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDelete = async (id: number) => {
@@ -311,8 +312,12 @@ function AccountPanel() {
       setShowForm(false)
       setEditingId(null)
       load()
-    } catch (e: any) { toast.error(e.message || '保存失败') }
-    finally { setSaving(false) }
+      toast.success('账号已更新')
+    } catch (e: any) {
+      toast.error(e.message || '保存失败')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleCancel = () => {

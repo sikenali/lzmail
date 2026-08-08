@@ -6,7 +6,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import {
-  Mail, MailOpen, Send, Paperclip, Calendar, TrendingUp, TrendingDown,
+  Mail, MailOpen, Send, Paperclip, TrendingUp, TrendingDown,
   ChevronRight, getAccountAvatarBg
 } from '@/lib/icons'
 import { DateTimePicker } from '@/components/DateTimePicker'

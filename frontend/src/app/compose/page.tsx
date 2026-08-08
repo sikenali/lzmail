@@ -92,8 +92,9 @@ function ComposePageInner() {
       router.push('/mail')
     } catch (err: any) {
       toast.error(err?.message || '发送失败')
+    } finally {
+      setSending(false)
     }
-    setSending(false)
   }
 
   const handleSaveDraft = async () => {

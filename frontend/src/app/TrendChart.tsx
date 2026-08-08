@@ -19,12 +19,12 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
       <AreaChart data={chartData}>
         <defs>
           <linearGradient id="receiveGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+            <stop offset="5%" style={{ stopColor: 'var(--primary)', stopOpacity: 0.15 }} />
+            <stop offset="95%" style={{ stopColor: 'var(--primary)', stopOpacity: 0 }} />
           </linearGradient>
           <linearGradient id="sendGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--success)" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
+            <stop offset="5%" style={{ stopColor: 'var(--success)', stopOpacity: 0.15 }} />
+            <stop offset="95%" style={{ stopColor: 'var(--success)', stopOpacity: 0 }} />
           </linearGradient>
         </defs>
         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
@@ -39,8 +39,8 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
           }}
           labelStyle={{ color: 'var(--foreground-secondary)' }}
         />
-        <Area type="monotone" dataKey="receive" stroke="var(--primary)" strokeWidth={2} fill="url(#receiveGrad)" />
-        <Area type="monotone" dataKey="send" stroke="var(--success)" strokeWidth={2} fill="url(#sendGrad)" />
+        <Area type="monotone" dataKey="receive" style={{ stroke: 'var(--primary)', strokeWidth: 2 }} fill="url(#receiveGrad)" />
+        <Area type="monotone" dataKey="send" style={{ stroke: 'var(--success)', strokeWidth: 2 }} fill="url(#sendGrad)" />
       </AreaChart>
     </ResponsiveContainer>
   )

@@ -14,7 +14,11 @@ function formatTime(dateStr: string): string {
   if (yesterday.toDateString() === date.toDateString()) return '昨天'
   const lastWeek = new Date(); lastWeek.setDate(today.getDate() - 6)
   if (date >= lastWeek && date < yesterday) {
-    const diff = Math.floor((new Date(yesterday).setHours(0,0,0,0) - date.setHours(0,0,0,0)) / 86400000) + 1
+    const yesterdayMid = new Date(yesterday)
+    yesterdayMid.setHours(0, 0, 0, 0)
+    const dateMid = new Date(date)
+    dateMid.setHours(0, 0, 0, 0)
+    const diff = Math.floor((yesterdayMid.getTime() - dateMid.getTime()) / 86400000) + 1
     return `${diff}天前`
   }
   return `${pad(date.getMonth() + 1)}月${pad(date.getDate())}日`

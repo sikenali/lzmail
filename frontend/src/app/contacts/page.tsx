@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { useSettings } from '@/hooks/useSettings'
@@ -148,10 +148,10 @@ export default function ContactsPage() {
     setMenuId(null)
   }
 
-  const sorted = [...contacts].sort((a, b) => {
+  const sorted = useMemo(() => [...contacts].sort((a, b) => {
     const r = (a.name || '').localeCompare(b.name || '', 'zh')
     return sortAsc ? r : -r
-  })
+  }), [contacts, sortAsc])
 
   const style = getAvatarStyle(form.name)
 

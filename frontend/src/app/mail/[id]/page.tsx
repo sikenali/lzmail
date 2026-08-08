@@ -13,7 +13,7 @@ function formatDate(dateStr: string): string {
 }
 
 function getAvatarBg(email: EmailDetail['email']): string {
-  const brand = (email as any).account_brand
+  const brand = email.account_brand
   if (brand) return brand
   return 'var(--primary)'
 }

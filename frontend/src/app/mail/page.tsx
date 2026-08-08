@@ -346,7 +346,7 @@ function MailPageInner() {
             ) : (
               sortedEmails.map((email) => (
                 <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
-                  <MailItem email={email} brand={(email as any).account_brand} selected={selectedId === email.id} onSelect={handleSelect} />
+                  <MailItem email={email} brand={email.account_brand} selected={selectedId === email.id} onSelect={handleSelect} />
                 </div>
               ))
             )}
@@ -420,7 +420,7 @@ function MailPageInner() {
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold shrink-0"
-                  style={{ backgroundColor: getAccountAvatarBg(detail.email as any) }}
+                  style={{ backgroundColor: getAccountAvatarBg(detail.email) }}
                 >
                   {(() => {
                     const name = (detail.email.from_name || detail.email.from).trim()

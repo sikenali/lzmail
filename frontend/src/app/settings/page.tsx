@@ -204,12 +204,12 @@ function AccountPanel() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
       const resp = await api.oauth.authUrl(key, `${apiUrl}/api/v1/oauth/${key}/callback`)
-      if (!resp?.auth_url) { alert('未配置 OAuth 客户端凭据'); return }
+      if (!resp?.auth_url) { toast.error('未配置 OAuth 客户端凭据'); return }
       sessionStorage.setItem('oauth_state', resp.state)
       sessionStorage.setItem('oauth_provider', key)
       window.location.href = resp.auth_url
     } catch (e: any) {
-      alert(e.message)
+      toast.error(e.message || 'OAuth 授权失败')
     }
   }
 
@@ -880,7 +880,7 @@ function StoragePanel() {
 
   const storageBytes = stats?.storage_bytes ?? 0
   const totalEmails = stats?.total_emails ?? 0
-  const storageCap = (stats as any)?.storage_limit || 50 * 1024 * 1024 * 1024
+  const storageCap = stats?.storage_limit || 0
 
   function formatBytes(b: number): string {
     if (b === 0) return '0 B'

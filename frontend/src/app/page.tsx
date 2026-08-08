@@ -156,7 +156,7 @@ export default function Dashboard() {
               ) : recentEmails.length === 0 ? (
                 <div className="text-center py-8 text-sm" style={{ color: 'var(--muted-foreground)' }}>暂无邮件</div>
               ) : recentEmails.map((mail) => {
-                const bc = (mail as any).account_brand || '#c43d3d'
+                const bc = mail.account_brand || '#c43d3d'
                 const accentColor = bc.startsWith('#') ? bc : '#c43d3d'
                 const date = new Date(mail.date)
                 const isToday = new Date().toDateString() === date.toDateString()

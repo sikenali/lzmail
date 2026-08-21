@@ -33,7 +33,8 @@ func setupTestDB(t *testing.T) *EmailStore {
 			has_attachments INTEGER NOT NULL DEFAULT 0,
 			archive_path TEXT,
 			message_id TEXT,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			sender_avatar_url TEXT DEFAULT ''
 		)
 	`)
 	if err != nil {

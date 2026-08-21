@@ -349,11 +349,15 @@ function AccountPanel() {
 
    const formatLastSync = (ts: number) => {
      if (!ts) return ''
+     const d = new Date(ts * 1000)
+     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
      const diff = Math.floor((Date.now() / 1000) - ts)
-     if (diff < 60) return '刚刚'
-     if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-     if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-     return `${Math.floor(diff / 86400)} 天前`
+     let rel: string
+     if (diff < 60) rel = '刚刚'
+     else if (diff < 3600) rel = `${Math.floor(diff / 60)} 分钟前`
+     else if (diff < 86400) rel = `${Math.floor(diff / 3600)} 小时前`
+     else rel = `${Math.floor(diff / 86400)} 天前`
+     return `${dateStr} · ${rel}`
    }
 
   return (
@@ -853,22 +857,29 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
 
 function ProxyPanel() {
   const { settings, setSetting } = useSettings()
-  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'global')
+  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'none')
+  const [proxyProto, setProxyProto] = useState(settings.proxy_proto || 'http')
   const [proxyHost, setProxyHost] = useState(settings.proxy_host || '')
   const [proxyPort, setProxyPort] = useState(settings.proxy_port || '1080')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setProxyMode(settings.proxy_mode || 'global')
+    setProxyMode(settings.proxy_mode || 'none')
+    setProxyProto(settings.proxy_proto || 'http')
     setProxyHost(settings.proxy_host || '')
     setProxyPort(settings.proxy_port || '1080')
-  }, [settings.proxy_mode, settings.proxy_host, settings.proxy_port])
+  }, [settings.proxy_mode, settings.proxy_proto, settings.proxy_host, settings.proxy_port])
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true)
     setSetting('proxy_mode', proxyMode)
     if (proxyMode === 'custom') {
+      setSetting('proxy_proto', proxyProto)
       setSetting('proxy_host', proxyHost)
       setSetting('proxy_port', proxyPort)
     }
+    await new Promise(r => setTimeout(r, 300))
+    setSaving(false)
     toast.success('代理设置已保存，重启服务后生效')
   }
 
@@ -880,70 +891,82 @@ function ProxyPanel() {
       </div>
 
       <div className="rounded-[16px]" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+        <div style={{ padding: '24px' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>代理模式</div>
               <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>选择 IMAP 连接使用的代理方式</div>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                checked={proxyMode === 'global'}
-                onChange={() => setProxyMode('global')}
-                className="w-4 h-4 accent-[var(--primary)]"
-              />
-              <span style={{ color: 'var(--foreground)' }}>全局代理</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                checked={proxyMode === 'custom'}
-                onChange={() => setProxyMode('custom')}
-                className="w-4 h-4 accent-[var(--primary)]"
-              />
-              <span style={{ color: 'var(--foreground)' }}>自定义代理</span>
-            </label>
+          <div className="flex items-center" style={{ gap: '8px' }}>
+            {([
+              { value: 'none', label: '不使用代理' },
+              { value: 'global', label: '全局代理' },
+              { value: 'custom', label: '自定义代理' },
+            ] as const).map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setProxyMode(opt.value)}
+                className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]"
+                style={{
+                  backgroundColor: proxyMode === opt.value ? 'var(--primary)' : 'var(--muted)',
+                  color: proxyMode === opt.value ? '#ffffff' : 'var(--foreground-secondary)',
+                  fontFamily: proxyMode === opt.value ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {proxyMode === 'custom' && (
-          <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
-            <div className="text-[15px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>代理地址</div>
-            <div className="flex items-center gap-3">
+          <div style={{ padding: '24px', borderTop: '1px solid var(--card-border)' }}>
+            <div className="text-[15px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>自定义代理</div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <CustomSelect
+                value={proxyProto}
+                width={110}
+                onChange={v => setProxyProto(v)}
+                options={[
+                  { value: 'http', label: 'HTTP' },
+                  { value: 'https', label: 'HTTPS' },
+                  { value: 'socks5', label: 'SOCKS5' },
+                ]}
+              />
               <input
                 value={proxyHost}
                 onChange={e => setProxyHost(e.target.value)}
                 placeholder="代理地址，如 127.0.0.1"
-                className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px]"
+                className="flex-1 min-w-[160px] h-10 px-3 rounded-lg outline-none text-[13px]"
                 style={{ backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
               />
               <input
                 value={proxyPort}
                 onChange={e => setProxyPort(e.target.value)}
                 placeholder="端口"
-                className="w-24 h-9 px-3 rounded-lg outline-none text-[13px]"
+                className="w-24 h-10 px-3 rounded-lg outline-none text-[13px]"
                 style={{ backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
               />
             </div>
           </div>
         )}
 
-        <div className="px-6 py-5 flex justify-end">
+        <div style={{ padding: '24px', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={handleSave}
-            className="px-4 h-9 bg-[var(--primary)] text-white rounded-[8px] text-[14px] font-medium hover:opacity-90"
+            disabled={saving}
+            className="px-4 h-10 bg-[var(--primary)] text-white rounded-[8px] text-[14px] font-medium hover:opacity-90 disabled:opacity-50 transition-all"
           >
-            保存设置
+            {saving ? '保存中…' : '保存设置'}
           </button>
         </div>
       </div>
 
       <div className="text-[12px]" style={{ color: 'var(--foreground-tertiary)', paddingLeft: 4 }}>
-        <div>• 全局代理：自动使用系统环境变量 http_proxy/https_proxy</div>
-        <div className="mt-1">• 自定义代理：填写代理服务器地址和端口，适用于 SOCKS5 或 HTTP 代理</div>
+        <div>• 不使用代理：直连邮件服务器</div>
+        <div className="mt-1">• 全局代理：自动使用系统环境变量 http_proxy/https_proxy</div>
+        <div className="mt-1">• 自定义代理：填写代理服务器协议、地址和端口，支持 HTTP/HTTPS/SOCKS5</div>
         <div className="mt-1">• 修改代理设置后，新添加的账号将生效</div>
       </div>
     </div>

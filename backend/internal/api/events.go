@@ -27,6 +27,11 @@ func (g *responseGuard) WriteHeader(status int) {
 	g.guarded = true
 	g.ResponseWriter.WriteHeader(status)
 }
+func (g *responseGuard) Flush() {
+	if f, ok := g.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
 
 func (h *Handler) handleSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")

@@ -53,6 +53,7 @@ func (e *Engine) AddAccount(account *models.Account) {
 	if e.settings != nil {
 		if ps, err := e.settings.GetAll(); err == nil {
 			s.WithProxySettings(ps["proxy_mode"], ps["proxy_host"], ps["proxy_port"])
+			s.WithProxyProto(ps["proxy_proto"])
 		}
 	}
 	s.Start()

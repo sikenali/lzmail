@@ -16,6 +16,7 @@ var allowedSettingsKeys = map[string]bool{
 	"archive_path":      true,
 	"auto_cleanup_days": true,
 	"proxy_mode":        true,
+	"proxy_proto":       true,
 	"proxy_host":        true,
 	"proxy_port":        true,
 }
@@ -35,7 +36,10 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	// 返回代理配置
 	if settings["proxy_mode"] == "" {
-		settings["proxy_mode"] = "global"
+		settings["proxy_mode"] = "none"
+	}
+	if settings["proxy_proto"] == "" {
+		settings["proxy_proto"] = "http"
 	}
 	if settings["proxy_port"] == "" {
 		settings["proxy_port"] = "1080"

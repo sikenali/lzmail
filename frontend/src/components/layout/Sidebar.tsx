@@ -19,6 +19,7 @@ type NavItem = {
   href: string
   badgeKey?: string
   badgeStyle?: string
+  onClickDraft?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -27,7 +28,7 @@ const navItems: NavItem[] = [
   { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED', badgeKey: 'starred' },
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=Sent' },
-  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badgeKey: 'drafts', badgeStyle: 'gold' },
+  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badgeKey: 'drafts', badgeStyle: 'gold', onClickDraft: true },
   { icon: Trash2, label: '已删除', href: '/mail?folder=Trash', badgeKey: 'trash' },
   { icon: AlertTriangle, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
@@ -158,8 +159,13 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           {navItems.map((item, i) => {
             const active = isActive(item.href)
             const isPressed = pressing === i
+            const handleDraftClick = (e: React.MouseEvent) => {
+              if (item.onClickDraft && counts && counts['drafts'] > 0) return
+              if (item.onClickDraft) { e.preventDefault(); router.push('/compose') }
+            }
             return (
               <Link key={item.href} href={item.href} prefetch={false}
+                onClick={handleDraftClick}
                 ref={el => { navRefs.current[i] = el }}
                 onMouseDown={() => setPressing(i)}
                 onMouseUp={() => setPressing(null)}
@@ -210,13 +216,6 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           <>
             <div className="flex items-center justify-between" style={{ padding: '0 16px' }}>
               <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)' }}>邮箱账号</div>
-              <Tooltip text="刷新未读数">
-                <button onClick={refreshCounts} disabled={loadingCounts}
-                  className="w-7 h-7 flex items-center justify-center rounded-[6px] transition-opacity hover:opacity-80 disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--muted)' }}>
-                  <RefreshCw className={`w-4 h-4 ${loadingCounts ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
-                </button>
-              </Tooltip>
             </div>
             <div style={{ paddingTop: 16 }} className="space-y-1">
               {accounts.map((a) => {

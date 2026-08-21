@@ -22,6 +22,7 @@ import (
 	"github.com/lzmail/backend/internal/sasl"
 	"github.com/lzmail/backend/internal/sse"
 	"github.com/lzmail/backend/internal/store"
+	"golang.org/x/net/proxy"
 	"net/url"
 	"regexp"
 )
@@ -40,6 +41,7 @@ type Syncer struct {
 	sseHub        *sse.Hub
 	tokenSource   *providers.TokenSource
 	proxyMode     string
+	proxyProto    string
 	proxyHost     string
 	proxyPort     string
 	syncMu        sync.Mutex
@@ -78,6 +80,11 @@ func (s *Syncer) WithProxySettings(mode, host, port string) *Syncer {
 	s.proxyMode = mode
 	s.proxyHost = host
 	s.proxyPort = port
+	return s
+}
+
+func (s *Syncer) WithProxyProto(proto string) *Syncer {
+	s.proxyProto = proto
 	return s
 }
 
@@ -225,6 +232,7 @@ func (s *Syncer) idleSync() error {
 	}
 
 	if _, err := c.Select("INBOX", false); err != nil {
+		s.closeConn(err)
 		return fmt.Errorf("select INBOX: %w", err)
 	}
 
@@ -236,13 +244,16 @@ func (s *Syncer) idleSync() error {
 
 	select {
 	case err := <-done:
-		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
-			s.closeConn(err)
-			return err
+		// 先关闭连接、释放 connMu，再执行同步，避免持锁期间调用 syncAllFolders
+		lastErr := err
+		s.closeConn(lastErr)
+		if lastErr != nil && !strings.Contains(lastErr.Error(), "use of closed network connection") {
+			return lastErr
 		}
 		s.syncAllFolders()
 		return nil
 	case <-s.stopCh:
+		s.closeConn(nil)
 		return nil
 	}
 }
@@ -437,14 +448,15 @@ func (s *Syncer) syncContactsFolder() {
 }
 
 func (s *Syncer) findContactsFolder(c *client.Client) string {
-	patterns := []string{"CONTACTS", "ADDRESS BOOK", "-addressbook", "Contacts", "Contacts/"}
+	patterns := []string{"CONTACTS", "ADDRESS BOOK", "-addressbook", "Contacts", "Contacts/", "通讯录", "联系人"}
 	ch := make(chan *imap.MailboxInfo, 32)
 	errCh := make(chan error, 1)
 	go func() { errCh <- c.List("", "*", ch) }()
 	for m := range ch {
 		name := m.Name
 		for _, pat := range patterns {
-			if strings.EqualFold(name, pat) || strings.Contains(strings.ToUpper(name), "CONTACT") || strings.Contains(strings.ToUpper(name), "ADDRESS BOOK") {
+			if strings.EqualFold(name, pat) || strings.Contains(strings.ToUpper(name), "CONTACT") || strings.Contains(strings.ToUpper(name), "ADDRESS BOOK") ||
+				strings.Contains(name, "通讯录") || strings.Contains(name, "联系人") {
 				return name
 			}
 		}
@@ -816,7 +828,37 @@ func preferAddress(addr string, d *net.Dialer) (string, error) {
 	return addr, nil
 }
 
-// getProxyURL 从环境变量读取代理地址，支持 http_proxy/https_proxy 大小写
+// dialThroughSOCKS5 通过 SOCKS5 代理建立 TLS 或直接连接
+func dialThroughSOCKS5(proxyAddr, targetAddr string, account *models.Account) (*client.Client, error) {
+	dialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, &net.Dialer{Timeout: 15 * time.Second})
+	if err != nil {
+		return nil, err
+	}
+	if account.IMAPPort == 993 {
+		tlsConn := tls.Client(dialer.(net.Conn), &tls.Config{ServerName: account.IMAPHost, InsecureSkipVerify: false})
+		if tlsErr := tlsConn.Handshake(); tlsErr != nil {
+			return nil, tlsErr
+		}
+		c, err := client.New(tlsConn)
+		if err != nil {
+			return nil, err
+		}
+		if loginErr := c.Login(account.Username, account.Password); loginErr != nil {
+			c.Logout()
+			return nil, loginErr
+		}
+		return c, nil
+	}
+	c, err := client.New(dialer.(net.Conn))
+	if err != nil {
+		return nil, err
+	}
+	if loginErr := c.Login(account.Username, account.Password); loginErr != nil {
+		c.Logout()
+		return nil, loginErr
+	}
+	return c, nil
+}
 func getProxyURL() *url.URL {
 	for _, key := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY"} {
 		if v := os.Getenv(key); v != "" {
@@ -896,14 +938,18 @@ func (s *Syncer) dialLocked() (*client.Client, error) {
 		// 代理支持
 		if s.proxyMode == "custom" && s.proxyHost != "" && s.proxyPort != "" {
 			proxyAddr := net.JoinHostPort(s.proxyHost, s.proxyPort)
-			dialConn, connErr := dialer.Dial("tcp", proxyAddr)
-			if connErr == nil {
-				c, err = dialThroughProxy(dialConn, s.account)
-				if err != nil {
-					log.Printf("[sync] account %s proxy connect failed: %v", s.account.Email, err)
-				}
+			if s.proxyProto == "socks5" {
+				c, err = dialThroughSOCKS5(proxyAddr, addr, s.account)
 			} else {
-				err = connErr
+				dialerConn, connErr := dialer.Dial("tcp", proxyAddr)
+				if connErr == nil {
+					c, err = dialThroughProxy(dialerConn, s.account)
+					if err != nil {
+						log.Printf("[sync] account %s proxy connect failed: %v", s.account.Email, err)
+					}
+				} else {
+					err = connErr
+				}
 			}
 		} else if s.proxyMode == "global" {
 			// 全局代理：从环境变量读取

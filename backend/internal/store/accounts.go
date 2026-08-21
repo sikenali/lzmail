@@ -34,6 +34,7 @@ func (s *AccountStore) decryptAccount(a *models.Account) error {
 	}
 	decrypted, err := crypto.Decrypt(a.Password)
 	if err != nil {
+		log.Printf("[store] account %d (%s) decrypt password failed (key may have changed): %v", a.ID, a.Email, err)
 		return fmt.Errorf("decrypt password: %w", err)
 	}
 	a.Password = decrypted
@@ -85,14 +86,14 @@ func (s *AccountStore) List() ([]models.Account, error) {
 			return nil, err
 		}
 		// 单个账号解密失败不应阻塞整个账号列表；记录并继续。
-		if err := s.decryptAccount(&a); err != nil {
-			log.Printf("[store] account %d (%s) decrypt password failed: %v", a.ID, a.Email, err)
-			a.Password = ""
-		}
-		if err := s.decryptOAuthToken(&a); err != nil {
-			log.Printf("[store] account %d (%s) decrypt oauth token failed: %v", a.ID, a.Email, err)
-			a.OAuth2Token = ""
-		}
+	if err := s.decryptAccount(&a); err != nil {
+		log.Printf("[store] account %d (%s) decrypt password failed (key may have changed), password will be empty", a.ID, a.Email)
+		a.Password = ""
+	}
+	if err := s.decryptOAuthToken(&a); err != nil {
+		log.Printf("[store] account %d (%s) decrypt oauth token failed (key may have changed), token will be empty", a.ID, a.Email)
+		a.OAuth2Token = ""
+	}
 		accounts = append(accounts, a)
 	}
 	return accounts, nil

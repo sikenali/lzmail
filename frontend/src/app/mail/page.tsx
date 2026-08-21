@@ -209,6 +209,14 @@ function MailPageInner() {
     if (selectedIds.size > 1 && !selectedIds.has(id)) {
       setSelectedIds(new Set([id]))
     }
+    // 草稿箱：点击邮件进入编辑模式
+    if (folder === 'Drafts') {
+      const draft = await api.mails.getDraft(id)
+      if (draft) {
+        router.push(`/compose?draft_id=${id}&to=${encodeURIComponent(draft.to)}&cc=${encodeURIComponent(draft.cc)}&subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body_html || draft.body_text)}&account_id=${draft.account_id}${draft.message_id ? '&message_id=' + encodeURIComponent(draft.message_id) : ''}`)
+        return
+      }
+    }
     setSelectedId(id)
     const d = await loadDetail(id)
     if (d) {
@@ -219,7 +227,7 @@ function MailPageInner() {
       // 同步更新本地列表的 is_read 状态
       setEmails(prev => prev.map(e => e.id === id ? { ...e, is_read: true } : e))
     }
-  }, [loadDetail, emails, selectedIds])
+  }, [loadDetail, emails, selectedIds, folder, router])
 
   const resetDetail = () => {
     setSelectedId(null)
@@ -250,8 +258,12 @@ function MailPageInner() {
         })
         const count = selectAllChecked ? totalCount : selectedIds.size
         toast.success(`已移动 ${count} 封邮件`)
-        setEmails([])
-        setTotalCount(0)
+        if (selectAllChecked) {
+          setRefresh(n => n + 1)
+        } else {
+          setEmails(prev => prev.filter(e => !selectedIds.has(e.id)))
+          setTotalCount(prev => Math.max(0, prev - count))
+        }
       } else {
         await api.mails.move(selectedId!, folder)
         toast.success('邮件已移动')
@@ -282,8 +294,12 @@ function MailPageInner() {
         })
         const count = selectAllChecked ? totalCount : selectedIds.size
         toast.success(`已标记 ${count} 封邮件为${isRead ? '未读' : '已读'}`)
-        setEmails(prev => prev.map(e => selectedIds.has(e.id) ? { ...e, is_read: !isRead } : e))
-        setTotalCount(0)
+        if (selectAllChecked) {
+          setRefresh(n => n + 1)
+        } else {
+          setEmails(prev => prev.map(e => selectedIds.has(e.id) ? { ...e, is_read: !isRead } : e))
+          setTotalCount(prev => Math.max(0, prev - count))
+        }
       } else {
         await api.mails.markRead(selectedId!)
         toast.success(detail?.email.is_read ? '已标记为未读' : '已标记为已读')
@@ -389,8 +405,13 @@ function MailPageInner() {
         })
         const count = selectAllChecked ? totalCount : selectedIds.size
         toast.success(`已删除 ${count} 封邮件`)
-        setEmails([])
-        setTotalCount(0)
+        if (selectAllChecked) {
+          setRefresh(n => n + 1)
+        } else {
+          setEmails(prev => prev.filter(e => !selectedIds.has(e.id)))
+          setTotalCount(prev => Math.max(0, prev - count))
+        }
+        setSelectedIds(new Set())
       } else {
         await api.mails.delete(selectedId!)
         toast.success('邮件已删除')

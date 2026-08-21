@@ -100,6 +100,39 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) handleGetDraft(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+
+	// 草稿需要返回完整的正文内容用于编辑
+	bodyHTML := ""
+	if email.ArchivePath != "" {
+		if resolved, err := anchorPath(h.archiveDir, email.ArchivePath); err == nil {
+			bodyHTML = extractBody(resolved)
+		}
+	}
+	if bodyHTML == "" && email.ArchivePath == "" {
+		if resolved, err := findEmlByUid(h.archiveDir, email.AccountID, email.UID, email.Date); err == nil {
+			bodyHTML = extractBody(resolved)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"id":          email.ID,
+		"account_id":  email.AccountID,
+		"to":          email.To,
+		"cc":          email.CC,
+		"subject":     email.Subject,
+		"body_html":   bodyHTML,
+		"body_text":   email.BodyPreview,
+		"message_id":  email.MessageID,
+	})
+}
+
 func (h *Handler) handleReextractBody(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	email, err := h.emails.GetByID(id)

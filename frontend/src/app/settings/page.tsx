@@ -857,14 +857,14 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
 
 function ProxyPanel() {
   const { settings, setSetting } = useSettings()
-  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'none')
+  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'global')
   const [proxyProto, setProxyProto] = useState(settings.proxy_proto || 'http')
   const [proxyHost, setProxyHost] = useState(settings.proxy_host || '')
   const [proxyPort, setProxyPort] = useState(settings.proxy_port || '1080')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setProxyMode(settings.proxy_mode || 'none')
+    setProxyMode(settings.proxy_mode || 'global')
     setProxyProto(settings.proxy_proto || 'http')
     setProxyHost(settings.proxy_host || '')
     setProxyPort(settings.proxy_port || '1080')
@@ -963,7 +963,7 @@ function ProxyPanel() {
         </div>
       </div>
 
-      <div className="text-[12px]" style={{ color: 'var(--foreground-tertiary)', paddingLeft: 4 }}>
+      <div className="text-[12px]" style={{ color: 'var(--foreground-tertiary)' }}>
         <div>• 不使用代理：直连邮件服务器</div>
         <div className="mt-1">• 全局代理：自动使用系统环境变量 http_proxy/https_proxy</div>
         <div className="mt-1">• 自定义代理：填写代理服务器协议、地址和端口，支持 HTTP/HTTPS/SOCKS5</div>

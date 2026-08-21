@@ -68,21 +68,26 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 
 	bodyHTML := ""
 	if email.ArchivePath != "" {
+		log.Printf("[mail] get %d: archive_path=%q", id, email.ArchivePath)
 		if resolved, err := anchorPath(h.archiveDir, email.ArchivePath); err == nil {
+			log.Printf("[mail] get %d: resolved path=%q", id, resolved)
 			if cached, ok := globalBodyCache.get(id); ok {
 				bodyHTML = cached
 			} else {
 				bodyHTML = extractBody(resolved)
+				log.Printf("[mail] get %d: body length=%d", id, len(bodyHTML))
 				globalBodyCache.set(id, bodyHTML)
 			}
 		}
 	} else {
 		// archive_path 为空时，尝试从磁盘恢复（兼容历史数据迁移后路径丢失的情况）
 		if resolved, err := findEmlByUid(h.archiveDir, email.AccountID, email.UID, email.Date); err == nil {
+			log.Printf("[mail] get %d: findEmlByUid found=%q", id, resolved)
 			if cached, ok := globalBodyCache.get(id); ok {
 				bodyHTML = cached
 			} else {
 				bodyHTML = extractBody(resolved)
+				log.Printf("[mail] get %d: fallback body length=%d", id, len(bodyHTML))
 				globalBodyCache.set(id, bodyHTML)
 			}
 		}
@@ -92,6 +97,37 @@ func (h *Handler) handleGetMail(w http.ResponseWriter, r *http.Request) {
 		"email":       email,
 		"attachments": atts,
 		"body_html":   bodyHTML,
+	})
+}
+
+func (h *Handler) handleReextractBody(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+
+	// Clear cache
+	globalBodyCache.delete(id)
+
+	// Force re-extract
+	var bodyHTML string
+	if email.ArchivePath != "" {
+		if resolved, err := anchorPath(h.archiveDir, email.ArchivePath); err == nil {
+			bodyHTML = extractBody(resolved)
+		}
+	}
+	if bodyHTML == "" {
+		if resolved, err := findEmlByUid(h.archiveDir, email.AccountID, email.UID, email.Date); err == nil {
+			bodyHTML = extractBody(resolved)
+		}
+	}
+	globalBodyCache.set(id, bodyHTML)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"body_html": bodyHTML,
+		"source":    "archive",
 	})
 }
 

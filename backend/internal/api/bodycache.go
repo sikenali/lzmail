@@ -99,3 +99,13 @@ func (c *bodyCache) set(emailID int64, html string) {
 	elem := c.order.PushBack(entry)
 	c.entries[emailID] = elem
 }
+
+func (c *bodyCache) delete(emailID int64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if elem, ok := c.entries[emailID]; ok {
+		c.order.Remove(elem)
+		delete(c.entries, emailID)
+	}
+}

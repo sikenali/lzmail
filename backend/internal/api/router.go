@@ -151,6 +151,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /api/v1/mails", rateLimitMiddleware(listLimiter, h.handleListMails))
 	mux.HandleFunc("GET /api/v1/mails/{id}", h.handleGetMail)
+	mux.HandleFunc("POST /api/v1/mails/{id}/reextract", h.handleReextractBody)
 	mux.HandleFunc("GET /api/v1/mails/{id}/raw", h.handleRenderMail)
 	mux.HandleFunc("PATCH /api/v1/mails/{id}", h.handleMoveMail)
 	mux.HandleFunc("POST /api/v1/mails/{id}/read", h.handleMarkRead)

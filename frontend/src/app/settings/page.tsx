@@ -363,7 +363,7 @@ function AccountPanel() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-4">
           <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
           <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>账号管理</h2>
         </div>
@@ -885,7 +885,7 @@ function ProxyPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 mb-4">
         <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--teal)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>代理设置</h2>
       </div>
@@ -1093,7 +1093,7 @@ function StoragePanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 mb-4">
         <div className="w-[4px] h-6 rounded-[2px]" style={{ backgroundColor: 'var(--success)' }} />
         <h2 className="text-[20px] font-bold leading-none" style={{ color: 'var(--foreground)' }}>归档目录</h2>
       </div>

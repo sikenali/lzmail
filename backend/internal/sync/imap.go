@@ -362,6 +362,7 @@ func (s *Syncer) syncContactsFolder() {
 
 	contactsFolder := s.findContactsFolder(c)
 	if contactsFolder == "" {
+		log.Printf("[sync] account %s no contacts folder found (IMAP 通讯录功能未启用或邮箱不支持)", s.account.Email)
 		return
 	}
 

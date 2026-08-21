@@ -435,6 +435,85 @@ func mimeTypeFromExt(ext string) string {
 	}
 }
 
+func ptr[T any](v T) *T { return &v }
+
+// handleBulkMails handles POST /api/v1/mails/bulk
+func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Action            string   `json:"action"`              // delete, mark_read, mark_unread, move, star, unstar
+		IDs               []int64  `json:"ids,omitempty"`       // specific IDs
+		AllInFolder       bool     `json:"all_in_folder"`       // true = all in folder
+		Folder            string   `json:"folder,omitempty"`    // required for all_in_folder
+		DestinationFolder string   `json:"destination_folder,omitempty"` // for move
+	}
+	if err := readJSON(w, r, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+
+	var ids []int64
+	if req.AllInFolder {
+		if req.Folder == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "folder required for all_in_folder"})
+			return
+		}
+		emails, err := h.emails.ListAll(req.Folder, "", "", 10000, 0)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		for _, e := range emails {
+			ids = append(ids, e.ID)
+		}
+	} else {
+		ids = req.IDs
+	}
+
+	if len(ids) == 0 {
+		writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "affected_count": 0})
+		return
+	}
+
+	var err error
+	switch req.Action {
+	case "delete":
+		err = h.emails.BulkDelete(ids)
+	case "mark_read":
+		err = h.emails.BulkUpdateFlags(ids, ptr(true), nil)
+	case "mark_unread":
+		err = h.emails.BulkUpdateFlags(ids, ptr(false), nil)
+	case "star":
+		err = h.emails.BulkUpdateFlags(ids, nil, ptr(true))
+	case "unstar":
+		err = h.emails.BulkUpdateFlags(ids, nil, ptr(false))
+	case "move":
+		if req.DestinationFolder == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "destination_folder required for move"})
+			return
+		}
+		err = h.emails.BulkMove(ids, req.DestinationFolder)
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown action"})
+		return
+	}
+
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if h.sseHub != nil {
+		for _, id := range ids {
+			h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d}`, id))
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":          true,
+		"affected_count":   len(ids),
+	})
+}
+
 // findEmlByUid 当 archive_path 为空时，按 accountID/uid/year/month 在归档目录中查找 EML 文件。
 func findEmlByUid(archiveDir string, accountID int64, uid uint32, date time.Time) (string, error) {
 	if date.IsZero() {

@@ -163,6 +163,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/mails/trend", h.handleMailTrend)
 	mux.HandleFunc("GET /api/v1/mails/stats", h.handleMailStats)
 	mux.HandleFunc("GET /api/v1/mails/counts", h.handleMailCounts)
+	mux.HandleFunc("POST /api/v1/mails/bulk", h.handleBulkMails)
 
 	mux.HandleFunc("POST /api/v1/compose", h.handleCompose)
 	mux.HandleFunc("POST /api/v1/compose/attachments", h.handleUploadAttachment)

@@ -556,3 +556,62 @@ func (s *EmailStore) Delete(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM emails WHERE id = ?`, id)
 	return err
 }
+
+// BulkUpdateFlags updates is_read/is_starred for multiple emails.
+func (s *EmailStore) BulkUpdateFlags(ids []int64, isRead, isStarred *bool) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	placeholders := strings.Repeat("?,", len(ids)-1) + "?"
+	query := fmt.Sprintf(`UPDATE emails SET `)
+	var sets []string
+	var args []any
+	if isRead != nil {
+		sets = append(sets, "is_read = ?")
+		args = append(args, *isRead)
+	}
+	if isStarred != nil {
+		sets = append(sets, "is_starred = ?")
+		args = append(args, *isStarred)
+	}
+	if len(sets) == 0 {
+		return nil
+	}
+	query += strings.Join(sets, ", ") + ` WHERE id IN (` + placeholders + `)`
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	_, err := s.db.Exec(query, args...)
+	return err
+}
+
+// BulkMove moves multiple emails to a folder.
+func (s *EmailStore) BulkMove(ids []int64, folder string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	realFolder := s.ResolveFolder(folder)
+	placeholders := strings.Repeat("?,", len(ids)-1) + "?"
+	query := "UPDATE emails SET folder = ? WHERE id IN (" + placeholders + ")"
+	args := []any{realFolder}
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	_, err := s.db.Exec(query, args...)
+	return err
+}
+
+// BulkDelete deletes multiple emails.
+func (s *EmailStore) BulkDelete(ids []int64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	placeholders := strings.Repeat("?,", len(ids)-1) + "?"
+	query := "DELETE FROM emails WHERE id IN (" + placeholders + ")"
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	_, err := s.db.Exec(query, args...)
+	return err
+}

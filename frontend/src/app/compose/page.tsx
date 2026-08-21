@@ -32,6 +32,7 @@ function ComposePageInner() {
   const [showSenderPicker, setShowSenderPicker] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [draftId, setDraftId] = useState<number | null>(null)
 
   useEffect(() => {
     api.accounts.list().then(list => {
@@ -48,6 +49,7 @@ function ComposePageInner() {
     const subjectParam = searchParams?.get('subject')
     const accountIdParam = searchParams?.get('account_id')
     const bodyParam = searchParams?.get('body')
+    const draftIdParam = searchParams?.get('draft_id')
     if (toParam) setTo(toParam)
     if (ccParam) setCc(ccParam)
     if (bccParam) setBcc(bccParam)
@@ -56,6 +58,7 @@ function ComposePageInner() {
     if (bodyParam) { setBody(bodyParam); editorRef.current?.setContent?.(bodyParam) }
     const messageIdParam = searchParams?.get('message_id')
     if (messageIdParam) setReplyTo(messageIdParam)
+    if (draftIdParam) setDraftId(Number(draftIdParam))
   }, [searchParams])
 
   // 账号加载完成后应用URL参数中的account_id(若初始值不在列表中)
@@ -115,12 +118,33 @@ function ComposePageInner() {
     if (sending || savingDraft) return
     setSavingDraft(true)
     try {
-      await api.compose({
-        account_id: accountId,
-        to, cc, bcc, subject,         body_text: editorRef.current?.getText() || body, body_html: editorRef.current?.getHTML() || body,
-        draft: true,
-      })
-      toast.success('草稿已保存')
+      if (draftId) {
+        // 更新现有草稿
+        await fetch(`/api/v1/compose/drafts/${draftId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            account_id: accountId,
+            to, cc, bcc, subject,
+            body_text: editorRef.current?.getText() || body,
+            body_html: editorRef.current?.getHTML() || body,
+            attachments: [],
+          })
+        })
+        toast.success('草稿已更新')
+        router.push('/mail?folder=Drafts')
+      } else {
+        // 新建草稿
+        await api.compose({
+          account_id: accountId,
+          to, cc, bcc, subject,
+          body_text: editorRef.current?.getText() || body,
+          body_html: editorRef.current?.getHTML() || body,
+          draft: true,
+        })
+        toast.success('草稿已保存')
+        setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
+      }
     } catch (err: any) {
       toast.error(err?.message || '保存失败')
     }
@@ -161,8 +185,12 @@ function ComposePageInner() {
             <div className="flex items-center gap-4">
               <div className="w-[5px] h-8 rounded-[2px]" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
               <div>
-                <h1 className="text-[28px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>写邮件</h1>
-                <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>新建邮件消息</p>
+                <h1 className="text-[28px] font-bold leading-none" style={{ color: 'rgba(61,43,31,1)' }}>
+                  {draftId ? '编辑草稿' : '写邮件'}
+                </h1>
+                <p className="text-[13px] mt-1" style={{ color: 'rgba(139,115,85,1)' }}>
+                  {draftId ? '修改草稿内容' : '新建邮件消息'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">

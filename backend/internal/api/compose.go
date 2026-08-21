@@ -616,3 +616,44 @@ func splitEmails(s string) []string {
 	}
 	return res
 }
+
+// handleUpdateDraft 更新草稿内容
+func (h *Handler) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	email, err := h.emails.GetByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	if email.Folder != "Drafts" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "not a draft"})
+		return
+	}
+
+	var req ComposeRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+	req.AccountID = email.AccountID
+
+	account, err := h.accounts.GetByID(req.AccountID)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "account not found"})
+		return
+	}
+
+	validated, err := validateAttachmentPaths(uploadDirOf(h.archiveDir), req.Attachments)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	req.Attachments = validated
+
+	// 保存为草稿
+	h.persistOutgoing(account, &req, "Drafts", email.Date)
+	if h.sseHub != nil {
+		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"draft":"updated"}`, id))
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "draft_updated"})
+}

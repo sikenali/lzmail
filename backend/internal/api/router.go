@@ -167,6 +167,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/mails/bulk", h.handleBulkMails)
 
 	mux.HandleFunc("POST /api/v1/compose", h.handleCompose)
+	mux.HandleFunc("PATCH /api/v1/compose/drafts/{id}", h.handleUpdateDraft)
 	mux.HandleFunc("POST /api/v1/compose/attachments", h.handleUploadAttachment)
 
 	mux.HandleFunc("GET /api/v1/contacts", h.handleListContacts)

@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, AlertTriangle, Plus, Edit, RefreshCw, getAccountAvatarBg } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, AlertTriangle, Plus, Edit, RefreshCw, getAccountAvatarBg, User } from '@/lib/icons'
 import { NavSlider } from '@/components/layout/NavSlider'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
@@ -232,8 +232,8 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                 className="flex items-center gap-2 rounded-[8px] transition-colors cursor-pointer"
                 style={{ padding: '8px 16px', backgroundColor: 'transparent' }}
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0" style={{ backgroundColor: ac }}>
-                  {(a.name || a.email)?.[0]?.toUpperCase() || '?'}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: ac }}>
+                  <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium leading-tight truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>

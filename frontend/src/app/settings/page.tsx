@@ -521,8 +521,8 @@ function AccountPanel() {
                 )}
                 <div className="px-5 py-4 flex items-center justify-between cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : a.id)}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: ac }}>
-                      {a.name?.[0]?.toUpperCase() || a.email?.[0]?.toUpperCase()}
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: ac }}>
+                      <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[14px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>

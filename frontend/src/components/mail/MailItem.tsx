@@ -1,5 +1,5 @@
 'use client'
-import { Check, Paperclip, Star } from '@/lib/icons'
+import { Check, Paperclip, Star, User } from '@/lib/icons'
 import type { Email } from '@/types'
 import React from 'react'
 
@@ -97,8 +97,8 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{ backgroundColor: brandColor, width: avatarSize, height: avatarSize, fontSize: avatarFontSize }}>
-              {avatarContent}
+            <div className="rounded-full shrink-0 overflow-hidden" style={{ backgroundColor: brandColor, width: avatarSize, height: avatarSize }}>
+              <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
             </div>
             <span className="truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight, fontSize: senderFontSize }}>
               {displayName}

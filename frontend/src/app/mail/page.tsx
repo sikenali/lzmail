@@ -5,7 +5,7 @@ import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
-import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, FolderMove, Mail, RefreshCw, Download, Check } from '@/lib/icons'
+import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, FolderMove, Mail, RefreshCw, Download, Check, User } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
@@ -666,16 +666,10 @@ function MailPageInner() {
 
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                   style={{ backgroundColor: getAccountAvatarBg({ brand_color: detail.email.account_brand }) }}
                 >
-                  {(() => {
-                    const name = (detail.email.from_name || detail.email.from).trim()
-                    if (!name) return '🐱'
-                    const parts = name.replace(/@.*$/, '').replace(/[._-]/g, ' ').trim().split(/\s+/).filter(Boolean)
-                    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-                    return parts[0]?.[0]?.toUpperCase() || '🐱'
-                  })()}
+                  <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3">
@@ -782,9 +776,9 @@ function MailPageInner() {
                     className="p-4 rounded-xl cursor-pointer transition-colors hover:bg-[var(--muted)]"
                     style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                         style={{ backgroundColor: getAccountAvatarBg({ brand_color: email.account_brand }) }}>
-                        {(email.from_name || email.from).trim()[0]?.toUpperCase() || '?'}
+                        <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">

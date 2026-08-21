@@ -84,12 +84,12 @@ cat > "$SCRIPT_DIR/_lpk_content/scripts/start.sh" << 'STARTSCRIPT'
 #!/bin/sh
 set -e
 
-# 使用持久化卷路径（与 lzc-manifest.yml 中 DATA_DIR / ARCHIVE_DIR 一致）
-mkdir -p /lzcapp/var/data /lzcapp/var/archives /app/logs
+# 使用持久化卷路径（DATA_DIR 下的 archives 子目录，与 lzc-manifest.yml 一致）
+mkdir -p /lzcapp/var/data/archives /app/logs
 chmod -R 777 /lzcapp/var/data || true
 
-# 启动后端，日志写入文件
-PORT=$BACKEND_PORT DATA_DIR=/lzcapp/var/data ARCHIVE_DIR=/lzcapp/var/archives \
+# 启动后端，归档目录自动使用 DATA_DIR/archives（持久化存储）
+PORT=$BACKEND_PORT DATA_DIR=/lzcapp/var/data \
   /lzcapp/pkg/content/backend/lzmail >>/app/logs/backend.log 2>&1 &
 BACKEND_PID=$!
 

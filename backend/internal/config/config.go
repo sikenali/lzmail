@@ -47,7 +47,7 @@ func Load() *Config {
 		Host:       getEnv("HOST", "127.0.0.1"),
 		Port:       getEnv("PORT", "8080"),
 		DataDir:    dataDir,
-		ArchiveDir: getEnv("ARCHIVE_DIR", filepath.Join(dataDir, "archives")),
+		ArchiveDir: filepath.Join(dataDir, "archives"),
 		StorageLimit: func() int64 {
 			v := getEnv("STORAGE_LIMIT_GB", "50")
 			var gb int64

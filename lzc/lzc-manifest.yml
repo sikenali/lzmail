@@ -7,7 +7,6 @@ application:
     BACKEND_PORT: "8080"
     FRONTEND_PORT: "3000"
     DATA_DIR: /lzcapp/var/data
-    ARCHIVE_DIR: /lzcapp/var/archives
     STORAGE_LIMIT_GB: "50"
     TZ: Asia/Shanghai
     NODE_ENV: production

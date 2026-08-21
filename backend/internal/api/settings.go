@@ -34,9 +34,9 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 	if _, has := settings["archive_path"]; !has || settings["archive_path"] == "" {
 		settings["archive_path"] = h.archiveDir
 	}
-	// 返回代理配置：旧版本默认"global"，无显式设置的存量用户保留兼容
+	// 返回代理配置：无显式设置的存量用户保留兼容，新用户默认不使用代理
 	if settings["proxy_mode"] == "" {
-		settings["proxy_mode"] = "global"
+		settings["proxy_mode"] = "none"
 	}
 	if settings["proxy_proto"] == "" {
 		settings["proxy_proto"] = "http"

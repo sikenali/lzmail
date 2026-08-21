@@ -11,7 +11,7 @@ import { useSSE } from '@/hooks/useSSE'
 import type { Account, MailStats, StorageTreeNode } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
-  User, Palette, Archive, Info, Globe,
+  User, Palette, Archive, Info, Globe, X, Settings,
   Plus, Trash2, Check, Edit,
   Folder, FileText, ChevronDown,
   Minus,
@@ -857,14 +857,14 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
 
 function ProxyPanel() {
   const { settings, setSetting } = useSettings()
-  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'global')
+  const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'none')
   const [proxyProto, setProxyProto] = useState(settings.proxy_proto || 'http')
   const [proxyHost, setProxyHost] = useState(settings.proxy_host || '')
   const [proxyPort, setProxyPort] = useState(settings.proxy_port || '1080')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setProxyMode(settings.proxy_mode || 'global')
+    setProxyMode(settings.proxy_mode || 'none')
     setProxyProto(settings.proxy_proto || 'http')
     setProxyHost(settings.proxy_host || '')
     setProxyPort(settings.proxy_port || '1080')
@@ -900,23 +900,27 @@ function ProxyPanel() {
           </div>
           <div className="flex items-center" style={{ gap: '8px' }}>
             {([
-              { value: 'none', label: '不使用代理' },
-              { value: 'global', label: '全局代理' },
-              { value: 'custom', label: '自定义代理' },
-            ] as const).map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setProxyMode(opt.value)}
-                className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]"
-                style={{
-                  backgroundColor: proxyMode === opt.value ? 'var(--primary)' : 'var(--muted)',
-                  color: proxyMode === opt.value ? '#ffffff' : 'var(--foreground-secondary)',
-                  fontFamily: proxyMode === opt.value ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
+              { value: 'none', label: '不使用代理', icon: X },
+              { value: 'global', label: '全局代理', icon: Globe },
+              { value: 'custom', label: '自定义代理', icon: Settings },
+            ] as const).map(opt => {
+              const Icon = opt.icon
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setProxyMode(opt.value)}
+                  className="flex items-center gap-2 px-4 h-10 rounded-lg transition-all text-[13px]"
+                  style={{
+                    backgroundColor: proxyMode === opt.value ? 'var(--primary)' : 'var(--muted)',
+                    color: proxyMode === opt.value ? '#ffffff' : 'var(--foreground-secondary)',
+                    fontFamily: proxyMode === opt.value ? 'SourceHanSans-SemiBold, system-ui' : 'SourceHanSans-Medium, system-ui',
+                  }}
+                >
+                  <Icon className="w-4 h-4 shrink-0" style={{ color: proxyMode === opt.value ? '#ffffff' : 'var(--foreground-secondary)' }} />
+                  {opt.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 

@@ -603,6 +603,10 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 		if msg.Envelope == nil {
 			continue
 		}
+		// 跳过已被标记删除的消息（防止从 Trash 删除后又从 Drafts 重新同步回来）
+		if hasFlag(msg.Flags, "\\Deleted") {
+			continue
+		}
 		email := &models.Email{
 			AccountID:   s.account.ID,
 			UID:         msg.Uid,

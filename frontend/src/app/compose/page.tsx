@@ -68,11 +68,25 @@ function ComposePageInner() {
     }
   }, [accounts])
 
+  // 编辑草稿时加载草稿内容
+  useEffect(() => {
+    if (!draftId) return
+    api.mails.getDraft(draftId).then(d => {
+      if (!d) return
+      setTo(d.to || '')
+      setCc(d.cc || '')
+      setSubject(d.subject || '')
+      if (d.body_html) { setBody(d.body_html); setTimeout(() => editorRef.current?.setContent?.(d.body_html), 100) }
+      if (d.account_id) setAccountId(d.account_id)
+    }).catch(() => {})
+  }, [draftId])
+
   const handleSend = async () => {
-    if (!to) { toast.error('请输入收件人'); return }
-    if (!accountId) { toast.error('请选择发件账号'); return }
-    if (!subject) { toast.error('请输入邮件主题'); return }
+    if (!to) { toast.warning('请输入收件人'); return }
+    if (!accountId) { toast.warning('请选择发件账号'); return }
+    if (!subject) { toast.warning('请输入邮件主题'); return }
     setSending(true)
+    toast.info('正在发送...')
     try {
       // 上传附件（如果有）
       const uploadedAttachments = []
@@ -105,6 +119,17 @@ function ComposePageInner() {
       }
       await api.compose(data)
       toast.success('邮件已发送')
+      // 发送后自动保存收件人/抄送/密送到联系人
+      const recipients = [...(to ? to.split(',') : []), ...(cc ? cc.split(',') : []), ...(bcc ? bcc.split(',') : [])]
+        .map(e => e.trim())
+        .filter(e => e.includes('@'))
+      if (recipients.length > 0) {
+        try {
+          await Promise.all(recipients.map(email =>
+            api.contacts.create({ name: email.split('@')[0], email, account_id: accountId })
+          ))
+        } catch {}
+      }
       setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
       router.push('/mail')
     } catch (err: any) {

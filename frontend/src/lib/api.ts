@@ -1,4 +1,4 @@
-import type { Account, Email, Contact, MailStats, EmailDetail, ComposePayload, StorageTreeNode } from '@/types'
+import type { Account, Email, Contact, MailStats, EmailDetail, ComposePayload, StorageTreeNode, Tag } from '@/types'
 
 const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080')
 
@@ -84,7 +84,13 @@ export const api = {
       if (accountId) params.set('account_id', String(accountId))
       return fetchJSON<Email[]>(`/api/v1/mails/search?${params}`)
     },
-    stats: () => fetchJSON<MailStats>('/api/v1/mails/stats'),
+    stats: (fromDate?: string, toDate?: string) => {
+      const params = new URLSearchParams()
+      if (fromDate) params.set('from_date', fromDate)
+      if (toDate) params.set('to_date', toDate)
+      const qs = params.toString()
+      return fetchJSON<MailStats>(`/api/v1/mails/stats${qs ? '?' + qs : ''}`)
+    },
     counts: () => fetchJSON<{ inbox_unread: number; drafts: number; starred: number; sent: number; trash: number; unread: number }>('/api/v1/mails/counts'),
     trend: (days = 7) => fetchJSON<Array<{date: string; receive: number; send: number}>>(`/api/v1/mails/trend?days=${days}`),
     markRead: (id: number) => fetchJSON<{ status: string }>(`/api/v1/mails/${id}/read`, { method: 'POST' }),
@@ -154,6 +160,32 @@ export const api = {
     all: () => fetchJSON<{ status: string }>('/api/v1/sync', { method: 'POST' }),
     account: (id: number) => fetchJSON<{ status: string }>(`/api/v1/sync?account_id=${id}`, { method: 'POST' }),
     status: () => fetchJSON<Record<string, string>>('/api/v1/sync/status'),
+  },
+
+  tags: {
+    list: (accountId: number) => fetchJSON<Tag[]>(`/api/v1/tags?account_id=${accountId}`),
+    create: (data: { name: string; account_id: number }) =>
+      fetchJSON<Tag>('/api/v1/tags', { method: 'POST', body: JSON.stringify(data) }),
+    delete: (id: number, accountId: number) =>
+      fetchJSON<{ status: string }>(`/api/v1/tags/${id}?account_id=${accountId}`, { method: 'DELETE' }),
+    getEmailTags: (emailId: number) => fetchJSON<Tag[]>(`/api/v1/emails/${emailId}/tags`),
+    setEmailTags: (emailId: number, tagIds: number[]) =>
+      fetchJSON<Tag[]>(`/api/v1/emails/${emailId}/tags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tag_ids: tagIds }),
+      }),
+  },
+
+  cleanup: {
+    preview: (accountId: number, days: number) =>
+      fetchJSON<{ account_id: number; days: number; cutoff_date: string; count: number }>(
+        `/api/v1/mails/cleanup/preview?account_id=${accountId}&days=${days}`
+      ),
+    run: (accountId: number, days: number) =>
+      fetchJSON<{ deleted: number; days: number; message: string }>(
+        `/api/v1/mails/cleanup/run?account_id=${accountId}&days=${days}`,
+        { method: 'POST' }
+      ),
   },
 
   events: {

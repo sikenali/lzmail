@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 6
+const currentSchemaVersion = 7
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
@@ -189,7 +189,10 @@ func migrate(db *sql.DB) error {
 	if err := migrateToV5(db); err != nil {
 		return err
 	}
-	return migrateToV6(db)
+	if err := migrateToV6(db); err != nil {
+		return err
+	}
+	return migrateToV7(db)
 }
 
 // migrateToV5 为 contacts 表添加 phone、company、title 列（幂等）
@@ -322,6 +325,41 @@ func migrateToV6(db *sql.DB) error {
 	if !exists {
 		if _, err := db.Exec(`ALTER TABLE scheduled_emails ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0`); err != nil {
 			return fmt.Errorf("add column attempts: %w", err)
+		}
+	}
+	return nil
+}
+
+func migrateToV7(db *sql.DB) error {
+	// 创建标签表
+	if _, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS tags (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(name, account_id)
+		)
+	`); err != nil {
+		return fmt.Errorf("create tags table: %w", err)
+	}
+	// 创建邮件-标签关联表
+	if _, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS email_tags (
+			email_id INTEGER NOT NULL REFERENCES emails(id) ON DELETE CASCADE,
+			tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+			PRIMARY KEY (email_id, tag_id)
+		)
+	`); err != nil {
+		return fmt.Errorf("create email_tags table: %w", err)
+	}
+	// 创建索引
+	for _, idx := range []string{
+		`CREATE INDEX IF NOT EXISTS idx_tags_account ON tags(account_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_email_tags_tag ON email_tags(tag_id)`,
+	} {
+		if _, err := db.Exec(idx); err != nil {
+			return fmt.Errorf("create index: %w", err)
 		}
 	}
 	return nil

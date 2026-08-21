@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/providers"
@@ -105,6 +106,7 @@ type Handler struct {
 	emails      *store.EmailStore
 	contacts    *store.ContactStore
 	settings    *store.SettingsStore
+	tagStore    *store.TagStore
 	sseHub      *sse.Hub
 	archiveDir  string
 	syncEngine  SyncEngine
@@ -131,8 +133,8 @@ type SyncEngine interface {
 	DeleteMessage(accountID int64, folder string, uid uint32) error
 }
 
-func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, hub *sse.Hub, archiveDir string, syncEngine SyncEngine, oauth *providers.Manager) *Handler {
-	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, sseHub: hub, archiveDir: archiveDir, syncEngine: syncEngine, oauth: oauth, oauthStates: newOAuthStateStore()}
+func NewHandler(as *store.AccountStore, es *store.EmailStore, cs *store.ContactStore, ss *store.SettingsStore, db *sql.DB, hub *sse.Hub, archiveDir string, syncEngine SyncEngine, oauth *providers.Manager) *Handler {
+	h := &Handler{accounts: as, emails: es, contacts: cs, settings: ss, tagStore: store.NewTagStore(db), sseHub: hub, archiveDir: archiveDir, syncEngine: syncEngine, oauth: oauth, oauthStates: newOAuthStateStore()}
 	AccountStoreInstance = as
 	EmailStoreInstance = es
 	OAuthManagerInstance = oauth
@@ -165,6 +167,14 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/mails/stats", h.handleMailStats)
 	mux.HandleFunc("GET /api/v1/mails/counts", h.handleMailCounts)
 	mux.HandleFunc("POST /api/v1/mails/bulk", h.handleBulkMails)
+	mux.HandleFunc("GET /api/v1/mails/cleanup/preview", h.handleCleanupPreview)
+	mux.HandleFunc("POST /api/v1/mails/cleanup/run", h.handleCleanupRun)
+
+	mux.HandleFunc("GET /api/v1/tags", h.handleListTags)
+	mux.HandleFunc("POST /api/v1/tags", h.handleCreateTag)
+	mux.HandleFunc("DELETE /api/v1/tags/{id}", h.handleDeleteTag)
+	mux.HandleFunc("GET /api/v1/emails/{id}/tags", h.handleGetEmailTags)
+	mux.HandleFunc("PATCH /api/v1/emails/{id}/tags", h.handleSetEmailTags)
 
 	mux.HandleFunc("POST /api/v1/compose", h.handleCompose)
 	mux.HandleFunc("PATCH /api/v1/compose/drafts/{id}", h.handleUpdateDraft)

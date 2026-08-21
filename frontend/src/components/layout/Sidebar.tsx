@@ -211,6 +211,8 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         </div>
       </div>
 
+        <div className="w-full" style={{ height: '1px', backgroundColor: 'var(--card-border)', margin: '8px 0' }} />
+
         <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>
         {accounts.length > 0 && (
           <>

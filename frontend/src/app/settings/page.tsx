@@ -8,7 +8,7 @@ import { NavSlider } from '@/components/layout/NavSlider'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
-import type { Account, MailStats, StorageTreeNode } from '@/types'
+import type { Account, MailStats, StorageTreeNode, Tag } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
   User, Palette, Archive, Info, Globe, X, Settings,
@@ -21,7 +21,7 @@ import {
   LayoutRow, CollapseVertical,
   Layout2,
   Eye, EyeOff, Mail,
-  RefreshCw,
+  RefreshCw, Tag as TagIcon, Tags,
 } from '@/lib/icons'
 import { getAccountAvatarBg, Contact } from '@/lib/icons'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -1222,24 +1222,174 @@ function StoragePanel() {
         </div>
 
         {/* Auto cleanup */}
-        <div className="px-6 py-5 flex items-center justify-between">
-          <div>
-            <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>自动清理</div>
-            <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>定期清理过期归档文件</div>
+        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>自动清理</div>
+              <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>定期清理已删除的邮件，与已删除标签联动</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CustomSelect
+                value={String(cleanupDays)}
+                width={110}
+                onChange={(v) => setSetting('auto_cleanup_days', v)}
+                options={[
+                  { value: '0', label: '永不清理' },
+                  { value: '30', label: '30 天' },
+                  { value: '90', label: '90 天' },
+                  { value: '180', label: '180 天' },
+                ]}
+              />
+              {accounts.length > 0 && (
+                <button
+                  onClick={async () => {
+                    const acc = accounts[0]
+                    const d = parseInt(settings.auto_cleanup_days || '30') || 30
+                    if (d === 0) { toast.info('自动清理未启用'); return }
+                    try {
+                      const preview = await api.cleanup.preview(acc.id, d)
+                      if (preview.count === 0) { toast.success('没有需要清理的邮件'); return }
+                      const res = await api.cleanup.run(acc.id, d)
+                      toast.success(res.message)
+                    } catch (e: any) { toast.error(e.message || '清理失败') }
+                  }}
+                  className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-[12px] font-medium transition-all hover:opacity-80"
+                  style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '0.7px solid var(--danger-border)' }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> 立即清理
+                </button>
+              )}
+            </div>
           </div>
-          <CustomSelect
-            value={String(cleanupDays)}
-            width={140}
-            onChange={(v) => setSetting('auto_cleanup_days', v)}
-            options={[
-              { value: '0', label: '永不清理' },
-              { value: '30', label: '30 天' },
-              { value: '90', label: '90 天' },
-              { value: '180', label: '180 天' },
-            ]}
-          />
+          {accounts.length === 0 && (
+            <div className="text-[12px] px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>
+              请先添加邮箱账号后启用自动清理
+            </div>
+          )}
         </div>
+
+        {/* Tag management */}
+        <TagPanel accounts={accounts} />
       </div>
+    </div>
+  )
+}
+
+// ── 标签管理 ──────────────────────────────────────────────
+function TagPanel({ accounts }: { accounts: Account[] }) {
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(accounts.length > 0 ? accounts[0].id : null)
+  const [tags, setTags] = useState<Tag[]>([])
+  const [loading, setLoading] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!selectedAccountId) return
+    setLoading(true)
+    api.tags.list(selectedAccountId).then(d => setTags(d ?? [])).catch(() => {}).finally(() => setLoading(false))
+  }, [selectedAccountId])
+
+  const handleCreate = async () => {
+    if (!newTagName.trim() || !selectedAccountId) return
+    setSaving(true)
+    try {
+      const tag = await api.tags.create({ name: newTagName.trim(), account_id: selectedAccountId })
+      setTags(prev => [tag, ...prev])
+      setNewTagName('')
+      toast.success('标签已创建')
+    } catch (e: any) {
+      toast.error(e.message || '创建失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (tagId: number) => {
+    if (!selectedAccountId) return
+    try {
+      await api.tags.delete(tagId, selectedAccountId)
+      setTags(prev => prev.filter(t => t.id !== tagId))
+      toast.success('标签已删除')
+    } catch (e: any) {
+      toast.error(e.message || '删除失败')
+    }
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+        <div className="text-[15px] font-semibold mb-2" style={{ color: 'var(--foreground)' }}>标签管理</div>
+        <div className="text-[13px]" style={{ color: 'var(--foreground-tertiary)' }}>请先添加邮箱账号</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-[15px] font-semibold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+            <Tags className="w-4 h-4" style={{ color: 'var(--gold)' }} />
+            标签管理
+          </div>
+          <div className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>为邮件分类打标签，标签随邮件删除自动清理</div>
+        </div>
+        <CustomSelect
+          value={selectedAccountId?.toString() || ''}
+          width={160}
+          onChange={(v) => setSelectedAccountId(Number(v))}
+          options={accounts.map(a => ({ value: String(a.id), label: a.name || a.email }))}
+        />
+      </div>
+
+      {/* Add tag */}
+      <div className="flex items-center gap-2 mb-4">
+        <input
+          value={newTagName}
+          onChange={e => setNewTagName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleCreate() }}
+          placeholder="输入标签名称…"
+          className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px] bg-transparent"
+          style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+        />
+        <button
+          onClick={handleCreate}
+          disabled={saving || !newTagName.trim()}
+          className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-[12px] font-medium transition-all hover:opacity-80 disabled:opacity-50"
+          style={{ backgroundColor: 'var(--primary)', color: '#ffffff' }}
+        >
+          <Plus className="w-3.5 h-3.5" /> 添加标签
+        </button>
+      </div>
+
+      {/* Tag list */}
+      {loading ? (
+        <div className="text-[12px] py-4 text-center" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>
+      ) : tags.length === 0 ? (
+        <div className="text-[12px] py-4 text-center rounded-lg" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>
+          暂无标签，点击上方按钮创建
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <div
+              key={tag.id}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all hover:opacity-80"
+              style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+            >
+              <TagIcon className="w-3 h-3" style={{ color: 'var(--gold)' }} />
+              <span>{tag.name}</span>
+              <button
+                onClick={() => handleDelete(tag.id)}
+                className="w-4 h-4 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] transition-colors"
+                title="删除标签"
+              >
+                <X className="w-3 h-3" style={{ color: 'var(--danger)' }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

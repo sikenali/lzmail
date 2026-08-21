@@ -97,3 +97,10 @@ export interface StorageTreeNode {
   path: string
   children?: StorageTreeNode[]
 }
+
+export interface Tag {
+  id: number
+  name: string
+  account_id: number
+  created_at: string
+}

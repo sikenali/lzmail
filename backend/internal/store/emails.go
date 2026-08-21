@@ -316,14 +316,27 @@ func (s *EmailStore) Counts() (*FolderCounts, error) {
 	return &FolderCounts{InboxUnread: inboxUnread, Drafts: drafts, Starred: starred, Sent: sent, Trash: trash, Unread: unread}, nil
 }
 
-func (s *EmailStore) Stats() (*MailStats, error) {
+func (s *EmailStore) Stats(fromDate, toDate string) (*MailStats, error) {
 	var st MailStats
+	// 构建可选的日期过滤条件
+	var dateCond string
+	if fromDate != "" {
+		dateCond += " AND date >= ?"
+	}
+	if toDate != "" {
+		if dateCond != "" {
+			dateCond += " AND"
+		} else {
+			dateCond += " AND"
+		}
+		dateCond += " date <= ?"
+	}
 	err := s.db.QueryRow(`
 		WITH base AS (
 			SELECT
-				(SELECT COUNT(*) FROM emails) AS total,
-				(SELECT COUNT(*) FROM emails WHERE is_read = 0) AS unread,
-				(SELECT COUNT(*) FROM emails WHERE date >= date('now', 'start of day')) AS today,
+				(SELECT COUNT(*) FROM emails`+dateCond+`) AS total,
+				(SELECT COUNT(*) FROM emails WHERE is_read = 0`+dateCond+`) AS unread,
+				(SELECT COUNT(*) FROM emails WHERE date >= date('now', 'start of day')`+dateCond+`) AS today,
 				COALESCE((SELECT SUM(size) FROM attachments), 0) AS storage_bytes
 		)
 		SELECT
@@ -334,11 +347,22 @@ func (s *EmailStore) Stats() (*MailStats, error) {
 			COALESCE((SELECT storage_bytes FROM base), 0),
 			COALESCE((SELECT value FROM settings WHERE key = 'storage_limit_bytes'), 0),
 			COALESCE((SELECT COUNT(*) FROM contacts), 0)
-	`).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit, &st.ContactCount)
+	`, dateArgs(fromDate, toDate)...).Scan(&st.TotalEmails, &st.UnreadEmails, &st.TodayEmails, &st.AccountCount, &st.StorageBytes, &st.StorageLimit, &st.ContactCount)
 	if err != nil {
 		return nil, err
 	}
 	return &st, nil
+}
+
+func dateArgs(fromDate, toDate string) []any {
+	var args []any
+	if fromDate != "" {
+		args = append(args, fromDate+" 00:00:00")
+	}
+	if toDate != "" {
+		args = append(args, toDate+" 23:59:59")
+	}
+	return args
 }
 
 type TrendPoint struct {
@@ -614,4 +638,43 @@ func (s *EmailStore) BulkDelete(ids []int64) error {
 	}
 	_, err := s.db.Exec(query, args...)
 	return err
+}
+
+// DeleteExpiredTrash 删除指定账号Trash文件夹中早于 cutoffDate 的邮件记录（仅删 DB，不删 .eml 文件）。
+// folder 参数支持多种已删除文件夹别名。
+func (s *EmailStore) DeleteExpiredTrash(accountID int64, cutoffDate string) (int64, error) {
+	names := canonicalFolders("Trash")
+	parts := make([]string, 0, len(names))
+	for _, n := range names {
+		parts = append(parts, "'"+strings.ReplaceAll(n, "'", "''")+"'")
+	}
+	folderIn := strings.Join(parts, ",")
+	result, err := s.db.Exec(`
+		DELETE FROM emails
+		 WHERE account_id = ?
+		   AND folder IN (`+folderIn+`)
+		   AND date < ?
+	`, accountID, cutoffDate)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+// CountTrashExpired 统计指定账号 Trash 文件夹中早于 cutoffDate 的邮件数量。
+func (s *EmailStore) CountTrashExpired(accountID int64, cutoffDate string) (int, error) {
+	names := canonicalFolders("Trash")
+	parts := make([]string, 0, len(names))
+	for _, n := range names {
+		parts = append(parts, "'"+strings.ReplaceAll(n, "'", "''")+"'")
+	}
+	folderIn := strings.Join(parts, ",")
+	var count int
+	err := s.db.QueryRow(`
+		SELECT COUNT(*) FROM emails
+		 WHERE account_id = ?
+		   AND folder IN (`+folderIn+`)
+		   AND date < ?
+	`, accountID, cutoffDate).Scan(&count)
+	return count, err
 }

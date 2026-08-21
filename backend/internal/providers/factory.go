@@ -1,6 +1,8 @@
 package providers
 
 import (
+	"strings"
+
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/oauth2"
 )
@@ -35,22 +37,57 @@ func Defaults(provider oauth2.Provider) (ProviderSettings, bool) {
 	return s, ok
 }
 
-// ApplyDefaults 若账号未填写 IMAP/SMTP 主机，则填入服务商预设
+// providerBrandColor 根据服务商返回品牌色，未知服务商返回默认色
+var providerBrandColor = map[string]string{
+	"gmail":  "#ea4335",
+	"outlook": "#0078d4",
+	"qq":     "#12b7f5",
+	"netease": "#e53e3e",
+	"icloud":  "#7c9a5f",
+	"yahoo":   "#721c90",
+}
+
+// ApplyDefaults 若账号未填写 IMAP/SMTP 主机或品牌色，则填入服务商预设
 func ApplyDefaults(a *models.Account) {
-	provider := oauth2.Provider(a.Provider)
-	if !a.IsOAuth2() {
-		return
+	provider := strings.ToLower(a.Provider)
+	// 自动填充品牌色（优先用邮箱域名推断，其次用显式 provider）
+	if a.BrandColor == "" {
+		if color, ok := providerBrandColor[provider]; ok {
+			a.BrandColor = color
+		} else {
+			// 从邮箱域名推断
+			if domain := extractDomain(a.Email); domain != "" {
+				for key, color := range providerBrandColor {
+					if strings.Contains(domain, key) {
+						a.BrandColor = color
+						break
+					}
+				}
+			}
+		}
 	}
-	defaults, ok := Defaults(provider)
-	if !ok {
-		return
+	if a.IsOAuth2() {
+		p := oauth2.Provider(provider)
+		defaults, ok := Defaults(p)
+		if !ok {
+			return
+		}
+		if a.IMAPHost == "" {
+			a.IMAPHost = defaults.IMAPHost
+			a.IMAPPort = defaults.IMAPPort
+		}
+		if a.SMTPHost == "" {
+			a.SMTPHost = defaults.SMTPHost
+			a.SMTPPort = defaults.SMTPPort
+		}
 	}
-	if a.IMAPHost == "" {
-		a.IMAPHost = defaults.IMAPHost
-		a.IMAPPort = defaults.IMAPPort
+}
+
+func extractDomain(email string) string {
+	for i := len(email) - 1; i >= 0; i-- {
+		if email[i] == '@' {
+			return email[i+1:]
+		}
 	}
-	if a.SMTPHost == "" {
-		a.SMTPHost = defaults.SMTPHost
-		a.SMTPPort = defaults.SMTPPort
-	}
+	return ""
 }

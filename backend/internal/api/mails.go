@@ -312,7 +312,9 @@ func (h *Handler) handleMailTrend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleMailStats(w http.ResponseWriter, r *http.Request) {
-	stats, err := h.emails.Stats()
+	fromDate := r.URL.Query().Get("from_date")
+	toDate := r.URL.Query().Get("to_date")
+	stats, err := h.emails.Stats(fromDate, toDate)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -127,7 +128,7 @@ func main() {
 	}
 	syncEngine.StartAll(accounts)
 
-	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, sseHub, archiveDir, syncEngine, oauthManager)
+	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, db, sseHub, archiveDir, syncEngine, oauthManager)
 	mux := http.NewServeMux()
 	handler.Register(mux)
 
@@ -143,7 +144,53 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 	log.Println("listening on", addr)
+	go runCleanupJob(accountStore, emailStore, settingsStore)
 	log.Fatal(srv.ListenAndServe())
+}
+
+// runCleanupJob 定期清理已过期的已删除邮件（Trash 文件夹）。
+func runCleanupJob(accountStore *store.AccountStore, emailStore *store.EmailStore, settingsStore *store.SettingsStore) {
+	ticker := time.NewTicker(6 * time.Hour)
+	defer ticker.Stop()
+	// 启动时也执行一次
+	go doCleanup(accountStore, emailStore, settingsStore)
+	for range ticker.C {
+		doCleanup(accountStore, emailStore, settingsStore)
+	}
+}
+
+func doCleanup(accountStore *store.AccountStore, emailStore *store.EmailStore, settingsStore *store.SettingsStore) {
+	settings, err := settingsStore.GetAll()
+	if err != nil {
+		log.Printf("[cleanup] get settings failed: %v", err)
+		return
+	}
+	daysStr := settings["auto_cleanup_days"]
+	if daysStr == "" || daysStr == "0" {
+		return
+	}
+	days, err := strconv.Atoi(daysStr)
+	if err != nil || days <= 0 {
+		return
+	}
+	cutoff := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+	accounts, err := accountStore.List()
+	if err != nil {
+		log.Printf("[cleanup] list accounts failed: %v", err)
+		return
+	}
+	total := int64(0)
+	for _, a := range accounts {
+		n, err := emailStore.DeleteExpiredTrash(a.ID, cutoff)
+		if err != nil {
+			log.Printf("[cleanup] account %d failed: %v", a.ID, err)
+			continue
+		}
+		total += n
+	}
+	if total > 0 {
+		log.Printf("[cleanup] deleted %d expired trash emails (>%d days)", total, days)
+	}
 }
 
 func setupOAuth(cfg *config.Config, accountStore *store.AccountStore) *providers.Manager {

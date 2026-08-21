@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   const [refresh, setRefresh] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [selectedDate, setSelectedDate] = useState('')
 
   useSSE(
     () => setRefresh(n => n + 1),
@@ -56,14 +57,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}),
+      api.mails.stats(undefined, selectedDate).then(d => setStats(d ?? null)).catch(() => {}),
       api.mails.counts().then(d => setSentCount(d?.sent ?? 0)).catch(() => {}),
       api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}),
       api.mails.list(undefined, 'INBOX', 5, 0).then(d => setRecentEmails(d ?? [])).catch(() => {}),
       api.mails.trend(7).then(d => setTrendData(d ?? [])).catch(() => {}),
       api.sync.status().then(d => setSyncStatus(d ?? {})).catch(() => {}),
     ]).finally(() => setLoading(false))
-  }, [refresh])
+  }, [refresh, selectedDate])
 
   const totalEmails = stats?.total_emails ?? 0
   const unreadEmails = stats?.unread_emails ?? 0
@@ -72,8 +73,6 @@ export default function Dashboard() {
   const storageCap = stats?.storage_limit || 0
   const storagePct = storageCap > 0 ? Math.round(((storageBytes / storageCap) * 100)) : 0
   const contactCount = stats?.contact_count ?? 0
-
-  const [selectedDate, setSelectedDate] = useState('')
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',

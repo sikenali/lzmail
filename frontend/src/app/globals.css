@@ -304,6 +304,29 @@ h1, .font-display {
   height: auto;
   border-radius: 8px;
 }
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+.ProseMirror table td,
+.ProseMirror table th {
+  border: 1px solid var(--card-border);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.ProseMirror pre {
+  background: var(--muted);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+/* 发票/带水印背景邮件：限制背景图尺寸，防止溢出 */
+.ProseMirror div[style*="background"] {
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
 .ProseMirror-focused {
   outline: none;
 }

@@ -23,7 +23,8 @@ type Email struct {
 	ScheduleAt      *time.Time `json:"-"`
 	AccountName     string     `json:"account_name"`
 	AccountBrand    string     `json:"account_brand"`
-	SenderAvatarURL string     `json:"sender_avatar_url"`
+	SenderAvatarURL    string     `json:"sender_avatar_url"`
+	RecipientAvatarURL string     `json:"recipient_avatar_url"`
 }
 
 type Attachment struct {

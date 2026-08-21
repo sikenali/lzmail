@@ -694,8 +694,8 @@ function MailPageInner() {
 
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
-                {detail.email.sender_avatar_url ? (
-                  <img src={detail.email.sender_avatar_url} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                {detail.email.sender_avatar_url || detail.email.recipient_avatar_url ? (
+                  <img src={detail.email.recipient_avatar_url && detail.email.folder === 'Sent' ? detail.email.recipient_avatar_url : detail.email.sender_avatar_url} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 ) : (
                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                     style={{ backgroundColor: getAccountAvatarBg({ brand_color: detail.email.account_brand }) }}

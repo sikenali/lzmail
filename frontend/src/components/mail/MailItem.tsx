@@ -60,6 +60,9 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
     ? displayInitial
     : '🐱'
   const senderAvatarURL = email.sender_avatar_url || ''
+  const recipientAvatarURL = email.recipient_avatar_url || ''
+  // 已发送邮件显示收件人头像，其他显示发件人头像
+  const avatarURL = isSent ? (recipientAvatarURL || senderAvatarURL) : senderAvatarURL
 
   const compact = density === 'compact'
   const avatarSize = compact ? '24px' : '32px'
@@ -99,8 +102,8 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {senderAvatarURL ? (
-              <img src={senderAvatarURL} alt="" className="rounded-full shrink-0 object-cover" style={{ width: avatarSize, height: avatarSize }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            {avatarURL ? (
+              <img src={avatarURL} alt="" className="rounded-full shrink-0 object-cover" style={{ width: avatarSize, height: avatarSize }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             ) : (
               <div className="rounded-full shrink-0 overflow-hidden" style={{ backgroundColor: brandColor, width: avatarSize, height: avatarSize }}>
                 <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
@@ -155,6 +158,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
     prev.email.to === next.email.to &&
     prev.email.has_attachments === next.email.has_attachments &&
     prev.email.sender_avatar_url === next.email.sender_avatar_url &&
+    prev.email.recipient_avatar_url === next.email.recipient_avatar_url &&
     prev.folder === next.folder
 })
 

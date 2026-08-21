@@ -17,13 +17,13 @@ func NewEmailStore(db *sql.DB) *EmailStore {
 	return &EmailStore{db: db}
 }
 
-const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.from_name, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, ''), COALESCE(e.sender_avatar_url, '')`
+const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.from_name, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, ''), COALESCE(e.sender_avatar_url, ''), COALESCE(e.recipient_avatar_url, '')`
 
 func scanEmail(scanner interface {
 	Scan(dest ...any) error
 }) (models.Email, error) {
 	var e models.Email
-	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.FromName, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand, &e.SenderAvatarURL)
+	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.FromName, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand, &e.SenderAvatarURL, &e.RecipientAvatarURL)
 	return e, err
 }
 
@@ -410,17 +410,17 @@ func formatDate(t time.Time) string {
 func (s *EmailStore) Upsert(e *models.Email) (int64, error) {
 	var id int64
 	err := s.db.QueryRow(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id, sender_avatar_url)
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id, sender_avatar_url, recipient_avatar_url)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		 ON CONFLICT(account_id, uid, folder) DO UPDATE SET
 			subject=excluded.subject, from_addr=excluded.from_addr, from_name=excluded.from_name, to_addr=excluded.to_addr,
 			cc=excluded.cc, date=excluded.date, body_preview=excluded.body_preview,
 			is_read=excluded.is_read, is_starred=excluded.is_starred,
 			has_attachments=excluded.has_attachments, archive_path=excluded.archive_path,
-			message_id=excluded.message_id, sender_avatar_url=excluded.sender_avatar_url
+			message_id=excluded.message_id, sender_avatar_url=excluded.sender_avatar_url, recipient_avatar_url=excluded.recipient_avatar_url
 		 RETURNING id`,
 		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC,
-		formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID, e.SenderAvatarURL,
+		formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID, e.SenderAvatarURL, e.RecipientAvatarURL,
 	).Scan(&id)
 	return id, err
 }
@@ -436,7 +436,7 @@ func (s *EmailStore) BatchUpsert(emails []*models.Email) error {
 	}
 	defer tx.Rollback()
 	stmt, err := tx.Prepare(`
-		INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id, sender_avatar_url)
+		INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, is_starred, has_attachments, archive_path, message_id, sender_avatar_url, recipient_avatar_url)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(account_id, uid, folder) DO UPDATE SET
 			subject=excluded.subject, from_addr=excluded.from_addr, from_name=excluded.from_name,
@@ -444,7 +444,7 @@ func (s *EmailStore) BatchUpsert(emails []*models.Email) error {
 			body_preview=excluded.body_preview, is_read=excluded.is_read,
 			is_starred=excluded.is_starred, has_attachments=excluded.has_attachments,
 			archive_path=excluded.archive_path, message_id=excluded.message_id,
-			sender_avatar_url=excluded.sender_avatar_url
+			sender_avatar_url=excluded.sender_avatar_url, recipient_avatar_url=excluded.recipient_avatar_url
 	`)
 	if err != nil {
 		return err
@@ -453,7 +453,7 @@ func (s *EmailStore) BatchUpsert(emails []*models.Email) error {
 	for _, e := range emails {
 		_, err := stmt.Exec(
 			e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC,
-			formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID, e.SenderAvatarURL,
+			formatDate(e.Date), e.BodyPreview, e.IsRead, e.IsStarred, e.HasAttachments, e.ArchivePath, e.MessageID, e.SenderAvatarURL, e.RecipientAvatarURL,
 		)
 		if err != nil {
 			return err
@@ -522,13 +522,13 @@ func (s *EmailStore) UpdateFlags(accountID int64, uid uint32, folder string, isR
 }
 
 // UpdateBody 补充正文预览/附件标记/归档路径（仅在正文已落库后调用）。
-func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview string, hasAttachments bool, archivePath, senderAvatarURL string) (int64, error) {
+func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview string, hasAttachments bool, archivePath, senderAvatarURL, recipientAvatarURL string) (int64, error) {
 	var id int64
 	err := s.db.QueryRow(
-		`UPDATE emails SET body_preview = ?, has_attachments = ?, archive_path = ?, sender_avatar_url = ?
+		`UPDATE emails SET body_preview = ?, has_attachments = ?, archive_path = ?, sender_avatar_url = ?, recipient_avatar_url = ?
 		 WHERE account_id = ? AND uid = ? AND folder = ?
 		 RETURNING id`,
-		bodyPreview, hasAttachments, archivePath, senderAvatarURL, accountID, uid, folder,
+		bodyPreview, hasAttachments, archivePath, senderAvatarURL, recipientAvatarURL, accountID, uid, folder,
 	).Scan(&id)
 	return id, err
 }

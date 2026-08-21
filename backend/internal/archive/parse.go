@@ -45,7 +45,8 @@ type Parsed struct {
 	Attachments    []Attachment
 	InlineImages   map[string]InlineImage // ContentID -> InlineImage
 	SenderAvatarID int64                  // 发件人头像图片的 attachments.id，0 表示无头像
-	SenderAvatarURL string                 // 发件人头像 URL（gravatar 等），用于前端直接引用
+	SenderAvatarURL     string // 发件人头像 URL（gravatar 等）
+	RecipientAvatarURL  string // 收件人头像 URL（gravatar 等，取第一个收件人）
 }
 
 var htmlTagRe = regexp.MustCompile(`(?i)<(script|style)[^>]*>.*?</(script|style)>|<[^>]+>`)
@@ -64,6 +65,11 @@ func Parse(raw []byte, senderEmail string) (*Parsed, error) {
 
 	// 提取发件人头像 URL
 	p.SenderAvatarURL = extractSenderAvatar(mail.Header(msg.Header), senderEmail)
+
+	// 提取收件人头像（取第一个 To 地址）
+	if recipients, _ := msg.Header.AddressList("To"); len(recipients) > 0 {
+		p.RecipientAvatarURL = extractSenderAvatar(mail.Header(msg.Header), recipients[0].Address)
+	}
 
 	var plainParts, htmlParts []string
 
@@ -344,4 +350,9 @@ func extractSenderAvatar(header mail.Header, senderEmail string) string {
 		return "https://gravatar.com/avatar/" + hash + "?s=200&d=retro"
 	}
 	return ""
+}
+
+// extractRecipientAvatar 从邮件头部提取收件人头像 URL（Gravatar），取第一个 To 地址。
+func extractRecipientAvatar(header mail.Header, recipientEmail string) string {
+	return extractSenderAvatar(header, recipientEmail)
 }

@@ -35,6 +35,7 @@ export interface Email {
   message_id: string
   created_at: string
   sender_avatar_url?: string
+  recipient_avatar_url?: string
   account_name?: string
   account_brand?: string
 }

@@ -748,7 +748,7 @@ func (s *Syncer) saveBody(folder string, uid uint32, raw []byte, senderEmail str
 		return
 	}
 
-	id, err := s.emailStore.UpdateBody(s.account.ID, uid, folder, parsed.Preview, parsed.HasAttachments, path, parsed.SenderAvatarURL)
+	id, err := s.emailStore.UpdateBody(s.account.ID, uid, folder, parsed.Preview, parsed.HasAttachments, path, parsed.SenderAvatarURL, parsed.RecipientAvatarURL)
 	if err != nil {
 		log.Printf("[sync] account %s update body uid=%d failed: %v", s.account.Email, uid, err)
 		return

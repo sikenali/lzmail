@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -292,55 +291,4 @@ func sanitizeExt(ext string) string {
 		return "." + sb.String()
 	}
 	return ""
-}
-
-func extractBody(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		log.Printf("[archive] read %s failed: %v", path, err)
-		return ""
-	}
-
-	// Try parse as EML
-	msg, err := mail.ReadMessage(bytes.NewReader(data))
-	if err != nil {
-		log.Printf("[archive] parse %s failed: %v", path, err)
-		return ""
-	}
-
-	// Get body
-	body := msg.Body
-	mediaType, _, _ := mime.ParseMediaType(msg.Header.Get("Content-Type"))
-
-	var buf bytes.Buffer
-	if strings.HasPrefix(mediaType, "multipart/") {
-		// Handle multipart - prefer text/html
-		mr := multipart.NewReader(body, msg.Header.Get("Content-Type"))
-		for {
-			part, err := mr.NextPart()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Printf("[archive] multipart part error: %v", err)
-				continue
-			}
-			partType, _, _ := mime.ParseMediaType(part.Header.Get("Content-Type"))
-			if partType == "text/html" {
-				io.Copy(&buf, part)
-				break
-			}
-			if partType == "text/plain" && buf.Len() == 0 {
-				io.Copy(&buf, part)
-			}
-		}
-	} else {
-		io.Copy(&buf, body)
-	}
-
-	result := buf.String()
-	if result == "" {
-		log.Printf("[archive] empty body extracted from %s", path)
-	}
-	return result
 }

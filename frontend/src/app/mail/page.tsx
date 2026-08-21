@@ -264,22 +264,25 @@ function MailPageInner() {
     resetDetail()
     setSelectedIds(new Set())
     setRefresh(n => n + 1)
+    refreshCounts()
   }
 
   const handleMarkRead = async () => {
     if (!selectedId && selectedIds.size === 0) return
     try {
       if (selectedIds.size > 1 || selectAllChecked) {
-        const isRead = !detail?.email.is_read
+        // When detail is null (bulk select without opening), check first selected email
+        const targetEmail = detail?.email || emails.find(e => selectedIds.has(e.id))
+        const isRead = targetEmail?.is_read ?? false
         await api.mails.bulk({
-          action: isRead ? 'mark_read' : 'mark_unread',
+          action: isRead ? 'mark_unread' : 'mark_read',
           all_in_folder: selectAllChecked,
           folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
           ids: selectAllChecked ? undefined : Array.from(selectedIds)
         })
         const count = selectAllChecked ? totalCount : selectedIds.size
-        toast.success(`已标记 ${count} 封邮件为${isRead ? '已读' : '未读'}`)
-        setEmails(prev => prev.map(e => ({ ...e, is_read: isRead })))
+        toast.success(`已标记 ${count} 封邮件为${isRead ? '未读' : '已读'}`)
+        setEmails(prev => prev.map(e => selectedIds.has(e.id) ? { ...e, is_read: !isRead } : e))
         setTotalCount(0)
       } else {
         await api.mails.markRead(selectedId!)
@@ -401,6 +404,7 @@ function MailPageInner() {
     resetDetail()
     setSelectedIds(new Set())
     setRefresh(n => n + 1)
+    refreshCounts()
   }
 
   const handleRefresh = async () => {

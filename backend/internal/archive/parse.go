@@ -104,6 +104,12 @@ func Parse(raw []byte) (*Parsed, error) {
 					if filename == "" {
 						filename = "attachment"
 					}
+					// 尝试解码非RFC 2047编码的GBK文件名（部分旧邮件客户端使用）
+					if filename != "attachment" && !isValidUTF8(filename) {
+						if decoded, err := simplifiedchinese.GBK.NewDecoder().Bytes([]byte(filename)); err == nil {
+							filename = string(decoded)
+						}
+					}
 					content := decodePart(part.Header.Get("Content-Transfer-Encoding"), "", partBytes)
 					p.Attachments = append(p.Attachments, Attachment{
 						Filename: filename,
@@ -291,4 +297,29 @@ func sanitizeExt(ext string) string {
 		return "." + sb.String()
 	}
 	return ""
+}
+
+// isValidUTF8 检查字符串是否是有效的UTF-8
+func isValidUTF8(s string) bool {
+	for i := 0; i < len(s); {
+		r := rune(s[i])
+		switch {
+		case r < 0x80:
+			i++
+		case r < 0xC0:
+			return false
+		case r < 0xE0:
+			i += 2
+		case r < 0xF0:
+			i += 3
+		case r < 0xF8:
+			i += 4
+		default:
+			return false
+		}
+		if i > len(s) {
+			return false
+		}
+	}
+	return true
 }

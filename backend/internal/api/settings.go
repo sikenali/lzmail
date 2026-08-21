@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // allowedSettingsKeys 允许客户端更新的设置键白名单
@@ -63,6 +65,26 @@ func (h *Handler) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 	if len(filtered) == 0 {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 		return
+	}
+	// archive_path：自动创建目录并验证可写
+	if p, ok := filtered["archive_path"]; ok && p != "" {
+		if info, err := os.Stat(p); err == nil && info.IsDir() {
+			// 目录已存在，验证可写性
+			if _, err := os.Stat(filepath.Join(p, ".writetest")); err != nil {
+				if f, err := os.CreateTemp(p, "lzmail-test-*.tmp"); err == nil {
+					f.Close(); os.Remove(f.Name())
+				} else {
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "归档目录不可写：" + p})
+					return
+				}
+			}
+		} else {
+			// 目录不存在，自动创建
+			if err := os.MkdirAll(p, 0755); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "无法创建归档目录：" + p})
+				return
+			}
+		}
 	}
 	if err := h.settings.SetBatch(filtered); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})

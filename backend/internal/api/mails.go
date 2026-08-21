@@ -257,21 +257,24 @@ func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
-	if err := h.emails.Delete(id); err != nil {
+	// 删除操作：将邮件移动到 Trash 文件夹（双向同步）
+	trashFolder := h.emails.ResolveFolder("Trash")
+	if err := h.emails.Move(id, trashFolder); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	if h.syncEngine != nil {
 		go func() {
-			if err := h.syncEngine.DeleteMessage(email.AccountID, email.Folder, email.UID); err != nil {
-				log.Printf("[sync] delete %d failed: %v", id, err)
+			if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, trashFolder); err != nil {
+				log.Printf("[sync] move %d to trash failed: %v", id, err)
 			}
 		}()
 	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"deleted":true}`, id))
 	}
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "moved_to_trash"})
 }
 
 func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +515,31 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 	var err error
 	switch req.Action {
 	case "delete":
-		err = h.emails.BulkDelete(ids)
+		// 删除操作：移动至 Trash 而非硬删除
+		trashFolder := h.emails.ResolveFolder("Trash")
+		for _, id := range ids {
+			if e, eerr := h.emails.GetByID(id); eerr == nil {
+				if merr := h.emails.Move(id, trashFolder); merr != nil {
+					err = merr
+					break
+				}
+				if h.syncEngine != nil {
+					eid := e.ID
+					eacc := e.AccountID
+					efolder := e.Folder
+					euid := e.UID
+					go func() {
+						if merr := h.syncEngine.MoveMessage(eacc, efolder, euid, trashFolder); merr != nil {
+							log.Printf("[sync] move %d to trash failed: %v", eid, merr)
+						}
+					}()
+				}
+				if h.sseHub != nil {
+					eid2 := e.ID
+					h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"deleted":true}`, eid2))
+				}
+			}
+		}
 	case "mark_read":
 		err = h.emails.BulkUpdateFlags(ids, ptr(true), nil)
 	case "mark_unread":

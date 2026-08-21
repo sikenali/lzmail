@@ -93,6 +93,11 @@ export const api = {
       fetchJSON<{ status: string }>(`/api/v1/mails/${id}/star?starred=${starred}`, { method: 'POST' }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/mails/${id}`, { method: 'DELETE' }),
     reextractBody: (id: number) => fetchJSON<{ body_html: string; source: string }>(`/api/v1/mails/${id}/reextract`, { method: 'POST' }),
+    bulk: (data: { action: string; ids?: number[]; all_in_folder?: boolean; folder?: string; destination_folder?: string }) =>
+      fetchJSON<{ success: boolean; affected_count: number }>('/api/v1/mails/bulk', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      }),
     rawUrl: (id: number) => `${API_BASE}/api/v1/mails/${id}/raw`,
     attachmentUrl: (emailId: number, attId: number) => `${API_BASE}/api/v1/mails/${emailId}/attachments/${attId}`,
     inlineImageUrl: (emailId: number, contentID: string) =>

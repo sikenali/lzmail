@@ -129,6 +129,7 @@ function MailPageInner() {
     } catch {
       if (id !== reqId.current) return
       if (!append) setEmails([])
+      setTotalCount(0)
       setHasMore(false)
     } finally {
       if (id === reqId.current) { setLoading(false); setLoadingMore(false) }
@@ -237,30 +238,80 @@ function MailPageInner() {
   }
 
   const handleMove = async (folder: string) => {
-    if (!selectedId) return
+    if (!selectedId && selectedIds.size === 0) return
     try {
-      await api.mails.move(selectedId, folder)
-      toast.success('邮件已移动')
+      if (selectedIds.size > 1 || selectAllChecked) {
+        await api.mails.bulk({
+          action: 'move',
+          all_in_folder: selectAllChecked,
+          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
+          ids: selectAllChecked ? undefined : Array.from(selectedIds),
+          destination_folder: folder
+        })
+        const count = selectAllChecked ? totalCount : selectedIds.size
+        toast.success(`已移动 ${count} 封邮件`)
+        setEmails([])
+        setTotalCount(0)
+      } else {
+        await api.mails.move(selectedId!, folder)
+        toast.success('邮件已移动')
+      }
     } catch {
       toast.error('移动失败，请重试')
       return
     }
     setFolderMoveOpen(false)
     resetDetail()
+    setSelectedIds(new Set())
     setRefresh(n => n + 1)
   }
 
   const handleMarkRead = async () => {
-    if (!selectedId) return
+    if (!selectedId && selectedIds.size === 0) return
     try {
-      await api.mails.markRead(selectedId)
-      toast.success(detail?.email.is_read ? '已标记为未读' : '已标记为已读')
+      if (selectedIds.size > 1 || selectAllChecked) {
+        const isRead = !detail?.email.is_read
+        await api.mails.bulk({
+          action: isRead ? 'mark_read' : 'mark_unread',
+          all_in_folder: selectAllChecked,
+          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
+          ids: selectAllChecked ? undefined : Array.from(selectedIds)
+        })
+        const count = selectAllChecked ? totalCount : selectedIds.size
+        toast.success(`已标记 ${count} 封邮件为${isRead ? '已读' : '未读'}`)
+        setEmails(prev => prev.map(e => ({ ...e, is_read: isRead })))
+        setTotalCount(0)
+      } else {
+        await api.mails.markRead(selectedId!)
+        toast.success(detail?.email.is_read ? '已标记为未读' : '已标记为已读')
+      }
     } catch {
       toast.error('操作失败，请重试')
       return
     }
     resetDetail()
+    setSelectedIds(new Set())
     setRefresh(n => n + 1)
+  }
+
+  const handleBulk = async (action: string) => {
+    try {
+      await api.mails.bulk({
+        action,
+        all_in_folder: selectAllChecked,
+        folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
+        ids: selectAllChecked ? undefined : Array.from(selectedIds)
+      })
+      const count = selectAllChecked ? totalCount : selectedIds.size
+      toast.success(`已处理 ${count} 封邮件`)
+      setSelectedIds(new Set())
+      setSelectedId(null)
+      setDetail(null)
+      setRefresh(n => n + 1)
+      refreshCounts()
+    } catch {
+      toast.error('操作失败，请重试')
+    }
   }
 
   const handleReply = async () => {
@@ -324,18 +375,31 @@ function MailPageInner() {
   }, [])
 
   const handleDelete = async () => {
-    if (!selectedId) return
+    if (!selectedId && selectedIds.size === 0) return
     try {
-      await api.mails.delete(selectedId)
+      if (selectedIds.size > 1 || selectAllChecked) {
+        await api.mails.bulk({
+          action: 'delete',
+          all_in_folder: selectAllChecked,
+          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
+          ids: selectAllChecked ? undefined : Array.from(selectedIds)
+        })
+        const count = selectAllChecked ? totalCount : selectedIds.size
+        toast.success(`已删除 ${count} 封邮件`)
+        setEmails([])
+        setTotalCount(0)
+      } else {
+        await api.mails.delete(selectedId!)
+        toast.success('邮件已删除')
+        setEmails(prev => prev.filter(e => e.id !== selectedId))
+        setTotalCount(prev => Math.max(0, prev - 1))
+      }
     } catch {
       toast.error('删除失败，请重试')
       return
     }
-    toast.success('邮件已删除')
-    // 乐观更新：立即从列表移除，总数递减
-    setEmails(prev => prev.filter(e => e.id !== selectedId))
-    setTotalCount(prev => Math.max(0, prev - 1))
     resetDetail()
+    setSelectedIds(new Set())
     setRefresh(n => n + 1)
   }
 
@@ -496,6 +560,21 @@ function MailPageInner() {
               <div className="flex items-center justify-center py-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>已加载全部邮件</div>
             )}
           </div>
+
+          {/* Bulk action toolbar - shows when emails are selected */}
+          {selectedIds.size > 0 && (
+            <div className="px-5 py-3 border-t flex items-center gap-3" style={{ borderColor: 'var(--card-border)' }}>
+              <span className="text-sm" style={{ color: 'var(--foreground-secondary)' }}>
+                已选择 {selectAllChecked ? `全部 ${totalCount} 封` : `${selectedIds.size} 封`}
+              </span>
+              <div className="flex items-center gap-1 ml-auto">
+                <Tooltip text="标记已读"><button onClick={() => handleBulk('mark_read')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><MailCheck className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="标记未读"><button onClick={() => handleBulk('mark_unread')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><Mail className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(true)} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><FolderMove className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="删除"><button onClick={handleDeleteRequest} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><Trash2 className="w-4 h-4" style={{ color: 'var(--danger)' }} /></button></Tooltip>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Email detail */}

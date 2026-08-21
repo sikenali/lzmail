@@ -589,6 +589,18 @@ function MailPageInner() {
                 suppressHydrationWarning
               />
 
+              {/* Reload body button - shows when body_html is empty but body_preview exists */}
+              {detail.email.body_preview && !detail.body_html && (
+                <div className="p-4 text-center" style={{ backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning)' }}>
+                  <button onClick={async () => {
+                    const res = await api.mails.reextractBody(detail.email.id);
+                    if (res?.body_html) setDetail(prev => prev ? { ...prev, body_html: res.body_html } : prev);
+                  }} className="text-sm px-4 py-2 rounded bg-[var(--warning)] text-[var(--warning-foreground)]">
+                    重新加载正文
+                  </button>
+                </div>
+              )}
+
               {/* Attachments */}
               {detail.attachments && detail.attachments.length > 0 && (
                 <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--background)', border: '0.7px solid var(--border)' }}>

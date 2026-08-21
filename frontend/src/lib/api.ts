@@ -92,6 +92,7 @@ export const api = {
     markStar: (id: number, starred: boolean) =>
       fetchJSON<{ status: string }>(`/api/v1/mails/${id}/star?starred=${starred}`, { method: 'POST' }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/mails/${id}`, { method: 'DELETE' }),
+    reextractBody: (id: number) => fetchJSON<{ body_html: string; source: string }>(`/api/v1/mails/${id}/reextract`, { method: 'POST' }),
     rawUrl: (id: number) => `${API_BASE}/api/v1/mails/${id}/raw`,
     attachmentUrl: (emailId: number, attId: number) => `${API_BASE}/api/v1/mails/${emailId}/attachments/${attId}`,
     inlineImageUrl: (emailId: number, contentID: string) =>

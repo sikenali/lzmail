@@ -532,13 +532,18 @@ func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview
 	return id, err
 }
 
-func (s *EmailStore) InsertSent(e *models.Email) error {
-	_, err := s.db.Exec(
+func (s *EmailStore) InsertSent(e *models.Email) (int64, error) {
+	result, err := s.db.Exec(
 		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, has_attachments, archive_path, message_id)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?,?)`,
 		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC, formatDate(e.Date),
 		e.BodyPreview, e.HasAttachments, e.ArchivePath, e.MessageID)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	id, _ := result.LastInsertId()
+	e.ID = id
+	return id, nil
 }
 
 func (s *EmailStore) Move(id int64, folder string) error {

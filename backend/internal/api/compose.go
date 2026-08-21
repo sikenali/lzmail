@@ -413,7 +413,7 @@ func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, 
 		ArchivePath:    path,
 		MessageID:      fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
 	}
-	if err := h.emails.InsertSent(email); err != nil {
+	if _, err := h.emails.InsertSent(email); err != nil {
 		return 0, err
 	}
 	return email.ID, nil

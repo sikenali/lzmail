@@ -118,7 +118,7 @@ type Handler struct {
 var AccountStoreInstance interface {
 	GetByID(int64) (*models.Account, error)
 }
-var EmailStoreInstance interface{ InsertSent(*models.Email) error }
+var EmailStoreInstance interface{ InsertSent(*models.Email) (int64, error) }
 var OAuthManagerInstance *providers.Manager
 var ScheduledStoreInstance *store.ScheduledStore
 var ArchiveDirInstance string

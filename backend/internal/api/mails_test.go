@@ -166,6 +166,7 @@ func TestHandleBulkMails_Delete(t *testing.T) {
 	h, rec, db := setupTestHandler(t)
 	insertTestEmails(t, db, 3)
 
+	// 从 INBOX 删除 → 移到 Trash，不会真正删除
 	body := map[string]any{
 		"action": "delete",
 		"ids":    []int64{1, 2},
@@ -177,9 +178,45 @@ func TestHandleBulkMails_Delete(t *testing.T) {
 	if rec.status != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rec.status)
 	}
+	// 移到 Trash 后仍可查到
+	e1, err := h.emails.GetByID(1)
+	if err != nil || e1 == nil {
+		t.Error("email 1 should still exist (moved to trash)")
+	}
+	if e1.Folder != "Trash" {
+		t.Errorf("email 1 folder = %s, want Trash", e1.Folder)
+	}
+	e3, err := h.emails.GetByID(3)
+	if err != nil || e3 == nil {
+		t.Error("email 3 should still exist")
+	}
+}
+
+func TestHandleBulkMails_DeleteFromTrash(t *testing.T) {
+	h, rec, db := setupTestHandler(t)
+	insertTestEmails(t, db, 3)
+	// 先将 e1, e2 移到 Trash
+	h.emails.BulkMove([]int64{1, 2}, "Trash")
+
+	body := map[string]any{
+		"action": "delete",
+		"ids":    []int64{1, 2},
+	}
+	req := httptest.NewRequest("POST", "/api/v1/mails/bulk", encodeJSON(body))
+	req.Header.Set("Content-Type", "application/json")
+	h.handleBulkMails(rec, req)
+
+	if rec.status != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.status)
+	}
+	// 已在 Trash 中，永久删除
 	_, err := h.emails.GetByID(1)
 	if err == nil {
-		t.Error("email 1 should be deleted")
+		t.Error("email 1 should be permanently deleted")
+	}
+	_, err = h.emails.GetByID(2)
+	if err == nil {
+		t.Error("email 2 should be permanently deleted")
 	}
 	e3, err := h.emails.GetByID(3)
 	if err != nil || e3 == nil {

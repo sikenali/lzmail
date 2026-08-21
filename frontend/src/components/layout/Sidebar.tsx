@@ -3,12 +3,13 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, AlertTriangle, Plus, Edit, getAccountAvatarBg } from '@/lib/icons'
+import { LayoutDashboard, Inbox, Star, Clock, Send, FileText, Trash2, AlertTriangle, Plus, Edit, RefreshCw, getAccountAvatarBg } from '@/lib/icons'
 import { NavSlider } from '@/components/layout/NavSlider'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { toast } from 'sonner'
+import { Tooltip } from '@/components/Tooltip'
 import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 
@@ -36,6 +37,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   const { settings } = useSettings()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [counts, setCounts] = useState<Record<string, number> | null>(null)
+  const [loadingCounts, setLoadingCounts] = useState(false)
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   // error 进入时间，用于过滤短暂抖动
   const [errorSince, setErrorSince] = useState<Record<number, number>>({})
@@ -60,10 +62,12 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
   }, [accounts])
 
   const refreshCounts = useCallback(async () => {
+    setLoadingCounts(true)
     try {
       const d = await api.mails.counts()
       setCounts(d ?? null)
     } catch {}
+    setLoadingCounts(false)
   }, [])
 
   useSSE(
@@ -204,7 +208,16 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
         <div className="flex-1 overflow-auto" style={{ paddingTop: 16, paddingLeft: 16, paddingRight: 16 }}>
         {accounts.length > 0 && (
           <>
-            <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)', padding: '0 16px' }}>邮箱账号</div>
+            <div className="flex items-center justify-between" style={{ padding: '0 16px' }}>
+              <div className="text-[11px] font-semibold" style={{ color: 'var(--muted-foreground)' }}>邮箱账号</div>
+              <Tooltip text="刷新未读数">
+                <button onClick={refreshCounts} disabled={loadingCounts}
+                  className="w-7 h-7 flex items-center justify-center rounded-[6px] transition-opacity hover:opacity-80 disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--muted)' }}>
+                  <RefreshCw className={`w-4 h-4 ${loadingCounts ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
+                </button>
+              </Tooltip>
+            </div>
             <div style={{ paddingTop: 16 }} className="space-y-1">
               {accounts.map((a) => {
             const ac = getAccountAvatarBg(a)

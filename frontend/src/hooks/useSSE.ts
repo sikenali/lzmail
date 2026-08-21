@@ -50,6 +50,9 @@ export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyn
         try {
           const data = JSON.parse(e.data) as SyncStatusData
           onSyncStatusRef.current?.(data)
+          if (data.status === 'ok' || data.status === 'completed') {
+            onMailUpdatedRef.current?.()
+          }
         } catch {}
       })
       es.onerror = () => {

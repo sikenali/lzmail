@@ -468,9 +468,9 @@ function AccountPanel() {
             <label htmlFor="idle" className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>启用 IMAP IDLE（实时推送）</label>
           </div>
           <div className="flex gap-2 mt-4 justify-end">
-            <button onClick={handleCancel} className="px-4 h-9 rounded-lg text-sm hover:bg-[var(--muted)]" style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
+            <button onClick={handleCancel} className="px-4 h-10 rounded-lg text-sm hover:bg-[var(--muted)] transition-all" style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
             <button onClick={editingId ? handleSaveEdit : handleCreate} disabled={saving}
-              className="px-4 h-9 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+              className="px-4 h-10 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all">
               {saving ? '保存中...' : (editingId ? '保存修改' : '保存')}
             </button>
           </div>
@@ -1062,6 +1062,7 @@ function StoragePanel() {
     setSetting('archive_path', p)
     setEditingPath(false)
     setTreeOpen(false)
+    toast.success('归档目录已更新')
   }
 
   const handleCancelEdit = () => {
@@ -1117,16 +1118,16 @@ function StoragePanel() {
               <div className="flex-1 max-w-[600px] ml-8">
                 <div className="flex items-center gap-2">
                   <input value={pathInput} onChange={e => { pathInputTouched.current = true; setPathInput(e.target.value) }}
-                    className="flex-1 h-9 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
+                    className="flex-1 h-10 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
                     style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
                     placeholder="输入归档路径，如 ~/lzmail/archives"
                   />
                   <button onClick={handleSavePath}
-                    className="px-3 h-9 rounded-lg text-[12px] font-medium"
+                    className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all"
                     style={{ backgroundColor: 'var(--primary)', color: '#ffffff' }}
                   >确定</button>
                   <button onClick={handleCancelEdit}
-                    className="px-3 h-9 rounded-lg text-[12px] font-medium"
+                    className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all"
                     style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}
                   >取消</button>
                 </div>

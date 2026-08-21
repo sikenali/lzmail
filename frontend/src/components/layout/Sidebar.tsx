@@ -192,7 +192,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                     color: active ? '#ffffff' : 'var(--foreground)',
                     fontWeight: active ? '600' : '500',
                   }}>{item.label}</span>
-                {item.badgeKey && counts && counts[item.badgeKey] > 0 && (
+                {item.badgeKey && counts && (item.onClickDraft ? true : counts[item.badgeKey] > 0) && (
                   <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
                     style={{
                       backgroundColor: item.badgeStyle === 'gold'

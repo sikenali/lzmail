@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
   { icon: Star, label: '标星邮件', href: '/mail?folder=STARRED', badgeKey: 'starred' },
   { icon: Clock, label: '稍后处理', href: '/mail?folder=DEFERRED' },
   { icon: Send, label: '已发送', href: '/mail?folder=Sent' },
-  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts', badgeKey: 'drafts', badgeStyle: 'gold', onClickDraft: true },
+  { icon: FileText, label: '草稿箱', href: '/mail?folder=Drafts' },
   { icon: Trash2, label: '已删除', href: '/mail?folder=Trash', badgeKey: 'trash' },
   { icon: AlertTriangle, label: '垃圾邮件', href: '/mail?folder=SPAM' },
 ]
@@ -159,13 +159,8 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
           {navItems.map((item, i) => {
             const active = isActive(item.href)
             const isPressed = pressing === i
-            const handleDraftClick = (e: React.MouseEvent) => {
-              if (item.onClickDraft && counts && counts['drafts'] > 0) return
-              if (item.onClickDraft) { e.preventDefault(); router.push('/compose') }
-            }
             return (
               <Link key={item.href} href={item.href} prefetch={false}
-                onClick={handleDraftClick}
                 ref={el => { navRefs.current[i] = el }}
                 onMouseDown={() => setPressing(i)}
                 onMouseUp={() => setPressing(null)}
@@ -192,7 +187,7 @@ export function Sidebar({ currentPath }: { currentPath: string }) {
                     color: active ? '#ffffff' : 'var(--foreground)',
                     fontWeight: active ? '600' : '500',
                   }}>{item.label}</span>
-                {item.badgeKey && counts && (item.onClickDraft ? true : counts[item.badgeKey] > 0) && (
+                {item.badgeKey && counts && counts[item.badgeKey] > 0 && (
                   <span className="h-[22px] min-w-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px]"
                     style={{
                       backgroundColor: item.badgeStyle === 'gold'

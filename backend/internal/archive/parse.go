@@ -2,6 +2,7 @@ package archive
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/base64"
 	"fmt"
 	"html"
@@ -43,12 +44,14 @@ type Parsed struct {
 	HasAttachments bool
 	Attachments    []Attachment
 	InlineImages   map[string]InlineImage // ContentID -> InlineImage
+	SenderAvatarID int64                  // 发件人头像图片的 attachments.id，0 表示无头像
+	SenderAvatarURL string                 // 发件人头像 URL（gravatar 等），用于前端直接引用
 }
 
 var htmlTagRe = regexp.MustCompile(`(?i)<(script|style)[^>]*>.*?</(script|style)>|<[^>]+>`)
 
 // Parse 解析 RFC822 原始邮件，提取正文预览与附件。
-func Parse(raw []byte) (*Parsed, error) {
+func Parse(raw []byte, senderEmail string) (*Parsed, error) {
 	msg, err := mail.ReadMessage(bytes.NewReader(raw))
 	if err != nil {
 		return nil, err
@@ -58,6 +61,9 @@ func Parse(raw []byte) (*Parsed, error) {
 	if d, err := msg.Header.Date(); err == nil {
 		p.Date = d
 	}
+
+	// 提取发件人头像 URL
+	p.SenderAvatarURL = extractSenderAvatar(mail.Header(msg.Header), senderEmail)
 
 	var plainParts, htmlParts []string
 
@@ -322,4 +328,20 @@ func isValidUTF8(s string) bool {
 		}
 	}
 	return true
+}
+
+// extractSenderAvatar 从邮件头部提取发件人头像 URL（Gravatar）。
+func extractSenderAvatar(header mail.Header, senderEmail string) string {
+	for _, key := range []string{"X-Gravatar-Hash", "X-Mailer-Avatar-Hash"} {
+		if v := header.Get(key); v != "" {
+			return "https://gravatar.com/avatar/" + v + "?s=200&d=identicon"
+		}
+	}
+	if senderEmail != "" {
+		h := md5.New()
+		h.Write([]byte(strings.ToLower(strings.TrimSpace(senderEmail))))
+		hash := fmt.Sprintf("%x", h.Sum(nil))
+		return "https://gravatar.com/avatar/" + hash + "?s=200&d=retro"
+	}
+	return ""
 }

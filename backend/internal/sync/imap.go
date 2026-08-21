@@ -630,6 +630,7 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 
 	var needBody []uint32
 	var newEmails []*models.Email
+	senderEmails := make(map[uint32]string) // uid -> sender email for avatar extraction
 	for msg := range metaCh {
 		if msg.Envelope == nil {
 			continue
@@ -651,6 +652,7 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 		if len(msg.Envelope.From) > 0 {
 			email.From = msg.Envelope.From[0].Address()
 			email.FromName = msg.Envelope.From[0].PersonalName
+			senderEmails[msg.Uid] = email.From
 		}
 		if len(msg.Envelope.To) > 0 {
 			email.To = joinAddresses(msg.Envelope.To)
@@ -683,7 +685,7 @@ func (s *Syncer) syncFolder(folder string, foldersTotal, foldersDone int) {
 	}
 
 	if len(needBody) > 0 {
-		s.fetchBodies(c, folder, needBody, foldersTotal, foldersDone)
+		s.fetchBodies(c, folder, needBody, foldersTotal, foldersDone, senderEmails)
 	}
 }
 
@@ -691,7 +693,7 @@ const bodyBatchSize = 200
 
 // fetchBodies 分批抓取指定 UID 的 RFC822 原文，落盘并解析正文预览与附件。
 // 每批完成后发布进度事件，避免一次性拉取海量正文导致内存与服务端压力过大。
-func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32, foldersTotal, foldersDone int) {
+func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32, foldersTotal, foldersDone int, senderEmails map[uint32]string) {
 	total := len(uids)
 	processed := 0
 	for start := 0; start < total; start += bodyBatchSize {
@@ -719,7 +721,7 @@ func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32, fol
 				log.Printf("[sync] account %s read body uid=%d failed: %v", s.account.Email, msg.Uid, err)
 				continue
 			}
-			s.saveBody(folder, msg.Uid, raw)
+			s.saveBody(folder, msg.Uid, raw, senderEmails[msg.Uid])
 		}
 		if err := <-done; err != nil {
 			log.Printf("[sync] account %s fetch bodies failed: %v", s.account.Email, err)
@@ -731,10 +733,10 @@ func (s *Syncer) fetchBodies(c *client.Client, folder string, uids []uint32, fol
 }
 
 // saveBody 保存 .eml 与附件，并把正文信息写回数据库。
-func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
+func (s *Syncer) saveBody(folder string, uid uint32, raw []byte, senderEmail string) {
 	w := archive.NewWriter(s.archiveDir)
 
-	parsed, err := archive.Parse(raw)
+	parsed, err := archive.Parse(raw, senderEmail)
 	if err != nil {
 		log.Printf("[sync] account %s parse body uid=%d failed: %v", s.account.Email, uid, err)
 		parsed = &archive.Parsed{Date: time.Now().UTC()}
@@ -746,7 +748,7 @@ func (s *Syncer) saveBody(folder string, uid uint32, raw []byte) {
 		return
 	}
 
-	id, err := s.emailStore.UpdateBody(s.account.ID, uid, folder, parsed.Preview, parsed.HasAttachments, path)
+	id, err := s.emailStore.UpdateBody(s.account.ID, uid, folder, parsed.Preview, parsed.HasAttachments, path, parsed.SenderAvatarURL)
 	if err != nil {
 		log.Printf("[sync] account %s update body uid=%d failed: %v", s.account.Email, uid, err)
 		return

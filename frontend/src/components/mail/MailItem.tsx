@@ -39,11 +39,12 @@ type MailItemProps = {
   checked?: boolean
   onSelect: (id: number) => void
   onToggle?: (id: number) => void
+  onStar?: (id: number, starred: boolean) => void
   folder?: string
   density?: 'comfortable' | 'compact'
 }
 
-const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected = false, checked = false, onSelect, onToggle, folder, density = 'comfortable' }: MailItemProps) {
+const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected = false, checked = false, onSelect, onToggle, onStar, folder, density = 'comfortable' }: MailItemProps) {
    const bc = (brand || email.account_brand || '#c43d3d')
   const brandColor = bc.startsWith('#') ? bc : '#c43d3d'
   const unread = email.is_read === false
@@ -58,6 +59,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
   const avatarContent = (isSent ? (email.to?.trim() || email.from?.trim()) : (email.from_name?.trim() || email.from?.trim()))
     ? displayInitial
     : '🐱'
+  const senderAvatarURL = email.sender_avatar_url || ''
 
   const compact = density === 'compact'
   const avatarSize = compact ? '24px' : '32px'
@@ -83,7 +85,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       style={rowStyle}
     >
 {/* Checkbox */}
-         <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggle?.(email.id) }}>
+          <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggle?.(email.id) }}>
         {isChecked ? (
           <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
             <Check className="w-3 h-3" style={{ color: '#fff' }} />
@@ -97,9 +99,13 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="rounded-full shrink-0 overflow-hidden" style={{ backgroundColor: brandColor, width: avatarSize, height: avatarSize }}>
-              <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
-            </div>
+            {senderAvatarURL ? (
+              <img src={senderAvatarURL} alt="" className="rounded-full shrink-0 object-cover" style={{ width: avatarSize, height: avatarSize }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            ) : (
+              <div className="rounded-full shrink-0 overflow-hidden" style={{ backgroundColor: brandColor, width: avatarSize, height: avatarSize }}>
+                <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
+              </div>
+            )}
             <span className="truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight, fontSize: senderFontSize }}>
               {displayName}
             </span>
@@ -123,7 +129,13 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       {/* Right: star (selected) or unread dot */}
       <div className="shrink-0 mt-1">
         {selected ? (
-          <Star className="w-4 h-4" style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
+          <button
+            onClick={(e) => { e.stopPropagation(); onStar?.(email.id, !email.is_starred) }}
+            className="w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-[var(--accent)]"
+            title={email.is_starred ? '取消标星' : '标星'}
+          >
+            <Star className="w-4 h-4" style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
+          </button>
         ) : unread ? (
           <span className="w-[9px] h-2 rounded-full block" style={{ backgroundColor: 'var(--primary)' }} />
         ) : null}
@@ -142,6 +154,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
     prev.email.from_name === next.email.from_name &&
     prev.email.to === next.email.to &&
     prev.email.has_attachments === next.email.has_attachments &&
+    prev.email.sender_avatar_url === next.email.sender_avatar_url &&
     prev.folder === next.folder
 })
 

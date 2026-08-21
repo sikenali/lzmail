@@ -258,24 +258,43 @@ func (h *Handler) handleDeleteMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
-	// 删除操作：将邮件移动到 Trash 文件夹（双向同步）
 	trashFolder := h.emails.ResolveFolder("Trash")
-	if err := h.emails.Move(id, trashFolder); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-	if h.syncEngine != nil {
-		go func() {
-			if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, trashFolder); err != nil {
-				log.Printf("[sync] move %d to trash failed: %v", id, err)
-			}
-		}()
+	isInTrash := strings.EqualFold(email.Folder, trashFolder) ||
+		strings.Contains(strings.ToLower(email.Folder), "trash") ||
+		strings.Contains(strings.ToLower(email.Folder), "deleted")
+
+	if isInTrash {
+		// 已在已删除中：永久删除（DB + IMAP expunge）
+		if err := h.emails.Delete(id); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+				if h.syncEngine != nil {
+					go func() {
+						if err := h.syncEngine.DeleteMessage(email.AccountID, email.Folder, email.UID); err != nil {
+							log.Printf("[sync] permanent delete %d failed: %v", id, err)
+						}
+					}()
+				}
+	} else {
+		// 未删除：移到已删除（双向同步）
+		if err := h.emails.Move(id, trashFolder); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		if h.syncEngine != nil {
+			go func() {
+				if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, trashFolder); err != nil {
+					log.Printf("[sync] move %d to trash failed: %v", id, err)
+				}
+			}()
+		}
 	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"deleted":true}`, id))
 	}
 	w.WriteHeader(http.StatusOK)
-	writeJSON(w, http.StatusOK, map[string]string{"status": "moved_to_trash"})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
@@ -516,24 +535,47 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 	var err error
 	switch req.Action {
 	case "delete":
-		// 删除操作：移动至 Trash 而非硬删除
+		// 删除操作：已在 Trash 中则永久删除，否则移到 Trash
 		trashFolder := h.emails.ResolveFolder("Trash")
 		for _, id := range ids {
 			if e, eerr := h.emails.GetByID(id); eerr == nil {
-				if merr := h.emails.Move(id, trashFolder); merr != nil {
-					err = merr
-					break
-				}
-				if h.syncEngine != nil {
-					eid := e.ID
-					eacc := e.AccountID
-					efolder := e.Folder
-					euid := e.UID
-					go func() {
-						if merr := h.syncEngine.MoveMessage(eacc, efolder, euid, trashFolder); merr != nil {
-							log.Printf("[sync] move %d to trash failed: %v", eid, merr)
-						}
-					}()
+				isInTrash := strings.EqualFold(e.Folder, trashFolder) ||
+					strings.Contains(strings.ToLower(e.Folder), "trash") ||
+					strings.Contains(strings.ToLower(e.Folder), "deleted")
+				if isInTrash {
+					// 已在已删除：永久删除（DB + IMAP）
+					if merr := h.emails.Delete(id); merr != nil {
+						err = merr
+						break
+					}
+					if h.syncEngine != nil {
+						eid := e.ID
+						eacc := e.AccountID
+						efolder := e.Folder
+						euid := e.UID
+						go func() {
+							if merr := h.syncEngine.DeleteMessage(eacc, efolder, euid); merr != nil {
+								log.Printf("[sync] permanent delete %d failed: %v", eid, merr)
+							}
+						}()
+					}
+				} else {
+					// 未删除：移到 Trash
+					if merr := h.emails.Move(id, trashFolder); merr != nil {
+						err = merr
+						break
+					}
+					if h.syncEngine != nil {
+						eid := e.ID
+						eacc := e.AccountID
+						efolder := e.Folder
+						euid := e.UID
+						go func() {
+							if merr := h.syncEngine.MoveMessage(eacc, efolder, euid, trashFolder); merr != nil {
+								log.Printf("[sync] move %d to trash failed: %v", eid, merr)
+							}
+						}()
+					}
 				}
 				if h.sseHub != nil {
 					eid2 := e.ID

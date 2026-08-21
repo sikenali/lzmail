@@ -564,7 +564,11 @@ function MailPageInner() {
                   </div>
                   {group.items.map((email) => (
                     <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
-                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect} density={mailDensity} />
+                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect} onStar={async (id, starred) => {
+                          await api.mails.markStar(id, starred)
+                          setEmails(prev => prev.map(e => e.id === id ? { ...e, is_starred: starred } : e))
+                          refreshCounts()
+                        }} density={mailDensity} />
                      </div>
                   ))}
                 </div>
@@ -614,7 +618,17 @@ function MailPageInner() {
                    <Tooltip text="回复"><button onClick={handleReply} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                    <Tooltip text="回复全部"><button onClick={handleReplyAll} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                    <Tooltip text="转发"><button onClick={handleForward} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Forward className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                   <Tooltip text="全部已读"><button onClick={handleMarkAllRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                    <Tooltip text="全部已读"><button onClick={handleMarkAllRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                    <Tooltip text={detail.email.is_starred ? '取消标星' : '标星'}><button onClick={async () => {
+                      if (!selectedId) return
+                      const newStarred = !detail.email.is_starred
+                      await api.mails.markStar(selectedId, newStarred)
+                      setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
+                      setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
+                      refreshCounts()
+                    }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                      <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
+                    </button></Tooltip>
                    </div>
                    <div className="w-px h-6 bg-[var(--card-border)]" />
                    <div className="flex items-center gap-1 relative">
@@ -656,21 +670,39 @@ function MailPageInner() {
                 </div>
               </div>
 
-              {/* Subject */}
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)' }}>{detail.email.subject || '(无主题)'}</h1>
-                <div className="flex items-center gap-2 shrink-0 pt-1">
-                   {detail.email.is_starred && <Star className="w-5 h-5" style={{ color: 'var(--gold)' }} />}
-                </div>
-              </div>
+               {/* Subject */}
+               <div className="flex items-start justify-between gap-4">
+                 <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)' }}>{detail.email.subject || '(无主题)'}</h1>
+                 <div className="flex items-center gap-2 shrink-0 pt-1">
+                    <button
+                      onClick={async () => {
+                        if (!selectedId) return
+                        const newStarred = !detail.email.is_starred
+                        await api.mails.markStar(selectedId, newStarred)
+                        setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
+                        setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
+                        refreshCounts()
+                      }}
+                      className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-all hover:opacity-80"
+                      style={{ backgroundColor: 'var(--muted)' }}
+                      title={detail.email.is_starred ? '取消标星' : '标星'}
+                    >
+                      <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
+                    </button>
+                 </div>
+               </div>
 
               {/* From info */}
               <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                  style={{ backgroundColor: getAccountAvatarBg({ brand_color: detail.email.account_brand }) }}
-                >
-                  <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
-                </div>
+                {detail.email.sender_avatar_url ? (
+                  <img src={detail.email.sender_avatar_url} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                ) : (
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                    style={{ backgroundColor: getAccountAvatarBg({ brand_color: detail.email.account_brand }) }}
+                  >
+                    <User className="w-[60%] h-[60%] text-white" style={{ margin: 'auto', display: 'block' }} />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">

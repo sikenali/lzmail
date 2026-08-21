@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 7
+const currentSchemaVersion = 8
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
@@ -192,7 +192,10 @@ func migrate(db *sql.DB) error {
 	if err := migrateToV6(db); err != nil {
 		return err
 	}
-	return migrateToV7(db)
+	if err := migrateToV7(db); err != nil {
+		return err
+	}
+	return migrateToV8(db)
 }
 
 // migrateToV5 为 contacts 表添加 phone、company、title 列（幂等）
@@ -360,6 +363,19 @@ func migrateToV7(db *sql.DB) error {
 	} {
 		if _, err := db.Exec(idx); err != nil {
 			return fmt.Errorf("create index: %w", err)
+		}
+	}
+	return nil
+}
+
+func migrateToV8(db *sql.DB) error {
+	exists, err := columnExists(db, "emails", "sender_avatar_url")
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if _, err := db.Exec(`ALTER TABLE emails ADD COLUMN sender_avatar_url TEXT DEFAULT ''`); err != nil {
+			return fmt.Errorf("add column sender_avatar_url: %w", err)
 		}
 	}
 	return nil

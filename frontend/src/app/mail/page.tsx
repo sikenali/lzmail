@@ -15,6 +15,12 @@ import { sanitizeHTML } from '@/lib/sanitize'
 import { Tooltip } from '@/components/Tooltip'
 import { toast } from 'sonner'
 
+function formatTime(dateStr: string): string {
+  const d = new Date(dateStr)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function resolveCIDRefs(html: string, emailId: number): string {
   if (!html) return ''
   return html.replace(/(?:src|href)\s*=\s*["']\s*cid:([^"'>\s]+)["']/gi, (_, cid) => {
@@ -199,6 +205,9 @@ function MailPageInner() {
   }
 
   const handleSelect = useCallback(async (id: number) => {
+    if (selectedIds.size > 1 && !selectedIds.has(id)) {
+      setSelectedIds(new Set([id]))
+    }
     setSelectedId(id)
     const d = await loadDetail(id)
     if (d) {
@@ -209,7 +218,7 @@ function MailPageInner() {
       // 同步更新本地列表的 is_read 状态
       setEmails(prev => prev.map(e => e.id === id ? { ...e, is_read: true } : e))
     }
-  }, [loadDetail, emails])
+  }, [loadDetail, emails, selectedIds])
 
   const resetDetail = () => {
     setSelectedId(null)
@@ -338,6 +347,7 @@ function MailPageInner() {
     setSyncing(false)
     setRefresh(n => n + 1)
     refreshCounts()
+    toast.success('已同步最新邮件')
   }
 
   const handleNext = () => {
@@ -414,9 +424,9 @@ function MailPageInner() {
               </div>
                <div className="flex items-center gap-2">
 <Tooltip text="刷新" side="bottom">
-                   <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                     <RefreshCw className={`w-4 h-4 ${loading || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)' }} />
-                   </button>
+                   <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                      <RefreshCw className={`w-4 h-4 ${loading || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', animationDuration: '0.8s' }} />
+                    </button>
                    </Tooltip>
 
                </div>
@@ -649,6 +659,51 @@ function MailPageInner() {
                     </Tooltip>
                 </div>
               </div>
+            </div>
+          ) : selectedIds.size > 1 ? (
+            <div className="max-w-[780px] mx-auto px-8 py-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[16px] font-semibold" style={{ color: 'var(--foreground)' }}>
+                  已选择 {selectedIds.size} 封邮件
+                </h2>
+                <button onClick={() => setSelectedIds(new Set())} className="text-sm" style={{ color: 'var(--primary)' }}>
+                  清除选择
+                </button>
+              </div>
+              {Array.from(selectedIds).slice(0, 5).map(id => {
+                const email = emails.find(e => e.id === id)
+                if (!email) return null
+                return (
+                  <div key={email.id} onClick={() => { setSelectedIds(new Set([email.id])); handleSelect(email.id) }}
+                    className="p-4 rounded-xl cursor-pointer transition-colors hover:bg-[var(--muted)]"
+                    style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                        style={{ backgroundColor: getAccountAvatarBg({ brand_color: email.account_brand }) }}>
+                        {(email.from_name || email.from).trim()[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate" style={{ color: 'var(--foreground)' }}>{email.from_name || email.from}</span>
+                          <span className="text-xs shrink-0" style={{ color: 'var(--muted-foreground)' }}>{formatTime(email.date)}</span>
+                        </div>
+                        <div className="truncate mt-0.5 font-medium" style={{ color: 'var(--foreground)' }}>{email.subject || '(无主题)'}</div>
+                        <div className="truncate text-sm mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{email.body_preview}</div>
+                        {email.has_attachments && (
+                          <span className="inline-flex items-center gap-1 mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                            <Paperclip className="w-3 h-3" /> 有附件
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {selectedIds.size > 5 && (
+                <div className="text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                  及其他 {selectedIds.size - 5} 封邮件...
+                </div>
+              )}
             </div>
           ) : loading ? (
             <div className="max-w-[780px] mx-auto px-10 py-6 space-y-6">

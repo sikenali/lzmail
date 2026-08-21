@@ -181,19 +181,19 @@ function AccountPanel() {
    const [provider, setProvider] = useState<ProviderKey>('auto')
    const [showPassword, setShowPassword] = useState(false)
     const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
-    const [syncProgress, setSyncProgress] = useState<SyncStatusData | null>(null)
+    const [syncProgress, setSyncProgress] = useState<Record<number, SyncStatusData>>({})
     const [lastSyncedAt, setLastSyncedAt] = useState<Record<number, number>>({})
     // 记录每个账号进入 error 的时间，用于过滤短暂抖动
     const [errorSince, setErrorSince] = useState<Record<number, number>>({})
     useSSE(undefined, undefined, (data: SyncStatusData) => {
       if (!data.account_id) return
       const id = Number(data.account_id)
-      setSyncStatus(prev => ({ ...prev, [id]: data.status }))
-      if (data.status === 'syncing') {
-        setSyncProgress(data)
-      } else {
-        setSyncProgress(null)
-      }
+       setSyncStatus(prev => ({ ...prev, [id]: data.status }))
+       if (data.status === 'syncing') {
+         setSyncProgress(prev => ({ ...prev, [id]: data }))
+       } else {
+         setSyncProgress(prev => { const next = { ...prev }; delete next[id]; return next })
+       }
       if (data.last_synced_at) {
         setLastSyncedAt(prev => { const next = { ...prev }; next[id] = data.last_synced_at!; return next })
       }
@@ -342,10 +342,14 @@ function AccountPanel() {
     resetForm()
   }
 
-   const getSyncBadge = (a: Account) => {
-     if (a.use_idle) return { label: 'IDLE · 实时', color: 'var(--success)', bg: 'var(--success-bg)', dotColor: 'var(--success)' }
-     return { label: '轮询', color: 'var(--muted-foreground)', bg: 'var(--accent)', dotColor: 'var(--muted-foreground)' }
-   }
+   const getSyncBadge = (a: Account, state: string, mode: string) => {
+      // 优先使用后端真实状态
+      if (state === 'syncing') return { label: '同步中', color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
+      if (state === 'error') return { label: '异常', color: 'var(--danger)', bg: 'var(--danger-bg)', dotColor: 'var(--danger)' }
+      // 正常：根据模式显示标签
+      if (mode === 'poll') return { label: '轮询 · 1分钟', color: 'var(--muted-foreground)', bg: 'var(--accent)', dotColor: 'var(--muted-foreground)' }
+      return { label: 'IDLE · 实时', color: 'var(--success)', bg: 'var(--success-bg)', dotColor: 'var(--success)' }
+    }
 
    const formatLastSync = (ts: number) => {
      if (!ts) return ''
@@ -495,20 +499,19 @@ function AccountPanel() {
              // error 持续超过 30 秒才视为真正的异常，之前阶段显示"待同步"
              const ERROR_GRACE_MS = 30_000
              const isErrored = syncStatus[a.id] === 'error' && (!errorSince[a.id] || (Date.now() - errorSince[a.id]) > ERROR_GRACE_MS)
-            const progressPct = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.total
-              ? Math.min(100, Math.round((syncProgress.processed || 0) / syncProgress.total * 100))
+            const prog = syncProgress[a.id]
+            const progressPct = prog && prog.total
+              ? Math.min(100, Math.round((prog.processed || 0) / prog.total * 100))
               : 0
-            const folderProgress = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.folders_total
-              ? `${syncProgress.folders_done}/${syncProgress.folders_total}`
+            const folderProgress = prog && prog.folders_total
+              ? `${prog.folders_done}/${prog.folders_total}`
               : null
-            const currentFolder = syncProgress && syncProgress.account_id === String(a.id) && syncProgress.folder
-              ? syncProgress.folder
-              : null
+            const currentFolder = prog?.folder
             const syncState = isSyncing
               ? { label: `${progressPct}%`, color: 'var(--gold)', bg: 'var(--gold-bg)', dotColor: 'var(--gold)' }
               : isErrored
               ? { label: '异常', color: 'var(--danger)', bg: 'var(--danger-bg)', dotColor: 'var(--danger)' }
-              : getSyncBadge(a)
+              : getSyncBadge(a, syncStatus[a.id], prog?.mode || (a.use_idle ? 'idle' : 'poll'))
             const isExpanded = expandedId === a.id
             return (
               <div key={a.id} className="rounded-[16px] overflow-hidden relative" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)' }}>
@@ -572,7 +575,7 @@ function AccountPanel() {
                         { label: '认证方式', value: a.auth_method === 'oauth2' ? 'OAuth 2.0' : '授权码' },
                         { label: 'IMAP 服务器', value: `${a.imap_host}:${a.imap_port}` },
                         { label: 'SMTP 服务器', value: `${a.smtp_host}:${a.smtp_port}` },
-                        { label: '同步模式', value: a.use_idle ? 'IDLE 实时' : 'Poll 轮询' },
+                        { label: '同步模式', value: prog?.mode === 'poll' ? 'Poll · 1分钟' : 'IDLE 实时' },
                         ...(a.auth_method === 'oauth2' && a.provider ? [
                           { label: '服务商', value: a.provider === 'gmail' ? 'Gmail' : a.provider === 'outlook' ? 'Outlook' : a.provider === 'netease' ? '网易126' : a.provider === 'yahoo' ? 'Yahoo' : a.provider === 'other' ? 'Exchange' : a.provider },
                         ] : []),

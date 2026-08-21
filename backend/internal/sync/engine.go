@@ -98,6 +98,11 @@ func (e *Engine) RefreshAccount(accountID int64) {
 	go s.ForceSync()
 }
 
+type SyncStatus struct {
+	Status string `json:"status"`
+	Mode   string `json:"mode"`
+}
+
 func (e *Engine) Statuses() map[int64]string {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -106,6 +111,20 @@ func (e *Engine) Statuses() map[int64]string {
 		statuses[id] = s.Status()
 	}
 	return statuses
+}
+
+// StatusDetails 返回每个账号的详细同步状态（含模式）。
+func (e *Engine) StatusDetails() map[int64]SyncStatus {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	details := make(map[int64]SyncStatus, len(e.syncers))
+	for id, s := range e.syncers {
+		details[id] = SyncStatus{
+			Status: s.Status(),
+			Mode:   modeLabel(s.account.UseIDLE),
+		}
+	}
+	return details
 }
 
 func (e *Engine) ApplyFlag(accountID int64, folder string, uid uint32, flag string, set bool) error {

@@ -99,7 +99,7 @@ export const api = {
       fetchJSON<{ status: string }>(`/api/v1/mails/${id}/star?starred=${starred}`, { method: 'POST' }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/mails/${id}`, { method: 'DELETE' }),
     reextractBody: (id: number) => fetchJSON<{ body_html: string; source: string }>(`/api/v1/mails/${id}/reextract`, { method: 'POST' }),
-    getDraft: (id: number) => fetchJSON<{ id: number; account_id: number; to: string; cc: string; subject: string; body_html: string; body_text: string; message_id: string }>(`/api/v1/mails/${id}/draft`),
+    getDraft: (id: number) => fetchJSON<{ id: number; account_id: number; to: string; cc: string; bcc: string; subject: string; body_html: string; body_text: string; message_id: string }>(`/api/v1/mails/${id}/draft`),
     bulk: (data: { action: string; ids?: number[]; all_in_folder?: boolean; folder?: string; destination_folder?: string }) =>
       fetchJSON<{ success: boolean; affected_count: number }>('/api/v1/mails/bulk', {
         method: 'POST',
@@ -160,6 +160,7 @@ export const api = {
     all: () => fetchJSON<{ status: string }>('/api/v1/sync', { method: 'POST' }),
     account: (id: number) => fetchJSON<{ status: string }>(`/api/v1/sync?account_id=${id}`, { method: 'POST' }),
     status: () => fetchJSON<Record<string, string>>('/api/v1/sync/status'),
+    statusDetail: () => fetchJSON<Record<string, { status: string; mode: string }>>('/api/v1/sync/status/detail'),
   },
 
   tags: {

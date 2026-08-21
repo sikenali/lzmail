@@ -7,6 +7,7 @@ import (
 	"github.com/lzmail/backend/internal/providers"
 	"github.com/lzmail/backend/internal/sse"
 	"github.com/lzmail/backend/internal/store"
+	bg "github.com/lzmail/backend/internal/sync"
 	"log"
 	"net/http"
 	"strings"
@@ -128,6 +129,7 @@ type SyncEngine interface {
 	RefreshAll()
 	RefreshAccount(int64)
 	Statuses() map[int64]string
+	StatusDetails() map[int64]bg.SyncStatus
 	ApplyFlag(accountID int64, folder string, uid uint32, flag string, set bool) error
 	MoveMessage(accountID int64, srcFolder string, uid uint32, destFolder string) error
 	DeleteMessage(accountID int64, folder string, uid uint32) error
@@ -194,6 +196,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 
 	mux.HandleFunc("POST /api/v1/sync", h.handleSync)
 	mux.HandleFunc("GET /api/v1/sync/status", h.handleSyncStatus)
+	mux.HandleFunc("GET /api/v1/sync/status/detail", h.handleSyncStatusDetail)
 
 	mux.HandleFunc("GET /api/v1/events", h.handleSSE)
 

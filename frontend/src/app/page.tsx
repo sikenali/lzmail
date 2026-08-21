@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [recentEmails, setRecentEmails] = useState<Email[]>([])
   const [trendData, setTrendData] = useState<Array<{date: string; receive: number; send: number}>>([])
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
+  const [syncProgress, setSyncProgress] = useState<Record<number, import('@/hooks/useSSE').SyncStatusData>>({})
   const [refresh, setRefresh] = useState(0)
   const [loading, setLoading] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
@@ -51,7 +52,13 @@ export default function Dashboard() {
     undefined,
     (data) => {
       if (!data.account_id) return
-      setSyncStatus(prev => ({ ...prev, [Number(data.account_id)]: data.status }))
+      const id = Number(data.account_id)
+      setSyncStatus(prev => ({ ...prev, [id]: data.status }))
+      if (data.status === 'syncing') {
+        setSyncProgress(prev => ({ ...prev, [id]: data }))
+      } else {
+        setSyncProgress(prev => { const next = { ...prev }; delete next[id]; return next })
+      }
     },
   )
 
@@ -202,10 +209,12 @@ export default function Dashboard() {
                 ) : accounts.map((a) => {
                   const ac = getAccountAvatarBg(a)
                   const syncState = syncStatus[a.id]
+                  const prog = syncProgress[a.id]
                   const syncing = syncState === 'syncing'
                   const syncErr = syncState === 'error'
                   const dotColor = syncing ? 'var(--gold)' : syncErr ? 'var(--danger)' : 'var(--success)'
-                  const statusText = syncing ? '同步中' : syncErr ? '异常' : '在线'
+                  const statusText = syncing ? '同步中' : syncErr ? '异常' : (prog?.mode === 'poll' ? '轮询' : '在线')
+                  const modeLabel = prog?.mode === 'poll' ? 'Poll · 1分钟' : 'IDLE · 实时'
                   return (
                     <div key={a.id} className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-3">
@@ -214,7 +223,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <div className="text-[13px] font-medium leading-tight" style={{ color: 'var(--foreground)' }}>{a.name || a.email}</div>
-                          <div className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{a.use_idle ? 'IDLE · 实时' : 'Poll · 每5分钟'}</div>
+                          <div className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{modeLabel}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

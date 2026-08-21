@@ -547,6 +547,15 @@ func (s *EmailStore) Move(id int64, folder string) error {
 	return err
 }
 
+// UpdateDraft 更新草稿的正文、主题、收件人等信息（不改变 UID/ID，保持同一条记录）
+func (s *EmailStore) UpdateDraft(id int64, subject, to, cc, bcc, bodyPreview string, hasAttachments bool, archivePath string) error {
+	_, err := s.db.Exec(`UPDATE emails SET subject=?, to_addr=?, cc=?, date=CURRENT_TIMESTAMP,
+		body_preview=?, has_attachments=?, archive_path=?, updated_at=CURRENT_TIMESTAMP
+		WHERE id=? AND folder IN (`+folderLiterals("Drafts")+`)`,
+		subject, to, cc, bodyPreview, hasAttachments, archivePath, id)
+	return err
+}
+
 // ResolveFolder 把规范文件夹名（如 "Trash"/"SPAM"/"Sent"）解析为该账号实际存储使用的
 // IMAP 文件夹名。若 DB 中已存在匹配的实际文件夹则返回它，否则回退为规范名本身。
 func (s *EmailStore) ResolveFolder(folder string) string {

@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 	"strconv"
+
+	"github.com/lzmail/backend/internal/sync"
 )
 
 func (h *Handler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +17,18 @@ func (h *Handler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
 		statuses = map[int64]string{}
 	}
 	writeJSON(w, http.StatusOK, statuses)
+}
+
+func (h *Handler) handleSyncStatusDetail(w http.ResponseWriter, r *http.Request) {
+	if h.syncEngine == nil {
+		writeJSON(w, http.StatusOK, map[string]interface{}{})
+		return
+	}
+	details := h.syncEngine.StatusDetails()
+	if details == nil {
+		details = map[int64]sync.SyncStatus{}
+	}
+	writeJSON(w, http.StatusOK, details)
 }
 
 func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {

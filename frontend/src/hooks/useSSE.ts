@@ -20,6 +20,7 @@ export interface SyncStatusData {
   folders_total?: number
   folders_done?: number
   last_synced_at?: number
+  mode?: 'idle' | 'poll'
 }
 
 export function useSSE(onMailNew?: () => void, onMailUpdated?: () => void, onSyncStatus?: (data: SyncStatusData) => void) {

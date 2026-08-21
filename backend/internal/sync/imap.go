@@ -152,6 +152,7 @@ func (s *Syncer) run() {
 		if r := recover(); r != nil {
 			log.Printf("[sync] account %s sync loop panic recovered: %v", s.account.Email, r)
 			s.setStatus("error")
+			s.publishProgress("error", "", 0, 0, 0, -1)
 			select {
 			case <-s.stopCh:
 				return
@@ -166,6 +167,7 @@ func (s *Syncer) run() {
 			if r := recover(); r != nil {
 				log.Printf("[sync] account %s syncAllFolders panic recovered: %v", s.account.Email, r)
 				s.setStatus("error")
+				s.publishProgress("error", "", 0, 0, 0, -1)
 			}
 		}()
 		s.syncAllFolders()
@@ -174,7 +176,7 @@ func (s *Syncer) run() {
 	if s.account.UseIDLE {
 		s.idleLoop(syncOnce)
 	} else {
-		ticker := time.NewTicker(5 * time.Minute)
+		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 		syncOnce()
 		for {
@@ -188,6 +190,15 @@ func (s *Syncer) run() {
 	}
 }
 
+// idleSyncResult 区分正常结束和真正错误，避免将 QQ 邮箱等服务商的正常 IDLE 断连误标为 error。
+type idleSyncResult int
+
+const (
+	idleOK idleSyncResult = iota // IDLE 正常结束（有新邮件或主动停止）
+	idleNormalClose              // IDLE 被正常关闭（服务器主动断连，非错误）
+	idleError                    // 真正错误（认证失败、连接拒绝等）
+)
+
 func (s *Syncer) idleLoop(syncOnce func()) {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
@@ -199,11 +210,12 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 		default:
 		}
 
-		if err := s.idleSync(); err != nil {
-			log.Printf("[sync] account %s idle failed: %v", s.account.Email, err)
+		res := s.idleSync()
+		switch res {
+		case idleError:
+			log.Printf("[sync] account %s idle error, retrying in 10s", s.account.Email)
 			s.setStatus("error")
 			s.publishProgress("error", "", 0, 0, 0, -1)
-			// Exponential backoff on error to avoid hammering a down server
 			jitter := time.Duration(rand.Intn(5)) * time.Second
 			select {
 			case <-s.stopCh:
@@ -211,10 +223,22 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 			case <-time.After(10*time.Second + jitter):
 			}
 			continue
+		case idleNormalClose:
+			// 服务器主动断连（常见于 QQ/网易），属于正常现象，静默重试
+			log.Printf("[sync] account %s idle connection closed by server, reconnecting", s.account.Email)
+			s.setStatus("ok")
+			s.publishProgress("ok", "", 0, 0, 0, -1)
+			// 短暂延迟后重连，避免频繁重连
+			select {
+			case <-s.stopCh:
+				return
+			case <-time.After(2 * time.Second):
+			}
+			continue
 		}
-		// idleSync 完成，更新最后同步时间并发布 idle 状态
+		// idleOK：IDLE 正常触发同步
 		s.setStatus("ok")
-		s.publishProgress("idle", "", 0, 0, 0, -1)
+		s.publishProgress("ok", "", 0, 0, 0, -1)
 
 		select {
 		case <-s.stopCh:
@@ -225,15 +249,15 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 	}
 }
 
-func (s *Syncer) idleSync() error {
+func (s *Syncer) idleSync() idleSyncResult {
 	c, err := s.ensureConn()
 	if err != nil {
-		return err
+		return idleError
 	}
 
 	if _, err := c.Select("INBOX", false); err != nil {
 		s.closeConn(err)
-		return fmt.Errorf("select INBOX: %w", err)
+		return idleError
 	}
 
 	// 60s IDLE 续期，防止 NAT 路由断连无感知
@@ -244,17 +268,22 @@ func (s *Syncer) idleSync() error {
 
 	select {
 	case err := <-done:
-		// 先关闭连接、释放 connMu，再执行同步，避免持锁期间调用 syncAllFolders
-		lastErr := err
-		s.closeConn(lastErr)
-		if lastErr != nil && !strings.Contains(lastErr.Error(), "use of closed network connection") {
-			return lastErr
+		// 正常 IDLE 结束（收到新邮件通知或 60s 续期）时 err 为 nil 或 "use of closed network connection"
+		isNormalClose := err == nil ||
+			strings.Contains(err.Error(), "use of closed network connection") ||
+			strings.Contains(err.Error(), "EOF") ||
+			strings.Contains(err.Error(), "i/o timeout")
+		s.closeConn(err)
+		if !isNormalClose {
+			log.Printf("[sync] account %s idle ended with error: %v", s.account.Email, err)
+			return idleError
 		}
+		// 正常结束 → 触发增量同步
 		s.syncAllFolders()
-		return nil
+		return idleOK
 	case <-s.stopCh:
 		s.closeConn(nil)
-		return nil
+		return idleOK
 	}
 }
 
@@ -300,6 +329,7 @@ type syncProgress struct {
 	FoldersTotal int    `json:"folders_total,omitempty"`
 	FoldersDone  int    `json:"folders_done,omitempty"`
 	LastSyncedAt int64  `json:"last_synced_at,omitempty"`
+	Mode         string `json:"mode,omitempty"` // "idle" 或 "poll"
 }
 
 func (s *Syncer) publishSync(status string) {
@@ -323,6 +353,7 @@ func (s *Syncer) publishProgress(status, folder string, total, processed, folder
 		FoldersTotal: foldersTotal,
 		FoldersDone:  foldersDone,
 		LastSyncedAt: time.Now().Unix(),
+		Mode:         modeLabel(s.account.UseIDLE),
 	}
 	b, _ := json.Marshal(payload)
 	s.sseHub.Publish("sync:status", string(b))
@@ -1047,4 +1078,12 @@ func joinAddresses(addrs []*imap.Address) string {
 		parts = append(parts, a.Address())
 	}
 	return strings.Join(parts, ", ")
+}
+
+// modeLabel 返回当前同步模式的显示标签。
+func modeLabel(useIDLE bool) string {
+	if useIDLE {
+		return "idle"
+	}
+	return "poll"
 }

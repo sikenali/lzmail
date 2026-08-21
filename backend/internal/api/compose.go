@@ -380,7 +380,7 @@ func (h *Handler) handleUploadAttachment(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, folder string, when time.Time) {
+func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, folder string, when time.Time) (int64, error) {
 	var path string
 	var preview string
 	extra := []string{}
@@ -399,7 +399,7 @@ func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, 
 		}
 	}
 	preview = previewFromText(req.BodyText)
-	h.emails.InsertSent(&models.Email{
+	email := &models.Email{
 		AccountID:      req.AccountID,
 		UID:            uid,
 		Folder:         folder,
@@ -412,7 +412,11 @@ func (h *Handler) persistOutgoing(account *models.Account, req *ComposeRequest, 
 		HasAttachments: len(req.Attachments) > 0,
 		ArchivePath:    path,
 		MessageID:      fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), account.Email),
-	})
+	}
+	if err := h.emails.InsertSent(email); err != nil {
+		return 0, err
+	}
+	return email.ID, nil
 }
 
 func previewFromText(text string) string {
@@ -447,11 +451,15 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 
 	// Save as draft: persist locally (including body), do NOT send over SMTP.
 	if req.Draft {
-		h.persistOutgoing(account, &req, "Drafts", time.Now())
-		if h.sseHub != nil {
-			h.sseHub.Publish("mail:updated", `{"draft":"saved"}`)
+		draftID, err := h.persistOutgoing(account, &req, "Drafts", time.Now())
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
 		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "draft_saved"})
+		if h.sseHub != nil {
+			h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"draft":"saved","id":%d}`, draftID))
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "draft_saved", "id": draftID})
 		return
 	}
 
@@ -617,7 +625,7 @@ func splitEmails(s string) []string {
 	return res
 }
 
-// handleUpdateDraft 更新草稿内容
+// handleUpdateDraft 更新草稿内容（原地更新，不创建新记录）
 func (h *Handler) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	email, err := h.emails.GetByID(id)
@@ -625,7 +633,9 @@ func (h *Handler) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
-	if email.Folder != "Drafts" {
+	// 兼容多种草稿文件夹名
+	isDraft := email.Folder == "Drafts" || email.Folder == "草稿箱" || email.Folder == "草稿"
+	if !isDraft {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "not a draft"})
 		return
 	}
@@ -650,8 +660,20 @@ func (h *Handler) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Attachments = validated
 
-	// 保存为草稿
-	h.persistOutgoing(account, &req, "Drafts", email.Date)
+	// 原地更新：重新生成 .eml 文件，更新邮件记录
+	msg := buildMessage(account.Email, req.To, req.Cc, req.Subject, req.BodyText, req.BodyHTML, req.Attachments)
+	aw := archive.NewWriter(h.archiveDir)
+	archivePath := ""
+	if len(msg) > 0 {
+		if p, err := aw.Save(req.AccountID, email.UID, email.Date, msg); err == nil {
+			archivePath = p
+		}
+	}
+	preview := previewFromText(req.BodyText)
+	if err := h.emails.UpdateDraft(id, req.Subject, req.To, req.Cc, req.Bcc, preview, len(req.Attachments) > 0, archivePath); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
 	if h.sseHub != nil {
 		h.sseHub.Publish("mail:updated", fmt.Sprintf(`{"id":%d,"draft":"updated"}`, id))
 	}

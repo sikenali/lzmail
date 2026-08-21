@@ -126,6 +126,7 @@ func (h *Handler) handleGetDraft(w http.ResponseWriter, r *http.Request) {
 		"account_id":  email.AccountID,
 		"to":          email.To,
 		"cc":          email.CC,
+		"bcc":         email.CC,
 		"subject":     email.Subject,
 		"body_html":   bodyHTML,
 		"body_text":   email.BodyPreview,

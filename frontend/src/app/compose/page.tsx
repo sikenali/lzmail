@@ -75,6 +75,7 @@ function ComposePageInner() {
       if (!d) return
       setTo(d.to || '')
       setCc(d.cc || '')
+      setBcc(d.bcc || '')
       setSubject(d.subject || '')
       if (d.body_html) { setBody(d.body_html); setTimeout(() => editorRef.current?.setContent?.(d.body_html), 100) }
       if (d.account_id) setAccountId(d.account_id)
@@ -145,7 +146,7 @@ function ComposePageInner() {
     try {
       if (draftId) {
         // 更新现有草稿
-        await fetch(`/api/v1/compose/drafts/${draftId}`, {
+        const res = await fetch(`/api/v1/compose/drafts/${draftId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -156,19 +157,30 @@ function ComposePageInner() {
             attachments: [],
           })
         })
-        toast.success('草稿已更新')
-        router.push('/mail?folder=Drafts')
+        const data = await res.json()
+        if (data.id) {
+          toast.success('草稿已更新')
+          router.replace(`/compose?draft_id=${data.id}`)
+        } else {
+          toast.success('草稿已更新')
+        }
       } else {
         // 新建草稿
-        await api.compose({
+        const res = await api.compose({
           account_id: accountId,
           to, cc, bcc, subject,
           body_text: editorRef.current?.getText() || body,
           body_html: editorRef.current?.getHTML() || body,
           draft: true,
         })
-        toast.success('草稿已保存')
-        setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
+        const draftId = (res as any)?.id
+        if (draftId) {
+          toast.success('草稿已保存')
+          router.replace(`/compose?draft_id=${draftId}`)
+        } else {
+          toast.success('草稿已保存')
+          router.push('/mail?folder=Drafts')
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || '保存失败')

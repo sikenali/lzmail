@@ -123,7 +123,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
       const p = draftId
         ? patchExistingDraft()
         : api.compose(data).then(res => { const id = (res as unknown as { id?: number })?.id; if (id) setDraftId(id) })
-      p.then(() => setLastAutoSaveTime(new Date())).catch(() => {}).finally(() => setAutoSaving(false))
+      p.then(() => setLastAutoSaveTime(new Date())).catch(() => { toast.error('自动保存失败') }).finally(() => setAutoSaving(false))
     }, 60000)
     return () => clearInterval(timer)
   }, [to, cc, bcc, subject, body, accountId, sending, savingDraft, open, draftId])
@@ -149,7 +149,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
     if (!to) { toast.warning('请输入收件人'); return }
     if (!accountId) { toast.warning('请选择发件账号'); return }
     if (!subject) { toast.warning('请输入邮件主题'); return }
-    if ((settings.send_confirm || 'false') === 'true') {
+    if (String(settings.send_confirm || 'false') === 'true') {
       setSendConfirmOpen(true)
       return
     }
@@ -313,7 +313,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
             <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>收件人</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <ContactPicker value={to} onSelect={emails => setTo(emails.join(', '))} />
+              <ContactPicker value={to} onSelect={emails => setTo(emails.join(', '))} accountId={accountId} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {!showCc && <button onClick={() => setShowCc(true)} style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-info)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}>抄送</button>}

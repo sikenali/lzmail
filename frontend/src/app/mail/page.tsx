@@ -158,12 +158,12 @@ function MailPageInner() {
       if (id !== reqId.current) return
       if (!append) {
         setEmails([])
+        setTotalCount(0)
         // 仅在「确认空库」时静默：未知(null)或确认有账号都应当如实报错
         if (storeEmptyRef.current !== true) {
           toast.error('邮件列表加载失败，请检查网络或后端服务')
         }
       }
-      setTotalCount(0)
       setHasMore(false)
     } finally {
       if (id === reqId.current) { setLoading(false); setLoadingMore(false) }
@@ -391,6 +391,10 @@ function MailPageInner() {
         ids: bt.ids
       })
       const count = bt.count
+      if (action === 'mark_read' || action === 'mark_unread') {
+        const newRead = action === 'mark_read'
+        setEmails(prev => prev.map(e => bt.ids?.includes(e.id) ? { ...e, is_read: newRead } : e))
+      }
       toast.success(`已处理 ${count} 封邮件`)
       setSelectedIds(new Set())
       setSelectedId(null)
@@ -416,8 +420,9 @@ function MailPageInner() {
     const to = detail.email.from
     const cc = detail.email.to && detail.email.to !== detail.email.from ? detail.email.to : ''
     const subject = 'Re: ' + (detail.email.subject || '')
+    const body = replyEditorRef.current?.getHTML() || replyText.trim()
     const messageId = detail.email.message_id || ''
-    router.push(`/compose?to=${encodeURIComponent(to)}&cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&account_id=${detail.email.account_id}${messageId ? '&message_id=' + encodeURIComponent(messageId) : ''}`)
+    router.push(`/compose?to=${encodeURIComponent(to)}&cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&account_id=${detail.email.account_id}${messageId ? '&message_id=' + encodeURIComponent(messageId) : ''}`)
   }
 
   const handleForward = async () => {
@@ -447,19 +452,6 @@ function MailPageInner() {
     toast.success(`已将 ${targets.length} 封邮件标记为已读`)
     setEmails(prev => prev.map(e => ({ ...e, is_read: true })))
     setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_read: true } } : prev)
-    setRefresh(n => n + 1)
-  }
-
-  const handleArchive = async () => {
-    if (!selectedId) return
-    try {
-      await api.mails.move(selectedId, 'Archive')
-      toast.success('邮件已归档')
-    } catch {
-      toast.error('归档失败，请重试')
-      return
-    }
-    resetDetail()
     setRefresh(n => n + 1)
   }
 
@@ -625,11 +617,13 @@ function MailPageInner() {
                 setMoreOpen(false)
                 if (!selectedId) return
                 const newStarred = !detail.email.is_starred
+                setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
+                setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
                 api.mails.markStar(selectedId, newStarred).then(() => {
-                  setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
-                  setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
                   refreshCounts()
                 }).catch(() => {
+                  setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: !newStarred } } : prev)
+                  setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: !newStarred } : e))
                   toast.error('标星失败，请重试')
                 })
               }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
@@ -672,10 +666,6 @@ function MailPageInner() {
                   {filterTabs.find(t => t.value === folder)?.label || folderLabelMap[folder] || '收件箱'}
                 </span>
                 <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>共 {totalCount || emails.length} 封</span>
-                <div className="hidden sm:flex items-center gap-1 h-7 px-2 rounded-[6px]" style={{ backgroundColor: 'var(--muted)', padding: '4px 8px' }}>
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--foreground-secondary)' }}>全部账号</span>
-                  <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--foreground-secondary)' }} />
-                </div>
               </div>
                <div className="flex items-center gap-2">
 <Tooltip text="刷新" side="bottom">
@@ -699,10 +689,15 @@ function MailPageInner() {
                   )}
                   <div className="relative flex-1">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
-                   <input ref={searchInputRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
-                     className="w-full h-10 pl-9 pr-4 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"
-                     style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
-                     placeholder="搜索邮件..." />
+                    <input ref={searchInputRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
+                      className="w-full h-10 pl-9 pr-8 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"
+                      style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+                      placeholder="搜索邮件..." />
+                    {searchQ && (
+                      <button onClick={() => setSearchQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
+                        <i className="ri-close-line w-3 h-3"></i>
+                      </button>
+                    )}
                  </div>
                </form>
           </div>
@@ -948,9 +943,19 @@ function MailPageInner() {
                   <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>附件（{detail.attachments.length}个）</div>
                   <div className="flex flex-wrap gap-2">
                     {detail.attachments.map((att, i) => (
-                      <a key={att.id} href={api.mails.attachmentUrl(detail.email.id, att.id)} download={att.filename}
+                      <button key={att.id} onClick={async () => {
+                        try {
+                          const resp = await fetch(api.mails.attachmentUrl(detail.email.id, att.id))
+                          if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+                          const blob = await resp.blob()
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url; a.download = att.filename; a.click()
+                          URL.revokeObjectURL(url)
+                        } catch { toast.error('附件下载失败，请重试') }
+                      }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-opacity hover:opacity-70"
-                        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--border)' }}>
+                        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--border)', cursor: 'pointer' }}>
                         <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                           style={{ backgroundColor: i % 2 === 0 ? 'var(--danger-bg)' : 'var(--success-bg)' }}>
                           <Paperclip className="w-4 h-4" style={{ color: i % 2 === 0 ? 'var(--danger)' : 'var(--success)' }} />
@@ -967,7 +972,7 @@ function MailPageInner() {
                           </span>
                         </span>
                         <Download className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>

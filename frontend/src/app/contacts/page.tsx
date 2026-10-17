@@ -134,8 +134,8 @@ export default function ContactsPage() {
       setContacts(prev => prev.filter(x => x.id !== c.id))
       setTotal(t => Math.max(0, t - 1))
       toast.success('已删除联系人')
-    } catch {
-      toast.error('删除失败')
+    } catch (e: any) {
+      toast.error(e.message || '删除失败')
     }
     setMenuId(null)
   }
@@ -227,7 +227,6 @@ export default function ContactsPage() {
                     <div className="flex flex-col items-start flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--foreground)', lineHeight: '22px' }}>{c.name || '(无名)'}</span>
-                        <Star className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
                       </div>
                       {c.title && <span style={{ fontSize: 13, color: 'var(--foreground-tertiary)', lineHeight: '18px' }}>{c.title}</span>}
                     </div>

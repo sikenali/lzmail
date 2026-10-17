@@ -19,6 +19,8 @@ export function DeleteConfirm({ open, title = '确认删除', message = '确定�
     try {
       await onConfirm()
       onCancel()
+    } catch {
+      // 操作失败，保持弹框打开让用户重试
     } finally {
       setConfirming(false)
     }

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 
 export type Settings = Record<string, string> & {
@@ -31,6 +32,7 @@ const defaults: Settings = {
   keep_attachments: 'true',
   compress_attachments: 'false',
   auto_cleanup: 'true',
+  auto_cleanup_days: '30',
   animations: 'true',
   archive_path: (() => {
     if (typeof navigator === 'undefined') return ''
@@ -172,7 +174,7 @@ export function useSettings() {
 
   const setSetting = useCallback((key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
-    api.settings.set({ [key]: value }).catch(() => {})
+    api.settings.set({ [key]: value }).catch(() => toast.error('设置保存失败'))
 
     if (key === 'theme') {
       applyTheme(value)
@@ -196,7 +198,7 @@ export function useSettings() {
 
   const setSettingsBatch = useCallback((batch: Record<string, string>) => {
     setSettings((prev) => ({ ...prev, ...batch }))
-    api.settings.set(batch).catch(() => {})
+    api.settings.set(batch).catch(() => toast.error('设置保存失败'))
     
     if (batch.theme) {
       applyTheme(batch.theme)

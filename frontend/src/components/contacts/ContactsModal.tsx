@@ -152,8 +152,8 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
       setContacts(prev => prev.filter(x => x.id !== c.id))
       setTotal(t => Math.max(0, t - 1))
       toast.success('已删除联系人')
-    } catch {
-      toast.error('删除失败')
+    } catch (e: any) {
+      toast.error(e.message || '删除失败')
     }
     setMenuId(null)
   }

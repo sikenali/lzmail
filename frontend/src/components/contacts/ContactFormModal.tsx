@@ -80,6 +80,7 @@ export function ContactFormModal({
   const saveContact = async () => {
     if (!form.name || !form.email) { toast.error('请填写姓名和邮箱'); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { toast.error('邮箱格式不正确'); return }
+    if (form.phone.trim() && !/^[\d\+\-\(\)\s]{6,20}$/.test(form.phone.trim())) { toast.error('电话格式不正确'); return }
     if (!hasAccount) { toast.error('请先在「账号管理」中添加邮箱账号'); return }
     setSaving(true)
     const extra = { phone: form.phone, company: form.company, title: form.title }

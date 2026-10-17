@@ -28,3 +28,5 @@ lzc/*.lpk
 lzc/output.lpk
 lzc/node-bin
 lzmail
+chrome-audit.log
+docs/ui-audit-*.md

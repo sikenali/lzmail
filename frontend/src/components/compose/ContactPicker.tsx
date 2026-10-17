@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { Plus, ChevronDown, Check } from '@/lib/icons'
 import { Tooltip } from '@/components/Tooltip'
@@ -31,10 +32,12 @@ export default function ContactPicker({
   value = '',
   onSelect,
   placeholder = '选择联系人',
+  accountId,
 }: {
   value?: string
   onSelect?: (emails: string[]) => void
   placeholder?: string
+  accountId?: number
 }) {
   const [allContacts, setAllContacts] = useState<Contact[]>([])
   const [filtered, setFiltered] = useState<Contact[]>([])
@@ -64,13 +67,13 @@ export default function ContactPicker({
   }, [value, allContacts])
 
   useEffect(() => {
-    api.contacts.list(undefined, 50, 0).then(result => {
+    api.contacts.list(accountId ?? undefined, 50, 0).then(result => {
       if (result && result.items && result.items.length > 0) {
         setAllContacts(result.items)
         setFiltered(result.items.slice(0, MAX_DISPLAY))
       }
     }).catch(() => {})
-  }, [])
+  }, [accountId])
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -93,9 +96,10 @@ export default function ContactPicker({
     }
     setLoading(true)
     try {
-      const result = await api.contacts.search(q, undefined, 50, 0)
+      const result = await api.contacts.search(q, accountId ?? undefined, 50, 0)
       setFiltered(result?.items || [])
     } catch {
+      toast.error('联系人搜索失败')
       setFiltered([])
     }
     setLoading(false)
@@ -158,7 +162,7 @@ export default function ContactPicker({
     setManualEmails([])
   }
 
-  const selectedCount = selected.size
+  const selectedCount = selected.size + manualEmails.length
 
   return (
     <div ref={wrapperRef} className="relative flex-1 min-w-0">

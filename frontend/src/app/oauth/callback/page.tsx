@@ -53,7 +53,7 @@ function OAuthCallbackInner() {
         scope: resp.scope,
       })
       setName(isGmail ? 'Gmail 账号' : 'Outlook 账号')
-      setEmail(isGmail ? '' : '')
+      setEmail('')
       setStatus('form')
     }).catch((e: any) => {
       setStatus('error')
@@ -80,6 +80,7 @@ function OAuthCallbackInner() {
 
   const handleSubmit = async () => {
     if (!email.trim()) { toast.error('请填写邮箱地址'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { toast.error('邮箱格式不正确'); return }
     if (!tokenData) return
     setStatus('loading')
     setMessage('正在保存账号...')
@@ -87,12 +88,14 @@ function OAuthCallbackInner() {
       const expSec = (Number.isFinite(tokenData.expires_in) && tokenData.expires_in > 0) ? tokenData.expires_in : 3600
       const expiresAt = new Date(Date.now() + expSec * 1000).toISOString()
       const isGmail = tokenData.provider === 'gmail'
-      await api.accounts.create({
+      const result = await api.accounts.create({
         name,
         email: email.trim(),
         imap_host: isGmail ? 'imap.gmail.com' : 'outlook.office365.com',
         smtp_host: isGmail ? 'smtp.gmail.com' : 'smtp.office365.com',
         username: email.trim(),
+        imap_port: isGmail ? 993 : 993,
+        smtp_port: isGmail ? 587 : 587,
         auth_method: 'oauth2',
         provider: tokenData.provider,
         access_token: tokenData.access_token,
@@ -102,6 +105,8 @@ function OAuthCallbackInner() {
       })
       setStatus('success')
       setMessage('授权成功，正在跳转...')
+      try { new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' }) } catch {}
+      if (result?.id) setTimeout(() => api.sync.account(result.id).catch(() => {}), 1000)
     } catch (e: any) {
       setStatus('error')
       setMessage(e?.message || '保存失败，请重试')

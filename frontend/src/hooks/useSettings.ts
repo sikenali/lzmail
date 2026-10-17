@@ -68,6 +68,7 @@ export function useSettings() {
 
   // 双轨镜像：同时写入传统 token 与 DESIGN token，使全站跟随强调色。
   // 默认色（空）则移除内联覆盖，回落到主题默认主色。
+  // 仅负责渲染，不做持久化；持久化只由 setSetting 的显式用户操作触发。
   const applyAccent = (color?: string | null) => {
     const root = document.documentElement
     const value = normalizeAccent(color)
@@ -82,7 +83,6 @@ export function useSettings() {
       if (v) root.style.setProperty(name, v)
       else root.style.removeProperty(name)
     })
-    localStorage.setItem('lzmail_accent_color', value)
   }
 
   const applyFontSize = (size: string) => {
@@ -102,8 +102,9 @@ export function useSettings() {
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     applyTheme(initialTheme)
 
-    // Apply saved accent color immediately
-    applyAccent(localStorage.getItem('lzmail_accent_color'))
+    // Apply saved accent color immediately (only if the user made an explicit choice)
+    const savedAccent = localStorage.getItem('lzmail_accent_color')
+    if (savedAccent !== null) applyAccent(savedAccent)
 
     // Apply saved font size immediately
     const savedFontSize = localStorage.getItem('lzmail_font_size')
@@ -149,7 +150,8 @@ export function useSettings() {
       // Use saved theme or system preference on error
       applyTheme(initialTheme)
       // Apply saved accent color
-      applyAccent(localStorage.getItem('lzmail_accent_color'))
+      const savedAccent = localStorage.getItem('lzmail_accent_color')
+      if (savedAccent !== null) applyAccent(savedAccent)
       // Apply saved animations
       if (savedAnimations === 'false') {
         document.body.classList.add('no-animations')
@@ -173,6 +175,7 @@ export function useSettings() {
     }
     if (key === 'accent_color') {
       applyAccent(value)
+      localStorage.setItem('lzmail_accent_color', normalizeAccent(value))
     }
     if (key === 'font_size') {
       applyFontSize(value)

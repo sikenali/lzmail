@@ -158,11 +158,10 @@ function MailPageInner() {
         setEmails(cached)
         setOffset(0)
         setHasMore(true)
-        return
+        setSelectedIds(new Set())
+      } else {
+        resetList()
       }
-      resetList()
-      fetchPage(0, false)
-      return
     }
     delete listCache.current[listKey]
     fetchPage(0, false)
@@ -434,6 +433,15 @@ function MailPageInner() {
   const refreshCounts = useCallback(() => {
     api.mails.counts().catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const handler = () => {
+      setRefresh(n => n + 1)
+      refreshCounts()
+    }
+    window.addEventListener('lzmail:refresh-mail', handler)
+    return () => window.removeEventListener('lzmail:refresh-mail', handler)
+  }, [refreshCounts])
 
   const handleDelete = async () => {
     if (!selectedId && selectedIds.size === 0) return

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { usePathname } from 'next/navigation'
 import { TopNav } from './TopNav'
 import { PageFooter } from './PageFooter'
@@ -48,10 +48,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--color-bg-main)' }}>
-      <TopNav
-        onOpenSettings={() => openHash('settings')}
-        onOpenAddAccount={() => openHash('account')}
-      />
+      <Suspense fallback={null}>
+        <TopNav
+          onOpenSettings={() => openHash('settings')}
+          onOpenAddAccount={() => openHash('account')}
+        />
+      </Suspense>
       <main className="flex-1 overflow-auto">{children}</main>
       <PageFooter
         onCompose={() => openHash('compose')}

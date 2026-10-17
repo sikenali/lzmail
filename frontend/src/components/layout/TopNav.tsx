@@ -1,7 +1,7 @@
 'use client'
 import { Search, getAccountAvatarBg } from '@/lib/icons'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
@@ -80,19 +80,17 @@ export function TopNav({
 }) {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { settings } = useSettings()
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
-  const [search, setSearch] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    setSearch(window.location.search)
-  }, [pathname])
-
+  const searchString = searchParams.toString()
+  const search = searchString ? `?${searchString}` : ''
   const fullPath = pathname + search
   const pageTitle = getPageTitle(fullPath)
 
@@ -135,6 +133,18 @@ export function TopNav({
   const avatarText = userAccount
     ? getInitials(userAccount.name || userAccount.email)
     : 'LZ'
+
+  const handleNavClick = (href: string) => {
+    const target = new URL(href, 'http://x')
+    if (target.pathname === '/mail' && pathname === '/mail') {
+      const targetFolder = target.searchParams.get('folder') || 'INBOX'
+      const currentFolder = searchParams.get('folder') || 'INBOX'
+      if (targetFolder === currentFolder) {
+        window.dispatchEvent(new Event('lzmail:refresh-mail'))
+      }
+    }
+    router.push(href)
+  }
 
   return (
     <header
@@ -206,7 +216,7 @@ export function TopNav({
           {navItems.map(item => (
             <button
               key={item.href}
-              onClick={() => router.push(item.href)}
+              onClick={() => handleNavClick(item.href)}
               style={{
                 display: 'flex',
                 alignItems: 'center',

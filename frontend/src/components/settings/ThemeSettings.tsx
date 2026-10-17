@@ -45,15 +45,6 @@ const THEMES: ThemeOption[] = [
     content: '#3A3A42',
     previewBg: '#1E1E24',
   },
-  {
-    id: 'system',
-    name: '跟随系统',
-    desc: '根据操作系统主题自动切换',
-    skin: '#E8E8E8',
-    topbar: '#F5F5F5',
-    content: '#D0D0D0',
-    previewBg: '#E8E8E8',
-  },
 ]
 
 const ACCENTS: AccentOption[] = [
@@ -97,42 +88,8 @@ export function ThemeSettings() {
     toast.success(`已切换布局：${LAYOUTS.find(l => l.id === id)?.name || ''}`)
   }
 
-  const handleResetAll = () => {
-    setSetting('theme', 'light')
-    setSetting('accent_color', '#c43d3d')
-    setSetting('layout_density', 'three')
-    toast.success('已恢复默认')
-  }
-
   return (
     <div className="flex flex-col gap-5" style={{ maxWidth: 1620 }}>
-      {/* Page Header Card */}
-      <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: '20px 24px' }}>
-        <div className="flex justify-between items-start gap-6">
-          <div className="flex-1 flex flex-col gap-1">
-            <div className="flex items-center gap-2" style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>
-              <span>首页</span>
-              <span style={{ color: 'var(--foreground-tertiary)' }}>/</span>
-              <span>设置中心</span>
-              <span style={{ color: 'var(--foreground-tertiary)' }}>/</span>
-              <span style={{ color: 'var(--foreground-secondary)', fontWeight: 500 }}>主题设置</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h1 style={{ fontSize: 30, fontWeight: 700, color: 'var(--foreground)', margin: '12px 0 0 0', letterSpacing: -0.5, lineHeight: 1.2 }}>主题设置</h1>
-              <p style={{ fontSize: 15, color: 'var(--foreground-secondary)', margin: '8px 0 0 0' }}>统一切换外观底色、强调色与导航布局模式，修改即时生效</p>
-            </div>
-          </div>
-          <button
-            onClick={handleResetAll}
-            className="inline-flex items-center gap-2 transition-all"
-            style={{ padding: '0 20px', height: 48, border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', borderRadius: 12, fontSize: 15, color: 'var(--foreground-secondary)', cursor: 'pointer', flexShrink: 0 }}
-          >
-            <i className="ri-restart-line w-[18px] h-[18px]"></i>
-            恢复默认
-          </button>
-        </div>
-      </div>
-
       {/* 外观主题 Card */}
       <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: '24px 28px' }}>
         <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>外观主题</div>

@@ -13,25 +13,6 @@ export function AboutSettings() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1620 }}>
-      {/* Page Header Card */}
-      <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: '20px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--foreground-tertiary)' }}>
-              <span>首页</span>
-              <span style={{ color: 'var(--foreground-tertiary)' }}>/</span>
-              <span>设置中心</span>
-              <span style={{ color: 'var(--foreground-tertiary)' }}>/</span>
-              <span style={{ color: 'var(--foreground-secondary)', fontWeight: 500 }}>关于</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <h1 style={{ fontSize: 30, fontWeight: 700, color: 'var(--foreground)', margin: '12px 0 0 0', letterSpacing: -0.5, lineHeight: 1.2 }}>关于</h1>
-              <p style={{ fontSize: 15, color: 'var(--foreground-secondary)', margin: '8px 0 0 0' }}>版本信息、开源仓库与版权声明</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* About Card */}
       <div
         style={{

@@ -46,7 +46,8 @@ export default function Dashboard() {
   const [syncStatus, setSyncStatus] = useState<Record<number, string>>({})
   const [syncProgress, setSyncProgress] = useState<Record<number, import('@/hooks/useSSE').SyncStatusData>>({})
   const [refresh, setRefresh] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [trendDays, setTrendDays] = useState(7)
   const trendCache = useRef<Record<number, Array<{date: string; receive: number; send: number}>>>({})
@@ -67,13 +68,19 @@ export default function Dashboard() {
   )
 
   useEffect(() => {
+    setLoading(true)
+    let failed = 0
+    const guard = <T,>(p: Promise<T>) => p.then(d => (d ?? (undefined as unknown)) as T).catch(() => { failed++; return undefined as unknown as T })
     Promise.all([
-      api.mails.stats(undefined, selectedDate).then(d => setStats(d ?? null)).catch(() => {}),
-      api.mails.counts().then(d => setSentCount(d?.sent ?? 0)).catch(() => {}),
-      api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}),
-      api.mails.list(undefined, 'INBOX', 5, 0).then(d => setRecentEmails(d ?? [])).catch(() => {}),
-      api.sync.status().then(d => setSyncStatus(d ?? {})).catch(() => {}),
-    ]).finally(() => setLoading(false))
+      guard(api.mails.stats(undefined, selectedDate)).then(d => d && setStats(d)),
+      guard(api.mails.counts()).then(d => d && setSentCount(d.sent ?? 0)),
+      guard(api.accounts.list()).then(d => d && setAccounts(d)),
+      guard(api.mails.list(undefined, 'INBOX', 5, 0)).then(d => d && setRecentEmails(d)),
+      guard(api.sync.status()).then(d => d && setSyncStatus(d)),
+    ]).finally(() => {
+      setLoading(false)
+      setLoadError(failed > 0)
+    })
   }, [refresh, selectedDate])
 
   useEffect(() => {
@@ -130,6 +137,12 @@ export default function Dashboard() {
           </div>
           <DateTimePicker value={selectedDate} onChange={setSelectedDate} />
         </div>
+
+        {loadError && !loading && (
+          <div className="mt-4 sm:mt-5 rounded-[10px] px-4 py-3 text-[13px]" style={{ backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger)', color: 'var(--danger)' }}>
+            部分数据加载失败，请检查网络或后端服务后刷新重试。
+          </div>
+        )}
 
         {/* Stats cards - 2×2 grid on mobile, 4-column flex on tablet+ */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 mt-5 sm:mt-7 md:mt-8">
@@ -259,23 +272,15 @@ export default function Dashboard() {
               </div>
               <div className="mt-4 sm:mt-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] sm:text-[13px]" style={{ color: 'var(--foreground-secondary)' }}>已使用</span>
+                  <span className="text-[12px] sm:text-[13px]" style={{ color: 'var(--foreground-secondary)' }}>附件已用</span>
                   <span className="text-[12px] sm:text-[13px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span>
                 </div>
                 <div className="h-1.5 sm:h-2 rounded-full overflow-hidden mt-1.5 sm:mt-2" style={{ backgroundColor: 'var(--muted)' }}>
                   <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, backgroundColor: 'var(--gold)' }} />
                 </div>
               </div>
-              <div className="flex gap-3 sm:gap-4 mt-3 sm:mt-4">
-                {[
-                  { label: '邮件 .eml', value: storageBytes > 0 ? formatBytes(storageBytes * 0.75) : '0 B' },
-                  { label: '附件', value: storageBytes > 0 ? formatBytes(storageBytes * 0.25) : '0 B' },
-                ].map((s, i) => (
-                  <div key={i} className="flex-1 bg-[var(--background)] rounded-xl p-2.5 sm:p-3">
-                    <div className="text-[10px] sm:text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{s.label}</div>
-                    <div className="text-sm sm:text-base font-bold mt-0.5 truncate" style={{ color: 'var(--foreground)' }}>{s.value}</div>
-                  </div>
-                ))}
+              <div className="text-[10px] sm:text-[11px] mt-2 sm:mt-3" style={{ color: 'var(--muted-foreground)' }}>
+                统计口径：附件占用（.eml 邮件正文文件不计入）
               </div>
             </div>
           </div>

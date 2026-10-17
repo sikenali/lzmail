@@ -1,6 +1,7 @@
 'use client'
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { AppShell } from '@/components/layout/AppShell'
 
@@ -78,7 +79,8 @@ function OAuthCallbackInner() {
   }, [status, router])
 
   const handleSubmit = async () => {
-    if (!email.trim() || !tokenData) return
+    if (!email.trim()) { toast.error('请填写邮箱地址'); return }
+    if (!tokenData) return
     setStatus('loading')
     setMessage('正在保存账号...')
     try {

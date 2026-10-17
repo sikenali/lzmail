@@ -93,28 +93,37 @@ func deterministicKey(id string) []byte {
 
 // encryptionKey 返回 32 字节 AES 密钥。
 // 优先级：ENCRYPTION_KEY 环境变量 > 确定性派生（OPENAPPID / package.yml / subdomain）> 随机生成并持久化。
+// 注意：genKeyMu 不可重入——每个分支必须独立加锁/解锁，禁止跨分支持有。
+var cachedKey []byte
+
 func encryptionKey() []byte {
+	if cachedKey != nil {
+		return cachedKey
+	}
 	// 1. 显式环境变量（最高优先级）
 	if key := os.Getenv("ENCRYPTION_KEY"); key != "" {
 		if decoded, err := hex.DecodeString(key); err == nil && len(decoded) == 32 {
+			cachedKey = decoded
 			return decoded
 		}
 	}
 	// 2. 已持久化的密钥文件（兼容旧部署）
 	if keyFile != "" {
 		genKeyMu.Lock()
-		defer genKeyMu.Unlock()
 		if data, err := os.ReadFile(keyFile); err == nil {
 			if decoded, err := hex.DecodeString(string(bytes.TrimSpace(data))); err == nil && len(decoded) == 32 {
+				genKeyMu.Unlock()
+				cachedKey = decoded
 				return decoded
 			}
 		}
+		genKeyMu.Unlock()
 	}
 	// 3. 确定性派生（LPK 升级场景：keyFile 丢失时使用）
-	id := derivationID()
-	if id != "" {
+	if id := derivationID(); id != "" {
 		key := deterministicKey(id)
 		log.Printf("[crypto] using deterministic encryption key derived from app identity: %s", id)
+		cachedKey = key
 		return key
 	}
 	// 4. 回退：随机生成（仅本地开发等非容器环境）
@@ -135,6 +144,7 @@ func encryptionKey() []byte {
 			return nil
 		}
 		log.Printf("[crypto] generated random encryption key (no app identity found)")
+		cachedKey = key
 		return key
 	}
 	log.Printf("[FATAL] ENCRYPTION_KEY not set and no key file - cannot securely store credentials. Set ENCRYPTION_KEY env var or run in data directory mode.")

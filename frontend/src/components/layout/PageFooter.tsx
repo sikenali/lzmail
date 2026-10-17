@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { Tooltip } from '@/components/Tooltip'
 
 function LogoIcon({ size = 20 }: { size?: number }) {
@@ -20,6 +21,7 @@ export function PageFooter({
   onCompose: () => void
   onContacts: () => void
 }) {
+  const router = useRouter()
   const actions = (
     <div className="flex items-center gap-2">
       <Tooltip text="写邮件">
@@ -77,7 +79,7 @@ export function PageFooter({
       <div
         className="flex items-center gap-2 shrink-0"
         style={{ cursor: 'pointer' }}
-        onClick={() => { window.location.href = '/' }}
+        onClick={() => router.push('/')}
       >
         <LogoIcon size={20} />
         <span

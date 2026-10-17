@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { CustomSelect } from '@/components/ui/CustomSelect'
+import { DeleteConfirm } from '@/components/DeleteConfirm'
 import type { MailStats, StorageTreeNode } from '@/types'
 import { Folder, FileText, RefreshCw, Trash2, Edit, Contact } from '@/lib/icons'
 
@@ -79,7 +80,7 @@ function formatBytes(b: number): string {
 export function StorageSettings() {
   const [stats, setStats] = useState<MailStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const { settings, setSetting } = useSettings()
+  const { settings, loading: settingsLoading, setSetting } = useSettings()
   const [accounts, setAccounts] = useState<Array<{ id: number; name?: string; email: string }>>([])
   const [editingPath, setEditingPath] = useState(false)
   const [pathInput, setPathInput] = useState('')
@@ -90,6 +91,7 @@ export function StorageSettings() {
   const treeRef = useRef<HTMLDivElement>(null)
   const [storageRoot, setStorageRoot] = useState<StorageTreeNode | null>(null)
   const [cleanupAccountId, setCleanupAccountId] = useState<number>(0)
+  const [cleanupConfirm, setCleanupConfirm] = useState<{ acc: { id: number; name?: string; email: string }; days: number; count: number } | null>(null)
 
   const archiveDir = settings.archive_dir || ''
   const archivePath = settings.archive_path || archiveDir || ''
@@ -110,8 +112,14 @@ export function StorageSettings() {
 
   useEffect(() => {
     api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    // 目录树必须在设置（服务端真实归档路径）加载完成后拉取，
+    // 否则会用浏览器默认推断路径（/home/user/...）请求导致 400。
+    if (settingsLoading) return
     api.storage.tree(archivePath).then(res => setStorageRoot(res.root)).catch(() => setStorageRoot(null))
-  }, [archivePath])
+  }, [archivePath, settingsLoading])
 
   const pathInputTouched = useRef(false)
   const reloadTree = () => {
@@ -144,11 +152,17 @@ export function StorageSettings() {
     setPathInput(archivePath); setEditingPath(true)
     loadDirTree(archiveDir)
   }
-  const handleSavePath = () => {
+  const handleSavePath = async () => {
     const p = pathInput.trim()
     if (!p) return
-    setSetting('archive_path', p); setEditingPath(false); setTreeOpen(false)
-    toast.success('归档目录已更新')
+    try {
+      await api.settings.set({ archive_path: p })
+      toast.success('归档目录已更新，重启服务后生效')
+      setEditingPath(false)
+      setTreeOpen(false)
+    } catch (e: any) {
+      toast.error(e?.message || '归档目录保存失败')
+    }
   }
   const handleCancelEdit = () => { setEditingPath(false); setTreeOpen(false); setDirError('') }
   const handleSelectDir = (path: string) => { setPathInput(path); loadDirTree(path) }
@@ -228,8 +242,8 @@ export function StorageSettings() {
         <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
           <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>存储统计</div>
           <div className="flex items-center gap-8">
-            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.75)}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml</div></div>
-            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes * 0.25)}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>附件</div></div>
+            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>附件占用</div></div>
+            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--muted-foreground)' }}>—</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml（未计入）</div></div>
             <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{totalEmails.toLocaleString()}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件总数</div></div>
             <div className="flex-1">
               <div className="flex items-center justify-between text-xs mb-1.5"><span style={{ color: 'var(--foreground-tertiary)' }}>已使用</span><span style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span></div>
@@ -261,15 +275,30 @@ export function StorageSettings() {
                   try {
                     const preview = await api.cleanup.preview(acc.id, d)
                     if (preview.count === 0) { toast.success(`${acc.name || acc.email} 没有需要清理的邮件`); return }
-                    const res = await api.cleanup.run(acc.id, d)
-                    toast.success(`${acc.name || acc.email}: ${res.message}`)
-                  } catch (e: any) { toast.error(e.message || '清理失败') }
+                    setCleanupConfirm({ acc, days: d, count: preview.count })
+                  } catch (e: any) { toast.error(e.message || '获取清理预览失败') }
                 }} className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-[12px] font-medium transition-all hover:opacity-80" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '0.7px solid var(--danger-border)' }}>
                   <Trash2 className="w-3.5 h-3.5" /> 立即清理
                 </button>
               )}
             </div>
           </div>
+          <DeleteConfirm
+            open={!!cleanupConfirm}
+            title="清理过期邮件"
+            message={cleanupConfirm ? `将删除「${cleanupConfirm.acc.name || cleanupConfirm.acc.email}」中超过 ${cleanupConfirm.days} 天的 ${cleanupConfirm.count} 封已删除邮件，此操作不可撤销。` : ''}
+            confirmText="清理"
+            onConfirm={async () => {
+              if (!cleanupConfirm) return
+              try {
+                const res = await api.cleanup.run(cleanupConfirm.acc.id, cleanupConfirm.days)
+                toast.success(`${cleanupConfirm.acc.name || cleanupConfirm.acc.email}: ${res.message}`)
+                api.mails.stats().then(d => setStats(d ?? null)).catch(() => {})
+              } catch (e: any) { toast.error(e.message || '清理失败') }
+              finally { setCleanupConfirm(null) }
+            }}
+            onCancel={() => setCleanupConfirm(null)}
+          />
           {accounts.length === 0 && (
             <div className="text-[12px] px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>请先添加邮箱账号后启用自动清理</div>
           )}

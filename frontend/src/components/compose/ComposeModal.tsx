@@ -86,8 +86,30 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
       setSubject(d.subject || '')
       if (d.body_html) { setBody(d.body_html); setTimeout(() => editorRef.current?.setContent?.(d.body_html), 100) }
       if (d.account_id) setAccountId(d.account_id)
-    }).catch(() => {})
+    }).catch((e: any) => toast.error(e?.message || '读取草稿失败'))
   }, [draftId])
+
+  // 更新已有草稿（PATCH）；失败抛出供调用方提示
+  const patchExistingDraft = async () => {
+    if (!draftId) return
+    const res = await fetch(`/api/v1/compose/drafts/${draftId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        account_id: accountId, to, cc, bcc, subject,
+        body_text: editorRef.current?.getText() || body,
+        body_html: editorRef.current?.getHTML() || body,
+        attachments: [],
+      })
+    })
+    if (!res.ok) {
+      let msg = ''
+      try { msg = JSON.parse(await res.text()).error || '' } catch {}
+      throw new Error(msg || `草稿更新失败（HTTP ${res.status}）`)
+    }
+    const data = await res.json()
+    if (data.id) setDraftId(data.id)
+  }
 
   useEffect(() => {
     if (!open || sending || savingDraft) return
@@ -95,13 +117,16 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
     if (!hasContent) return
     const timer = setInterval(() => {
       if (sending || savingDraft) return
-      const content = editorRef.current?.getHTML() || body
-      const data = { account_id: accountId, to, cc, bcc, subject, body_text: editorRef.current?.getText() || '', body_html: content, draft: true }
+      const data = { account_id: accountId, to, cc, bcc, subject, body_text: editorRef.current?.getText() || '', body_html: editorRef.current?.getHTML() || body, draft: true }
       setAutoSaving(true)
-      api.compose(data).then(() => { setLastAutoSaveTime(new Date()) }).catch(() => {}).finally(() => setAutoSaving(false))
+      // 已有草稿 → 更新同一行，避免每 60s 生成重复草稿；新建草稿记下 id 供后续自动保存复用
+      const p = draftId
+        ? patchExistingDraft()
+        : api.compose(data).then(res => { const id = (res as unknown as { id?: number })?.id; if (id) setDraftId(id) })
+      p.then(() => setLastAutoSaveTime(new Date())).catch(() => {}).finally(() => setAutoSaving(false))
     }, 60000)
     return () => clearInterval(timer)
-  }, [to, cc, bcc, subject, body, accountId, sending, savingDraft, open])
+  }, [to, cc, bcc, subject, body, accountId, sending, savingDraft, open, draftId])
 
   useEffect(() => {
     if (open) {
@@ -168,6 +193,12 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
         } catch {}
       }
       setTo(''); setCc(''); setBcc(''); setSubject(''); setBody(''); setAttachments([]); setScheduleAt('')
+      // 从草稿发出：删除草稿行，避免草稿箱残留（已发送邮件保留在 Sent）
+      if (draftId) {
+        const did = Number(draftId)
+        api.mails.delete(did).catch(() => {})
+        setDraftId(null)
+      }
       onClose()
     } catch (err: any) {
       toast.error(err?.message || '发送失败')
@@ -181,19 +212,8 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
     setSavingDraft(true)
     try {
       if (draftId) {
-        const res = await fetch(`/api/v1/compose/drafts/${draftId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            account_id: accountId, to, cc, bcc, subject,
-            body_text: editorRef.current?.getText() || body,
-            body_html: editorRef.current?.getHTML() || body,
-            attachments: [],
-          })
-        })
-        const data = await res.json()
+        await patchExistingDraft()
         toast.success('草稿已更新')
-        if (data.id) setDraftId(data.id)
       } else {
         const res = await api.compose({
           account_id: accountId, to, cc, bcc, subject,
@@ -201,7 +221,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
           body_html: editorRef.current?.getHTML() || body,
           draft: true,
         })
-        const newDraftId = (res as any)?.id
+        const newDraftId = (res as unknown as { id?: number })?.id
         toast.success('草稿已保存')
         if (newDraftId) setDraftId(newDraftId)
       }

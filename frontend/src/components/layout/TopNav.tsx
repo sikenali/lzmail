@@ -1,6 +1,6 @@
 'use client'
 import { Search, getAccountAvatarBg } from '@/lib/icons'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
@@ -93,7 +93,6 @@ export function TopNav({
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const searchString = searchParams.toString()
   const search = searchString ? `?${searchString}` : ''
@@ -447,7 +446,6 @@ export function TopNav({
               }}
             />
             <input
-              ref={searchInputRef}
               value={searchQ}
               onChange={e => setSearchQ(e.target.value)}
               onFocus={() => setSearchFocused(true)}

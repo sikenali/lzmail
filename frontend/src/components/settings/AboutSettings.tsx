@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Tooltip } from '@/components/Tooltip'
 
 export function AboutSettings() {
-  const [appVersion, setAppVersion] = useState('V1.0.0')
+  const [appVersion, setAppVersion] = useState('')
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function AboutSettings() {
 
         {/* Version */}
         <div style={{ marginTop: 8, fontSize: 14, color: 'var(--foreground-tertiary)', lineHeight: 1.4 }}>
-          版本：{appVersion}
+          版本：{appVersion || '开发版'}
         </div>
 
         {/* GitHub Link */}

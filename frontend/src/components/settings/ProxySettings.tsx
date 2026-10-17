@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
+import { api } from '@/lib/api'
 import { CustomSelect } from '@/components/ui/CustomSelect'
 import { X, Globe, Settings } from '@/lib/icons'
 
 export function ProxySettings() {
-  const { settings, setSetting } = useSettings()
+  const { settings } = useSettings()
   const [proxyMode, setProxyMode] = useState(settings.proxy_mode || 'none')
   const [proxyProto, setProxyProto] = useState(settings.proxy_proto || 'http')
   const [proxyHost, setProxyHost] = useState(settings.proxy_host || '')
@@ -21,16 +22,31 @@ export function ProxySettings() {
   }, [settings.proxy_mode, settings.proxy_proto, settings.proxy_host, settings.proxy_port])
 
   const handleSave = async () => {
-    setSaving(true)
-    setSetting('proxy_mode', proxyMode)
-    if (proxyMode === 'custom') {
-      setSetting('proxy_proto', proxyProto)
-      setSetting('proxy_host', proxyHost)
-      setSetting('proxy_port', proxyPort)
+    if (proxyMode === 'custom' && !proxyHost.trim()) {
+      toast.error('请填写代理服务器地址')
+      return
     }
-    await new Promise(r => setTimeout(r, 300))
-    setSaving(false)
-    toast.success('代理设置已保存，重启服务后生效')
+    const portNum = Number(proxyPort)
+    if (proxyMode === 'custom' && (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535)) {
+      toast.error('代理端口需为 1-65535 的整数')
+      return
+    }
+    setSaving(true)
+    try {
+      // 单次原子写，避免 4 个并发 POST 相互覆盖（lost update）
+      const payload: Record<string, string> = { proxy_mode: proxyMode }
+      if (proxyMode === 'custom') {
+        payload.proxy_proto = proxyProto
+        payload.proxy_host = proxyHost.trim()
+        payload.proxy_port = String(portNum)
+      }
+      await api.settings.set(payload)
+      toast.success('代理设置已保存，重启服务后生效')
+    } catch (e: any) {
+      toast.error(e?.message || '代理设置保存失败')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

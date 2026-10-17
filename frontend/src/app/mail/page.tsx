@@ -60,12 +60,12 @@ function MailPageInner() {
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const listRef = useRef<HTMLDivElement | null>(null)
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const listCache = useRef<Record<string, Email[]>>({})
   const reqId = useRef(0)
   const prevListKeyRef = useRef('')
   const [firstLoad, setFirstLoad] = useState(true)
   const [storeEmpty, setStoreEmpty] = useState(false)
+  const storeEmptyRef = useRef(storeEmpty)
   const scrollHandlerRef = useRef<() => void>(() => {})
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
@@ -74,6 +74,7 @@ function MailPageInner() {
   const detailCache = useRef<Map<number, EmailDetail>>(new Map())
   const { settings } = useSettings()
   const mailDensity: 'comfortable' | 'compact' = (settings.mail_density as 'comfortable' | 'compact') || 'comfortable'
+  const listWidth = settings.layout_density === 'two' ? 'md:w-[280px] lg:w-[340px]' : 'md:w-[320px] lg:w-[420px]'
 
   const isMobile = useIsMobile()
 
@@ -87,6 +88,14 @@ function MailPageInner() {
     }
   }
 
+  // 搜索态下“全选”只能作用于已加载的搜索结果（后端无 all_in_search 语义）
+  const searching = Boolean(debouncedSearch && debouncedSearch.trim())
+  const bulkTarget = () => selectAllChecked
+    ? (searching
+      ? { allInFolder: false, ids: emails.map(e => e.id) as number[] | undefined, folder: undefined as string | undefined, count: emails.length }
+      : { allInFolder: true, ids: undefined as number[] | undefined, folder: folder === 'ALL' ? '' : folder, count: totalCount })
+    : { allInFolder: false, ids: Array.from(selectedIds) as number[] | undefined, folder: undefined as string | undefined, count: selectedIds.size }
+
   useSSE(() => {
     setRefresh(n => n + 1)
     refreshCounts()
@@ -95,15 +104,12 @@ function MailPageInner() {
     refreshCounts()
   })
 
-  useEffect(() => {
-    const timer = setInterval(() => setRefresh(n => n + 1), 30 * 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
-
   const loadAccounts = useCallback(async () => {
     try {
       const accs = await api.accounts.list()
-      setStoreEmpty(!accs || accs.length === 0)
+      const empty = !accs || accs.length === 0
+      storeEmptyRef.current = empty
+      setStoreEmpty(empty)
     } catch {}
   }, [])
 
@@ -145,7 +151,10 @@ function MailPageInner() {
       setHasMore(more)
     } catch {
       if (id !== reqId.current) return
-      if (!append) setEmails([])
+      if (!append) {
+        setEmails([])
+        toast.error('邮件列表加载失败，请检查网络或后端服务')
+      }
       setTotalCount(0)
       setHasMore(false)
     } finally {
@@ -229,13 +238,11 @@ function MailPageInner() {
       if (d) detailCache.current.set(id, d)
       setDetail(d)
       return d
-    } catch { setDetail(null); return null }
+    } catch { setDetail(null); toast.error('邮件加载失败，请重试'); return null }
   }, [])
 
   const filterTabs = [
     { label: '所有邮件', value: 'ALL' },
-    { label: '未读', value: 'UNSEEN' },
-    { label: '有附件', value: 'HASATTACH' },
     { label: '已标星', value: 'STARRED' },
   ]
 
@@ -249,7 +256,13 @@ function MailPageInner() {
     }
     // 草稿箱：点击邮件进入编辑模式
     if (folder === 'Drafts') {
-      const draft = await api.mails.getDraft(id)
+      let draft: Awaited<ReturnType<typeof api.mails.getDraft>>
+      try {
+        draft = await api.mails.getDraft(id)
+      } catch (e: any) {
+        toast.error(e?.message || '读取草稿失败')
+        return
+      }
       if (draft) {
         router.push(`/compose?draft_id=${id}&to=${encodeURIComponent(draft.to)}&cc=${encodeURIComponent(draft.cc)}&subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body_html || draft.body_text)}&account_id=${draft.account_id}${draft.message_id ? '&message_id=' + encodeURIComponent(draft.message_id) : ''}`)
         return
@@ -289,14 +302,15 @@ function MailPageInner() {
     if (!selectedId && selectedIds.size === 0) return
     try {
       if (selectedIds.size > 1 || selectAllChecked) {
+        const bt = bulkTarget()
         await api.mails.bulk({
           action: 'move',
-          all_in_folder: selectAllChecked,
-          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
-          ids: selectAllChecked ? undefined : Array.from(selectedIds),
+          all_in_folder: bt.allInFolder,
+          folder: bt.folder,
+          ids: bt.ids,
           destination_folder: folder
         })
-        const count = selectAllChecked ? totalCount : selectedIds.size
+        const count = bt.count
         toast.success(`已移动 ${count} 封邮件`)
         if (selectAllChecked) {
           setRefresh(n => n + 1)
@@ -327,23 +341,26 @@ function MailPageInner() {
         // When detail is null (bulk select without opening), check first selected email
         const targetEmail = detail?.email || emails.find(e => selectedIds.has(e.id))
         const isRead = targetEmail?.is_read ?? false
+        const bt = bulkTarget()
         await api.mails.bulk({
           action: isRead ? 'mark_unread' : 'mark_read',
-          all_in_folder: selectAllChecked,
-          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
-          ids: selectAllChecked ? undefined : Array.from(selectedIds)
+          all_in_folder: bt.allInFolder,
+          folder: bt.folder,
+          ids: bt.ids
         })
-        const count = selectAllChecked ? totalCount : selectedIds.size
+        const count = bt.count
         toast.success(`已标记 ${count} 封邮件为${isRead ? '未读' : '已读'}`)
         if (selectAllChecked) {
           setRefresh(n => n + 1)
         } else {
           setEmails(prev => prev.map(e => selectedIds.has(e.id) ? { ...e, is_read: !isRead } : e))
-          setTotalCount(prev => Math.max(0, prev - count))
         }
       } else {
-        await api.mails.markRead(selectedId!)
-        toast.success(detail?.email.is_read ? '已标记为未读' : '已标记为已读')
+        // 单封切换读/未读：后端无单封 unread 端点，走 bulk(ids)
+        const isRead = detail?.email.is_read ?? false
+        await api.mails.bulk({ action: isRead ? 'mark_unread' : 'mark_read', ids: [selectedId!] })
+        toast.success(isRead ? '已标记为未读' : '已标记为已读')
+        setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_read: !isRead } : e))
       }
     } catch {
       toast.error('操作失败，请重试')
@@ -356,13 +373,14 @@ function MailPageInner() {
 
   const handleBulk = async (action: string) => {
     try {
+      const bt = bulkTarget()
       await api.mails.bulk({
         action,
-        all_in_folder: selectAllChecked,
-        folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
-        ids: selectAllChecked ? undefined : Array.from(selectedIds)
+        all_in_folder: bt.allInFolder,
+        folder: bt.folder,
+        ids: bt.ids
       })
-      const count = selectAllChecked ? totalCount : selectedIds.size
+      const count = bt.count
       toast.success(`已处理 ${count} 封邮件`)
       setSelectedIds(new Set())
       setSelectedId(null)
@@ -408,8 +426,9 @@ function MailPageInner() {
       }
       await api.mails.bulk({
         action: 'mark_read',
-        all_in_folder: true,
-        folder: folder === 'ALL' ? '' : folder,
+        all_in_folder: !searching,
+        folder: !searching ? (folder === 'ALL' ? '' : folder) : undefined,
+        ids: searching ? targets.map(e => e.id) : undefined
       })
     } catch {
       toast.error('操作失败，请重试')
@@ -451,17 +470,28 @@ function MailPageInner() {
     return () => window.removeEventListener('lzmail:refresh-mail', handler)
   }, [refreshCounts])
 
+  useEffect(() => {
+    // 空库（无账号）时不重载列表，只轻量复查账号，避免定时刷新造成无谓重渲染
+    const timer = setInterval(() => {
+      if (storeEmptyRef.current) { loadAccounts(); return }
+      setRefresh(n => n + 1)
+      refreshCounts()
+    }, 30 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [loadAccounts, refreshCounts])
+
   const handleDelete = async () => {
     if (!selectedId && selectedIds.size === 0) return
     try {
       if (selectedIds.size > 1 || selectAllChecked) {
+        const bt = bulkTarget()
         await api.mails.bulk({
           action: 'delete',
-          all_in_folder: selectAllChecked,
-          folder: selectAllChecked ? (folder === 'ALL' ? '' : folder) : undefined,
-          ids: selectAllChecked ? undefined : Array.from(selectedIds)
+          all_in_folder: bt.allInFolder,
+          folder: bt.folder,
+          ids: bt.ids
         })
-        const count = selectAllChecked ? totalCount : selectedIds.size
+        const count = bt.count
         toast.success(`已删除 ${count} 封邮件`)
         if (selectAllChecked) {
           setRefresh(n => n + 1)
@@ -489,15 +519,20 @@ function MailPageInner() {
   }
 
   const handleRefresh = async () => {
+    if (syncing || storeEmpty) return
     setSyncing(true)
+    let synced = false
     try {
       await api.sync.all()
-    } catch {}
+      synced = true
+    } catch (e: any) {
+      toast.error(e?.message || '同步失败，请重试')
+    }
     await loadAccounts()
     setSyncing(false)
     setRefresh(n => n + 1)
     refreshCounts()
-    toast.success('已同步最新邮件')
+    if (synced) toast.success('已同步最新邮件')
   }
 
   const handleNext = () => {
@@ -584,6 +619,8 @@ function MailPageInner() {
                   setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
                   setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
                   refreshCounts()
+                }).catch(() => {
+                  toast.error('标星失败，请重试')
                 })
               }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className={`ri-star${detail.email.is_starred ? '-fill' : '-line'} w-4 h-4`} style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)' }}></i>
@@ -603,7 +640,7 @@ function MailPageInner() {
     <AppShell>
       <div className="flex h-full relative">
         {/* Email list */}
-        <div className={`${mobileView === 'detail' ? 'hidden md:flex' : 'flex'} w-full md:w-[320px] lg:w-[420px] border-r shrink-0 flex flex-col`} style={{ backgroundColor: 'var(--background)', borderColor: 'var(--card-border)' }}>
+        <div className={`${mobileView === 'detail' ? 'hidden md:flex' : 'flex'} w-full ${listWidth} border-r shrink-0 flex flex-col`} style={{ backgroundColor: 'var(--background)', borderColor: 'var(--card-border)' }}>
           {/* Mobile top bar when in detail view */}
           {mobileView === 'detail' && (
             <div className="flex items-center h-12 px-4 shrink-0 md:hidden border-b" style={{ backgroundColor: 'var(--background)', borderBottom: '1px solid var(--card-border)' }}>
@@ -632,15 +669,15 @@ function MailPageInner() {
               </div>
                <div className="flex items-center gap-2">
 <Tooltip text="刷新" side="bottom">
-                  <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                    <RefreshCw className={`w-4 h-4 ${(firstLoad && loading) || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', animationDuration: '0.8s' }} />
+                  <button onClick={handleRefresh} disabled={storeEmpty} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--muted)', opacity: storeEmpty ? 0.35 : 1 }}>
+                    <RefreshCw className={`w-4 h-4 ${(firstLoad && loading) || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', opacity: storeEmpty ? 0.5 : 1, animationDuration: '0.8s' }} />
                   </button>
 </Tooltip>
                </div>
             </div>
                <form onSubmit={e => e.preventDefault()} className="flex items-center gap-2 mt-3">
                   {emails.length > 0 && (
-                    <div className="shrink-0 mt-0.5 cursor-pointer" onClick={handleSelectAll} title={selectAllChecked ? '取消全选' : '全选当前页邮件'}>
+                    <div className="shrink-0 mt-0.5 cursor-pointer" onClick={handleSelectAll} title={selectAllChecked ? '取消全选' : (searching ? '全选当前页搜索结果' : '全选当前文件夹邮件')}>
                       {selectAllChecked ? (
                         <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
                           <Check className="w-3 h-3" style={{ color: '#fff' }} />
@@ -682,10 +719,16 @@ function MailPageInner() {
                   </div>
                   {group.items.map((email) => (
                     <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
-                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect} onStar={async (id, starred) => {
-                          await api.mails.markStar(id, starred)
-                          setEmails(prev => prev.map(e => e.id === id ? { ...e, is_starred: starred } : e))
-                          refreshCounts()
+                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect}                         onStar={async (id, starred) => {
+                          const prev = !starred
+                          setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: starred } : e))
+                          try {
+                            await api.mails.markStar(id, starred)
+                            refreshCounts()
+                          } catch {
+                            setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: prev } : e))
+                            toast.error('标星失败，请重试')
+                          }
                         }} density={mailDensity} isMobile={isMobile && mobileView !== 'detail'} />
                       </div>
                   ))}
@@ -751,10 +794,16 @@ function MailPageInner() {
                    <Tooltip text={detail.email.is_starred ? '取消标星' : '标星'}><button onClick={async () => {
                      if (!selectedId) return
                      const newStarred = !detail.email.is_starred
-                     await api.mails.markStar(selectedId, newStarred)
                      setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
                      setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
-                     refreshCounts()
+                     try {
+                       await api.mails.markStar(selectedId, newStarred)
+                       refreshCounts()
+                     } catch {
+                       setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: !newStarred } } : prev)
+                       setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: !newStarred } : e))
+                       toast.error('标星失败，请重试')
+                     }
                    }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
                      <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
                    </button></Tooltip>
@@ -808,10 +857,16 @@ function MailPageInner() {
                       onClick={async () => {
                         if (!selectedId) return
                         const newStarred = !detail.email.is_starred
-                        await api.mails.markStar(selectedId, newStarred)
                         setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
                         setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
-                        refreshCounts()
+                        try {
+                          await api.mails.markStar(selectedId, newStarred)
+                          refreshCounts()
+                        } catch {
+                          setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: !newStarred } } : prev)
+                          setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: !newStarred } : e))
+                          toast.error('标星失败，请重试')
+                        }
                       }}
                       className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-all hover:opacity-80"
                       style={{ backgroundColor: 'var(--muted)' }}
@@ -864,8 +919,13 @@ function MailPageInner() {
               {detail.email.body_preview && !detail.body_html && (
                 <div className="p-4 text-center" style={{ backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning)' }}>
                   <button onClick={async () => {
-                    const res = await api.mails.reextractBody(detail.email.id);
-                    if (res?.body_html) setDetail(prev => prev ? { ...prev, body_html: res.body_html } : prev);
+                    try {
+                      const res = await api.mails.reextractBody(detail.email.id);
+                      if (res?.body_html) setDetail(prev => prev ? { ...prev, body_html: res.body_html } : prev);
+                      else toast.error('未解析到正文内容')
+                    } catch {
+                      toast.error('正文重新加载失败，请重试')
+                    }
                   }} className="text-sm px-4 py-2 rounded bg-[var(--warning)] text-[var(--warning-foreground)]">
                     重新加载正文
                   </button>

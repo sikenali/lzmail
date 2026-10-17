@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
-  Plus, Trash2, Check, Edit, ChevronDown, User, Eye, EyeOff, Mail, X, RefreshCw,
+  Plus, Trash2, Check, Edit, User, Eye, EyeOff, Mail, X, RefreshCw,
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { Modal } from '@/components/layout/Modal'
@@ -32,57 +32,6 @@ function ProviderLogo({ provider, size = 18 }: { provider: string; size?: number
     </span>
   )
 }
-function CustomSelect({
-    value, options, onChange, width = 120,
-  }: {
-    value: string
-    options: Array<{ value: string; label: string; provider?: string }>
-    onChange: (v: string) => void
-    width?: number
-  }) {
-   const [open, setOpen] = useState(false)
-   const ref = useRef<HTMLDivElement>(null)
-
-   useEffect(() => {
-     const handler = (e: MouseEvent) => {
-       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-     }
-     document.addEventListener('mousedown', handler)
-     return () => document.removeEventListener('mousedown', handler)
-   }, [])
-
-   const selected = options.find(o => o.value === value)
-   return (
-     <div ref={ref} className="relative" style={{ width }}>
-       <button
-         onClick={() => setOpen(!open)}
-         className="flex items-center gap-2 w-full h-9 px-3 rounded-lg text-sm outline-none transition-colors"
-         style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-       >
-         {'provider' in (selected || {}) && selected?.provider ? <ProviderLogo provider={selected.provider} size={16} /> : null}
-         <span className="flex-1 text-left truncate">{selected?.label || value}</span>
-         <ChevronDown style={{ width: 14, height: 14, flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
-       </button>
-       {open && (
-          <div className="absolute z-50 top-full mt-1 left-0 w-full rounded-lg overflow-hidden shadow-lg"
-            style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', minWidth: width }}
-          >
-            {options.map(opt => (
-              <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
-                className="w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[var(--color-bg-secondary)] flex items-center gap-2"
-                style={{ color: opt.value === value ? 'var(--color-primary)' : 'var(--color-text-primary)', backgroundColor: opt.value === value ? 'var(--color-bg-secondary)' : 'transparent' }}
-              >
-                {opt.value === value && <Check style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--color-primary)' }} />}
-                {'provider' in opt && opt.provider ? <ProviderLogo provider={opt.provider} size={18} /> : null}
-                {opt.label}
-              </button>
-            ))}
-          </div>
-       )}
-     </div>
-   )
- }
-
 type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease' | 'icloud' | 'yahoo' | 'other'
 
 const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
@@ -140,6 +89,18 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
     guide: 'Yahoo 需生成「应用密码」：登录 Yahoo 账号 → 账户信息 → 账户安全 → 应用密码，生成后输入此处。',
   },
 }
+
+// 服务商选择器：横排 chip，默认「自动识别」
+const PROVIDER_CHIPS: Array<{ key: ProviderKey; label: string; provider: string }> = [
+  { key: 'auto', label: '自动识别', provider: 'auto' },
+  { key: 'gmail', label: 'Gmail', provider: 'gmail' },
+  { key: 'outlook', label: 'Outlook', provider: 'outlook' },
+  { key: 'qq', label: 'QQ邮箱', provider: 'qq' },
+  { key: 'netease', label: '网易126', provider: 'netease' },
+  { key: 'icloud', label: 'iCloud', provider: 'icloud' },
+  { key: 'yahoo', label: 'Yahoo', provider: 'yahoo' },
+  { key: 'other', label: 'Exchange', provider: 'other' },
+]
 
 function detectProvider(email: string): ProviderKey {
   const domain = (email || '').split('@')[1]?.toLowerCase().trim() || ''
@@ -204,7 +165,7 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
    const handleOAuthLogin = async (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
      try {
        const apiUrl = typeof window !== 'undefined' ? window.location.origin : ''
-       const resp = await api.oauth.authUrl(key, `${apiUrl}/v1/oauth/${key}/callback`)
+       const resp = await api.oauth.authUrl(key, `${apiUrl}/oauth/callback`)
        if (!resp?.auth_url) { toast.error('未配置 OAuth 客户端凭据'); return }
        sessionStorage.setItem('oauth_state', resp.state)
        sessionStorage.setItem('oauth_provider', key)
@@ -244,9 +205,13 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
      if (!open) { resetForm(); setSelectedId(null) }
    }, [open])
 
-   const handleCreate = async () => {
-     if (!form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
-     setSaving(true)
+const handleCreate = async () => {
+      if (!form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { toast.error('邮箱格式不正确'); return }
+      if (!Number.isInteger(form.imap_port) || form.imap_port < 1 || form.imap_port > 65535) { toast.error('IMAP 端口需为 1-65535 的整数'); return }
+      if (!Number.isInteger(form.smtp_port) || form.smtp_port < 1 || form.smtp_port > 65535) { toast.error('SMTP 端口需为 1-65535 的整数'); return }
+      if ((form.auth_method || 'password') !== 'oauth2' && !form.username.trim()) { toast.error('请填写用户名'); return }
+      setSaving(true)
      try {
        const result = await api.accounts.create({
          name: form.name, email: form.email, imap_host: form.imap_host,
@@ -305,9 +270,13 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
      resetForm()
    }
 
-   const handleSaveEdit = async () => {
-     if (!selectedId || !form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
-     setSaving(true)
+const handleSaveEdit = async () => {
+      if (!selectedId || !form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { toast.error('邮箱格式不正确'); return }
+      if (!Number.isInteger(form.imap_port) || form.imap_port < 1 || form.imap_port > 65535) { toast.error('IMAP 端口需为 1-65535 的整数'); return }
+      if (!Number.isInteger(form.smtp_port) || form.smtp_port < 1 || form.smtp_port > 65535) { toast.error('SMTP 端口需为 1-65535 的整数'); return }
+      if ((form.auth_method || 'password') !== 'oauth2' && !form.username.trim()) { toast.error('请填写用户名'); return }
+      setSaving(true)
      try {
        await api.accounts.update(selectedId, {
          name: form.name, email: form.email, imap_host: form.imap_host,
@@ -418,9 +387,7 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
               {/* Account list */}
               {loading ? (
                 <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap' }}>加载中...</div>
-              ) : accounts.length === 0 ? (
-                <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap' }}>暂无账号</div>
-              ) : (
+              ) : accounts.length === 0 ? null : (
                 accounts.map(a => {
                   const ac = getAccountAvatarBg(a)
                   const isSelected = selectedId === a.id
@@ -473,37 +440,45 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
             {/* Right: Form */}
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
               <div className="p-1" style={{ paddingBottom: 16 }}>
-               <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
-                 <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16, fontFamily: 'var(--font-family-cn)' }}>
-                   {isEditing ? '编辑账号' : '新建账号'}
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-                   <span style={{ fontSize: 12, flexShrink: 0, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>邮箱服务商：</span>
-                   <CustomSelect
-                     value={provider}
-                     width={140}
-                     onChange={(v) => {
-                       const key = v as ProviderKey
-                       if (key === 'auto' || key === 'other') setProvider(key)
-                       else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
-                     }}
-                    options={[
-                       { value: 'auto', label: '自动识别', provider: 'auto' },
-                       { value: 'gmail', label: 'Gmail', provider: 'gmail' },
-                       { value: 'outlook', label: 'Outlook', provider: 'outlook' },
-                       { value: 'qq', label: 'QQ邮箱', provider: 'qq' },
-                       { value: 'netease', label: '网易126', provider: 'netease' },
-                       { value: 'icloud', label: 'iCloud', provider: 'icloud' },
-                       { value: 'yahoo', label: 'Yahoo', provider: 'yahoo' },
-                       { value: 'other', label: 'Exchange', provider: 'other' },
-                     ]}
-                   />
-                   {activeProvider && (
-                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 8, fontSize: 12, backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)' }}>
-                       <span style={{ fontWeight: 600, color: activeProvider.brand }}>{activeProvider.label}</span>
-                     </div>
-                   )}
-                 </div>
+                <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
+                  <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 16 }}>
+                    {PROVIDER_CHIPS.map(({ key, label, provider }) => {
+                      const active = provider === key
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => {
+                            if (key === 'auto' || key === 'other') setProvider(key)
+                            else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            height: 32,
+                            padding: '0 12px',
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: active ? 600 : 400,
+                            cursor: 'pointer',
+                            backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--color-bg-white)',
+                            border: active ? '1px solid var(--color-primary)' : '0.7px solid var(--color-border)',
+                            color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                            fontFamily: 'var(--font-family-cn)',
+                            transition: 'all var(--transition-base)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <ProviderLogo provider={provider} size={15} />
+                          {label}
+                          {active && <Check style={{ width: 12, height: 12, flexShrink: 0 }} />}
+                        </button>
+                      )
+                    })}
+                  </div>
                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                      <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>账号名称</label>

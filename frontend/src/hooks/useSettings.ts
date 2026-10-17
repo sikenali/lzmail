@@ -127,12 +127,17 @@ export function useSettings() {
     mediaQuery.addEventListener('change', handleSystemThemeChange)
 
     api.settings.get().then((s) => {
-      setSettings((prev) => ({ ...defaults, ...s }))
+      const mergedSettings = { ...defaults, ...s }
+      const localStorageTheme = localStorage.getItem('lzmail_theme')
+      if (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme)) {
+        mergedSettings.theme = localStorageTheme
+      }
+      setSettings(mergedSettings)
       // Apply theme: prefer the user's explicit localStorage choice, fall back to API, then defaults
       const apiTheme = s?.theme
-      const localStorageTheme = localStorage.getItem('lzmail_theme')
-      const themeToApply = (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme)
-        ? localStorageTheme
+      const lsThemeForApply = localStorage.getItem('lzmail_theme')
+      const themeToApply = (lsThemeForApply && ['light', 'dark', 'system'].includes(lsThemeForApply)
+        ? lsThemeForApply
         : (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) ? apiTheme : defaults.theme)) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
       // Apply accent color (localStorage 的显式选择优先，其次 API，再次默认)

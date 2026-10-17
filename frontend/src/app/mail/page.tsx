@@ -153,7 +153,9 @@ function MailPageInner() {
       if (id !== reqId.current) return
       if (!append) {
         setEmails([])
-        toast.error('邮件列表加载失败，请检查网络或后端服务')
+        if (!storeEmptyRef.current) {
+          toast.error('邮件列表加载失败，请检查网络或后端服务')
+        }
       }
       setTotalCount(0)
       setHasMore(false)

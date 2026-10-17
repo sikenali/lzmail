@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 import { Plus, ChevronDown, Check } from '@/lib/icons'
+import { Tooltip } from '@/components/Tooltip'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
@@ -224,14 +225,16 @@ export default function ContactPicker({
           autoComplete="off"
           onClick={e => e.stopPropagation()}
         />
-        <button
-          onClick={e => { e.stopPropagation(); setOpen(true) }}
-          className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
-          style={{ color: 'var(--foreground-secondary)' }}
-          title="选择联系人"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
+        <Tooltip text="选择联系人">
+          <button
+            onClick={e => { e.stopPropagation(); setOpen(true) }}
+            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
+            style={{ color: 'var(--foreground-secondary)' }}
+            aria-label="选择联系人"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* 弹框 */}

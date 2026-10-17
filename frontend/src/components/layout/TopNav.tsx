@@ -5,6 +5,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
+import { Tooltip } from '@/components/Tooltip'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { Account } from '@/types'
 
 type NavItem = {
@@ -82,6 +84,8 @@ export function TopNav({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { settings } = useSettings()
+  const isMobile = useIsMobile()
+  const [folderMenuOpen, setFolderMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
@@ -200,66 +204,169 @@ export function TopNav({
       </div>
 
       <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-        }}
+        style={isMobile
+          ? { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+          : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflowX: 'auto', overflowY: 'hidden' }
+        }
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            flexShrink: 0,
-          }}
-        >
-          {navItems.map(item => (
+        {isMobile ? (
+          <div style={{ position: 'relative' }}>
             <button
-              key={item.href}
-              onClick={() => handleNavClick(item.href)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                backgroundColor: isActive(item.href, fullPath) ? 'var(--color-primary-soft)' : 'transparent',
-                color: isActive(item.href, fullPath) ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-family-cn)',
-                fontSize: '13px',
-                fontWeight: 500,
-                transition: 'all var(--transition-base)',
-              }}
-              title={item.label}
+              onClick={() => setFolderMenuOpen(v => !v)}
+              className="nav-btn"
+              aria-label="邮件文件夹"
+              aria-expanded={folderMenuOpen}
             >
-              <div style={{ position: 'relative' }}>
-                <i
-                  className={item.icon}
+              <i className="ri-folder-2-line icon"></i>
+              {inboxUnread > 0 && (
+                <span
                   style={{
-                    fontSize: '16px',
-                    width: '16px',
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    minWidth: '16px',
                     height: '16px',
-                    display: 'inline-flex',
+                    padding: '0 4px',
+                    borderRadius: '9999px',
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#ffffff',
                   }}
-                ></i>
-                {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
-                  <span
+                >
+                  {inboxUnread > 99 ? '99+' : inboxUnread}
+                </span>
+              )}
+            </button>
+            {folderMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" style={{ backgroundColor: 'transparent' }} onClick={() => setFolderMenuOpen(false)} />
+                <div
+                  className="absolute z-50"
+                  style={{
+                    top: 'calc(100% + 8px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 224,
+                    backgroundColor: 'var(--color-bg-white)',
+                    border: '1px solid var(--color-border-soft)',
+                    borderRadius: 12,
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
+                    padding: 6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  {navItems.map(item => {
+                    const active = isActive(item.href, fullPath)
+                    return (
+                      <button
+                        key={item.href}
+                        onClick={() => { setFolderMenuOpen(false); handleNavClick(item.href) }}
+                        style={{
+                          display: 'flex',
+                          width: '100%',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
+                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-family-cn)',
+                          fontSize: '13px',
+                          fontWeight: active ? 500 : 400,
+                          textAlign: 'left',
+                        }}
+                      >
+                        <i
+                          className={item.icon}
+                          style={{ fontSize: '16px', width: '16px', height: '16px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        ></i>
+                        <span className="truncate flex-1">{item.label}</span>
+                        {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
+                          <span
+                            style={{
+                              minWidth: 18,
+                              height: 18,
+                              padding: '0 5px',
+                              borderRadius: 9999,
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#fff',
+                              fontSize: 10,
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {inboxUnread > 99 ? '99+' : inboxUnread}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              flexShrink: 0,
+            }}
+          >
+            {navItems.map(item => (
+              <button
+                key={item.href}
+                onClick={() => handleNavClick(item.href)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive(item.href, fullPath) ? 'var(--color-primary-soft)' : 'transparent',
+                  color: isActive(item.href, fullPath) ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-family-cn)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  transition: 'all var(--transition-base)',
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  <i
+                    className={item.icon}
                     style={{
-                      position: 'absolute',
-                      top: '-6px',
-                      right: '-8px',
-                      minWidth: '16px',
+                      fontSize: '16px',
+                      width: '16px',
                       height: '16px',
-                      padding: '0 2px',
-                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  ></i>
+                  {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-6px',
+                        right: '-8px',
+                        minWidth: '16px',
+                        height: '16px',
+                        padding: '0 2px',
+                        borderRadius: '9999px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -267,16 +374,17 @@ export function TopNav({
                       fontWeight: 700,
                       backgroundColor: 'var(--color-primary)',
                       color: '#ffffff',
-                    }}
-                  >
-                    {inboxUnread > 99 ? '99+' : inboxUnread}
-                  </span>
-                )}
-              </div>
-              <span className="truncate hidden sm:inline">{item.label}</span>
-            </button>
-          ))}
-        </div>
+                      }}
+                    >
+                      {inboxUnread > 99 ? '99+' : inboxUnread}
+                    </span>
+                  )}
+                </div>
+                <span className="truncate hidden sm:inline">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div
@@ -330,45 +438,49 @@ export function TopNav({
         )}
 
         {onOpenSettings && (
-          <button
-            onClick={onOpenSettings}
-            className="nav-btn"
-            title="设置"
-          >
-            <i className="ri-settings-3-line icon"></i>
-            {unreadCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  minWidth: '16px',
-                  height: '16px',
-                  padding: '0 2px',
-                  borderRadius: '9999px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  backgroundColor: 'var(--color-error)',
-                  color: '#ffffff',
-                }}
-              >
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
+          <Tooltip text="设置" side="bottom">
+            <button
+              onClick={onOpenSettings}
+              className="nav-btn"
+              aria-label="设置"
+            >
+              <i className="ri-settings-3-line icon"></i>
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    minWidth: '16px',
+                    height: '16px',
+                    padding: '0 2px',
+                    borderRadius: '9999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    backgroundColor: 'var(--color-error)',
+                    color: '#ffffff',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
         )}
 
         {onOpenAddAccount && (
-          <button
-            onClick={onOpenAddAccount}
-            className="nav-btn"
-            title="添加账号"
-          >
-            <i className="ri-add-line icon"></i>
-          </button>
+          <Tooltip text="添加账号" side="bottom">
+            <button
+              onClick={onOpenAddAccount}
+              className="nav-btn"
+              aria-label="添加账号"
+            >
+              <i className="ri-add-line icon"></i>
+            </button>
+          </Tooltip>
         )}
 
         {userAccount && (

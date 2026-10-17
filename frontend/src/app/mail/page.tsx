@@ -794,22 +794,24 @@ function MailPageInner() {
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)' }}>{detail.email.subject || '(无主题)'}</h1>
                 <div className="flex items-center gap-2 shrink-0 pt-1">
-                   <button
-                     onClick={async () => {
-                       if (!selectedId) return
-                       const newStarred = !detail.email.is_starred
-                       await api.mails.markStar(selectedId, newStarred)
-                       setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
-                       setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
-                       refreshCounts()
-                     }}
-                     className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-all hover:opacity-80"
-                     style={{ backgroundColor: 'var(--muted)' }}
-                     title={detail.email.is_starred ? '取消标星' : '标星'}
-                   >
-                     <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
-                   </button>
-                </div>
+                    <Tooltip text={detail.email.is_starred ? '取消标星' : '标星'}>
+                    <button
+                      onClick={async () => {
+                        if (!selectedId) return
+                        const newStarred = !detail.email.is_starred
+                        await api.mails.markStar(selectedId, newStarred)
+                        setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
+                        setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
+                        refreshCounts()
+                      }}
+                      className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-all hover:opacity-80"
+                      style={{ backgroundColor: 'var(--muted)' }}
+                      aria-label={detail.email.is_starred ? '取消标星' : '标星'}
+                    >
+                      <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
+                    </button>
+                    </Tooltip>
+                 </div>
               </div>
 
               {/* From info */}

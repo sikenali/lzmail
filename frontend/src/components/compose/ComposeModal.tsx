@@ -11,6 +11,7 @@ const RichTextEditor = dynamic(() => import('@/components/editor/RichTextEditor'
 import { DateTimePicker } from '@/components/DateTimePicker'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { Account, ComposePayload } from '@/types'
 import ContactPicker from '@/components/compose/ContactPicker'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
@@ -28,6 +29,7 @@ export interface ComposeParams {
 
 export function ComposeModal({ open, onClose, params }: { open: boolean; onClose: () => void; params?: ComposeParams }) {
   const [accounts, setAccounts] = useState<Account[]>([])
+  const isMobile = useIsMobile()
   const [accountId, setAccountId] = useState(0)
   const [to, setTo] = useState('')
   const [cc, setCc] = useState('')
@@ -249,7 +251,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
         maxHeight={800}
       >
         {/* Form body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px 14px' : '16px 24px' }}>
           {/* Sender */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12 }}>
             <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>发件人</span>
@@ -357,45 +359,45 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? undefined : 'space-between', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 8 : 0, padding: isMobile ? '10px 12px' : '12px 24px', paddingBottom: isMobile ? 'calc(10px + env(safe-area-inset-bottom))' : 12, flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexBasis: isMobile ? '100%' : undefined }}>
             <input ref={fileInputRef} type="file" multiple accept="*/*" onChange={handleFileChange} className="hidden" />
             <label
               onDragOver={e => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, cursor: 'pointer', transition: 'all var(--transition-base)', backgroundColor: dragOver ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', border: dragOver ? '1.5px dashed var(--color-primary)' : 'none', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>
-              <Paperclip style={{ width: 16, height: 16 }} /> 添加附件
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, cursor: 'pointer', transition: 'all var(--transition-base)', backgroundColor: dragOver ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', border: dragOver ? '1.5px dashed var(--color-primary)' : 'none', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-family-cn)' }}>
+              <Paperclip style={{ width: 16, height: 16, flexShrink: 0 }} /> 添加附件
             </label>
-            <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>最大 50MB，支持拖拽上传</span>
+            {!isMobile && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>最大 50MB，支持拖拽上传</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexBasis: isMobile ? '100%' : undefined }}>
             <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date().toISOString().slice(0, 10) + 'T' + new Date().toTimeString().slice(0, 5))}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, transition: 'all var(--transition-base)', backgroundColor: scheduleAt ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', color: scheduleAt ? 'var(--color-error)' : 'var(--color-text-secondary)', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}>
-              <Clock style={{ width: 16, height: 16 }} />
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, transition: 'all var(--transition-base)', backgroundColor: scheduleAt ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', color: scheduleAt ? 'var(--color-error)' : 'var(--color-text-secondary)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-family-cn)' }}>
+              <Clock style={{ width: 16, height: 16, flexShrink: 0 }} />
               <span style={{ fontSize: 12, fontWeight: 500 }}>{scheduleAt ? '取消定时' : '定时发送'}</span>
-              <ChevronDown style={{ width: 12, height: 12, color: 'var(--color-text-muted)' }} />
+              <ChevronDown style={{ width: 12, height: 12, flexShrink: 0, color: 'var(--color-text-muted)' }} />
             </button>
-            {lastAutoSaveTime && (
+            {lastAutoSaveTime && !isMobile && (
               <span style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>
                 <span style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: autoSaving ? 'var(--color-warning)' : 'var(--color-success)', display: 'inline-block' }} />
                 自动保存 {lastAutoSaveTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
             <button onClick={handleSaveDraft} disabled={savingDraft}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', backgroundColor: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)', border: '0.7px solid var(--color-border)', opacity: savingDraft ? 0.5 : 1, fontFamily: 'var(--font-family-cn)' }}>
-              <Paperclip style={{ width: 16, height: 16 }} /> {savingDraft ? '保存中...' : '存草稿'}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : undefined, gap: 6, height: 36, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', backgroundColor: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)', border: '0.7px solid var(--color-border)', opacity: savingDraft ? 0.5 : 1, whiteSpace: 'nowrap', flex: isMobile ? '1 1 auto' : undefined, fontFamily: 'var(--font-family-cn)' }}>
+              <Paperclip style={{ width: 16, height: 16, flexShrink: 0 }} /> {savingDraft ? '保存中...' : '存草稿'}
             </button>
             <button onClick={handleSend} disabled={sending}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 18px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', opacity: sending ? 0.5 : 1, fontFamily: 'var(--font-family-cn)' }}>
-              <Send style={{ width: 16, height: 16 }} /> {sending ? '发送中...' : '发送'}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : undefined, gap: 6, height: 36, padding: '0 18px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', opacity: sending ? 0.5 : 1, whiteSpace: 'nowrap', flex: isMobile ? '1 1 auto' : undefined, fontFamily: 'var(--font-family-cn)' }}>
+              <Send style={{ width: 16, height: 16, flexShrink: 0 }} /> {sending ? '发送中...' : '发送'}
             </button>
           </div>
         </div>
 
         {/* Schedule at */}
         {scheduleAt && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 24px', borderTop: '1px solid var(--color-border-soft)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: isMobile ? '10px 12px' : '12px 24px', paddingBottom: isMobile ? 'calc(10px + env(safe-area-inset-bottom))' : 12, borderTop: '1px solid var(--color-border-soft)' }}>
             <DateTimePicker value={scheduleAt} onChange={setScheduleAt} />
             <button onClick={() => setScheduleAt('')} style={{ fontSize: 12, color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}>取消定时</button>
           </div>

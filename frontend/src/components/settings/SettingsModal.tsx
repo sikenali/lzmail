@@ -6,6 +6,7 @@ import { ThemeSettings } from './ThemeSettings'
 import { PersonalSettings } from './PersonalSettings'
 import { AboutSettings } from './AboutSettings'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { Tooltip } from '@/components/Tooltip'
 
 type MainTab = 'theme' | 'personal' | 'about'
 
@@ -79,13 +80,15 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, backgroundColor: 'var(--color-bg-white)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
-            title="关闭"
-          >
-            <i className="ri-close-line" style={{ fontSize: 20 }}></i>
-          </button>
+          <Tooltip text="关闭" side="left">
+            <button
+              onClick={onClose}
+              aria-label="关闭"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, backgroundColor: 'var(--color-bg-white)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
+            >
+              <i className="ri-close-line" style={{ fontSize: 20 }}></i>
+            </button>
+          </Tooltip>
         </div>
 
         {/* Panel Body */}

@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { Tooltip } from '@/components/Tooltip'
 
 export function Modal({
   open,
@@ -111,13 +112,15 @@ export function Modal({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
               {headerExtra}
-              <button
-                onClick={onClose}
-                title="关闭"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
-              >
-                <i className="ri-close-line" style={{ fontSize: 18 }}></i>
-              </button>
+              <Tooltip text="关闭" side="left">
+                <button
+                  onClick={onClose}
+                  aria-label="关闭"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
+                >
+                  <i className="ri-close-line" style={{ fontSize: 18 }}></i>
+                </button>
+              </Tooltip>
             </div>
           </div>
         )}

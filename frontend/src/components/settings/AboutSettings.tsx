@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { Tooltip } from '@/components/Tooltip'
 
 export function AboutSettings() {
   const [appVersion, setAppVersion] = useState('V1.0.0')
@@ -69,15 +70,17 @@ export function AboutSettings() {
         </div>
 
         {/* GitHub Link */}
-        <a
-          href="https://github.com/sikenali/lzmail"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 32, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
-          title="访问 GitHub 仓库"
-        >
-          <i className="ri-github-line" style={{ fontSize: 34, color: 'var(--foreground-secondary)' }}></i>
-        </a>
+        <Tooltip text="访问 GitHub 仓库" side="bottom">
+          <a
+            href="https://github.com/sikenali/lzmail"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="访问 GitHub 仓库"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 32, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
+          >
+            <i className="ri-github-line" style={{ fontSize: 34, color: 'var(--foreground-secondary)' }}></i>
+          </a>
+        </Tooltip>
 
         {/* Copyright */}
         <div style={{ marginTop: 32, fontSize: 14, color: 'var(--foreground-tertiary)' }}>

@@ -1,5 +1,6 @@
 'use client'
 import { Check, Paperclip, Star, User } from '@/lib/icons'
+import { Tooltip } from '@/components/Tooltip'
 import type { Email } from '@/types'
 import React from 'react'
 
@@ -135,9 +136,11 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       {!mobile && (
         <div className="shrink-0">
           {selected ? (
-            <button onClick={(e) => { e.stopPropagation(); onStar?.(email.id, !email.is_starred) }} className="w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-[var(--accent)]" title={email.is_starred ? '取消标星' : '标星'}>
-              <Star className="w-4 h-4" style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
-            </button>
+            <Tooltip text={email.is_starred ? '取消标星' : '标星'}>
+              <button onClick={(e) => { e.stopPropagation(); onStar?.(email.id, !email.is_starred) }} className="w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-[var(--accent)]" aria-label={email.is_starred ? '取消标星' : '标星'}>
+                <Star className="w-4 h-4" style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
+              </button>
+            </Tooltip>
           ) : unread ? (
             <span className="w-[9px] h-2 rounded-full block" style={{ backgroundColor: 'var(--primary)' }} />
           ) : null}

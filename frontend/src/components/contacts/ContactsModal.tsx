@@ -8,6 +8,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import { ContactFormModal } from './ContactFormModal'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { Tooltip } from '@/components/Tooltip'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
@@ -337,22 +338,26 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                               )}
                             </div>
                             <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-                              <button
-                                onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
-                                className="flex items-center justify-center"
-                                style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: s.bg }}
-                                title="发邮件"
-                              >
-                                <MailIcon className="w-4 h-4" style={{ color: s.text }} />
-                              </button>
-                              <button
-                                onClick={() => setMenuId(menuId === c.id ? null : c.id)}
-                                className="flex items-center justify-center"
-                                style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: 'var(--muted)' }}
-                                title="更多"
-                              >
-                                <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-                              </button>
+                              <Tooltip text="发邮件">
+                                <button
+                                  onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                                  className="flex items-center justify-center"
+                                  style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: s.bg }}
+                                  aria-label="发邮件"
+                                >
+                                  <MailIcon className="w-4 h-4" style={{ color: s.text }} />
+                                </button>
+                              </Tooltip>
+                              <Tooltip text="更多">
+                                <button
+                                  onClick={() => setMenuId(menuId === c.id ? null : c.id)}
+                                  className="flex items-center justify-center"
+                                  style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: 'var(--muted)' }}
+                                  aria-label="更多"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
+                                </button>
+                              </Tooltip>
                             </div>
                           </div>
                         ) : (
@@ -373,22 +378,26 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                             <span style={{ fontSize: 13, color: 'var(--foreground-secondary)' }}>{c.company || '—'}</span>
                           </div>
                           <div className="flex items-center gap-2" style={{ width: 100, flexShrink: 0 }}>
-                            <button
-                              onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
-                              className="flex items-center justify-center"
-                              style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: s.bg }}
-                              title="发邮件"
-                            >
-                              <MailIcon className="w-4 h-4" style={{ color: s.text }} />
-                            </button>
-                            <button
-                              onClick={() => setMenuId(menuId === c.id ? null : c.id)}
-                              className="flex items-center justify-center"
-                              style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: 'var(--muted)' }}
-                              title="更多"
-                            >
-                              <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
-                            </button>
+                            <Tooltip text="发邮件">
+                              <button
+                                onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                                className="flex items-center justify-center"
+                                style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: s.bg }}
+                                aria-label="发邮件"
+                              >
+                                <MailIcon className="w-4 h-4" style={{ color: s.text }} />
+                              </button>
+                            </Tooltip>
+                            <Tooltip text="更多">
+                              <button
+                                onClick={() => setMenuId(menuId === c.id ? null : c.id)}
+                                className="flex items-center justify-center"
+                                style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: 'var(--muted)' }}
+                                aria-label="更多"
+                              >
+                                <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
                         )}

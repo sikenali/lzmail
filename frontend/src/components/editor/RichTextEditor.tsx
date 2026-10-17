@@ -12,6 +12,7 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { forwardRef, useImperativeHandle } from 'react'
 import { toast } from 'sonner'
 import { Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon, Table as TableIcon, Code, List, ListOrdered, Quote, Heading1, Heading2 } from '@/lib/icons'
+import { Tooltip } from '@/components/Tooltip'
 
 interface RichTextEditorProps {
   value: string
@@ -144,26 +145,30 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
             <Code className="w-4 h-4" />
           </ToolbarBtn>
           <div className="flex-1" />
-          <button
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)] disabled:opacity-30"
-            title="撤销"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--foreground-secondary)' }}>
-              <path d="M3 7v6h6" /><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6.6 2.8L3 13" />
-            </svg>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)] disabled:opacity-30"
-            title="重做"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--foreground-secondary)' }}>
-              <path d="M21 7v6h-6" /><path d="M3 17a9 9 0 019-9 9 9 0 016.6 2.8L21 13" />
-            </svg>
-          </button>
+          <Tooltip text="撤销" side="bottom">
+            <button
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              aria-label="撤销"
+              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)] disabled:opacity-30"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--foreground-secondary)' }}>
+                <path d="M3 7v6h6" /><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6.6 2.8L3 13" />
+              </svg>
+            </button>
+          </Tooltip>
+          <Tooltip text="重做" side="bottom">
+            <button
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              aria-label="重做"
+              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--muted)] disabled:opacity-30"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--foreground-secondary)' }}>
+                <path d="M21 7v6h-6" /><path d="M3 17a9 9 0 019-9 9 9 0 016.6 2.8L21 13" />
+              </svg>
+            </button>
+          </Tooltip>
         </div>
         {/* Editor */}
         <div className="flex-1 overflow-auto p-4" style={{ minHeight: 0 }}>
@@ -189,13 +194,15 @@ function ToolbarBtn({
   title?: string
 }) {
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`}
-      style={{ color: isActive ? 'var(--primary)' : 'var(--foreground-secondary)' }}
-    >
-      {children}
-    </button>
+    <Tooltip text={title} side="bottom">
+      <button
+        onClick={onClick}
+        aria-label={title}
+        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`}
+        style={{ color: isActive ? 'var(--primary)' : 'var(--foreground-secondary)' }}
+      >
+        {children}
+      </button>
+    </Tooltip>
   )
 }

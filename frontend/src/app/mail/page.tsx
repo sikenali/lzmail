@@ -64,8 +64,8 @@ function MailPageInner() {
   const reqId = useRef(0)
   const prevListKeyRef = useRef('')
   const [firstLoad, setFirstLoad] = useState(true)
-  const [storeEmpty, setStoreEmpty] = useState(false)
-  const storeEmptyRef = useRef(storeEmpty)
+  const [storeEmpty, setStoreEmpty] = useState<boolean | null>(null)
+  const storeEmptyRef = useRef<boolean | null>(null)
   const scrollHandlerRef = useRef<() => void>(() => {})
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
@@ -110,7 +110,12 @@ function MailPageInner() {
       const empty = !accs || accs.length === 0
       storeEmptyRef.current = empty
       setStoreEmpty(empty)
-    } catch {}
+    } catch {
+      // 账号列表查不到就按「有账号」处理，把错误交给列表请求自己去提示，
+      // 否则 storeEmpty 停在 unknown，列表永远不加载也永远不报错
+      storeEmptyRef.current = false
+      setStoreEmpty(false)
+    }
   }, [])
 
   useEffect(() => { loadAccounts() }, [loadAccounts])
@@ -153,7 +158,8 @@ function MailPageInner() {
       if (id !== reqId.current) return
       if (!append) {
         setEmails([])
-        if (!storeEmptyRef.current) {
+        // 仅在「确认空库」时静默：未知(null)或确认有账号都应当如实报错
+        if (storeEmptyRef.current !== true) {
           toast.error('邮件列表加载失败，请检查网络或后端服务')
         }
       }
@@ -167,6 +173,8 @@ function MailPageInner() {
   const listKey = `${folder}:${debouncedSearch}`
 
   useEffect(() => {
+    // 账号状态未知时先不动作：空库不必白发一次列表请求，有账号也避免先闪骨架再被清空
+    if (storeEmpty === null) return
     if (storeEmpty) {
       if (searchParams?.get('id')) router.replace(`/mail?folder=${encodeURIComponent(folder)}`)
       setEmails([])
@@ -475,7 +483,7 @@ function MailPageInner() {
   useEffect(() => {
     // 空库（无账号）时不重载列表，只轻量复查账号，避免定时刷新造成无谓重渲染
     const timer = setInterval(() => {
-      if (storeEmptyRef.current) { loadAccounts(); return }
+      if (storeEmptyRef.current === true) { loadAccounts(); return }
       setRefresh(n => n + 1)
       refreshCounts()
     }, 30 * 60 * 1000)
@@ -521,7 +529,7 @@ function MailPageInner() {
   }
 
   const handleRefresh = async () => {
-    if (syncing || storeEmpty) return
+    if (syncing || storeEmpty === true) return
     setSyncing(true)
     let synced = false
     try {
@@ -671,7 +679,7 @@ function MailPageInner() {
               </div>
                <div className="flex items-center gap-2">
 <Tooltip text="刷新" side="bottom">
-                  <button onClick={handleRefresh} disabled={storeEmpty} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--muted)', opacity: storeEmpty ? 0.35 : 1 }}>
+                  <button onClick={handleRefresh} disabled={storeEmpty === true} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--muted)', opacity: storeEmpty ? 0.35 : 1 }}>
                     <RefreshCw className={`w-4 h-4 ${(firstLoad && loading) || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', opacity: storeEmpty ? 0.5 : 1, animationDuration: '0.8s' }} />
                   </button>
 </Tooltip>

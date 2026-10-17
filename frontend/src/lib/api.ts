@@ -73,10 +73,23 @@ export const api = {
       params.set('folder', folder)
       params.set('limit', String(limit))
       params.set('offset', String(offset))
-      const res = await fetch(`${API_BASE}/api/v1/mails?${params}`)
-      const total = parseInt(res.headers.get('X-Total-Count') || '0', 10) || 0
-      const items: Email[] = await res.json()
-      return { items, total }
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/mails?${params}`, { signal: controller.signal })
+        if (!res.ok) {
+          const text = await res.text()
+          let msg = `HTTP ${res.status}`
+          try { const j = JSON.parse(text); msg = j.error || msg } catch {}
+          if (res.headers.get('content-type')?.includes('text/html')) msg = '后端连接异常，请检查网络或稍后重试'
+          throw new Error(msg)
+        }
+        const total = parseInt(res.headers.get('X-Total-Count') || '0', 10) || 0
+        const items = (await res.json()) as Email[] | null
+        return { items: items || [], total }
+      } finally {
+        clearTimeout(timeout)
+      }
     },
     get: (id: number) => fetchJSON<EmailDetail>(`/api/v1/mails/${id}`),
     search: (q: string, accountId?: number, limit = 50, offset = 0) => {

@@ -405,7 +405,7 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
          </div>
 
           {/* Body: Left list + Right form */}
-          <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', paddingTop: 20 }}>
+          <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', paddingTop: 20, height: '100%', boxSizing: 'border-box' }}>
             {/* Left: Account list */}
             <nav style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
              {/* Add new button */}

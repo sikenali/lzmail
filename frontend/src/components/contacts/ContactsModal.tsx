@@ -253,7 +253,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-6" style={{ minHeight: 0, height: '100%', boxSizing: 'border-box' }}>
           {/* Table section */}
           <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--color-bg-secondary)', padding: 20, border: '1px solid var(--color-border-soft)' }}>
             <div style={{ minWidth: 800 }}>

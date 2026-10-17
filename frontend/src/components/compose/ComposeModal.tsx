@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { createPortal } from 'react-dom'
 import { api } from '@/lib/api'
+import { Modal } from '@/components/layout/Modal'
 import { Paperclip, Send, X, ChevronDown, Clock, Mail, Check } from '@/lib/icons'
 const RichTextEditor = dynamic(() => import('@/components/editor/RichTextEditor').then(m => m.RichTextEditor), {
   ssr: false,
@@ -236,47 +236,18 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
 
   if (!open) return null
 
-  return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease', zIndex: 1000 }} onClick={onClose}>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: 900,
-          maxWidth: '94vw',
-          height: '90vh',
-          maxHeight: 800,
-          backgroundColor: 'var(--color-bg-white)',
-          border: '1px solid var(--color-border-soft)',
-          borderRadius: 16,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-          overflow: 'hidden',
-          animation: 'scaleIn 0.2s ease',
-        }}
-        onClick={(e) => e.stopPropagation()}
+  return (
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        icon={<i className="ri-quill-pen-line" style={{ fontSize: 26, color: 'var(--color-primary)' }}></i>}
+        title={draftId ? '编辑草稿' : '写邮件'}
+        subtitle={draftId ? '修改草稿内容' : '新建邮件消息'}
+        width={900}
+        height="90vh"
+        maxHeight={800}
       >
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', flexShrink: 0, borderBottom: '1px solid var(--color-border-soft)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'var(--color-primary)' }} />
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 24, margin: 0, fontFamily: 'var(--font-family-cn)' }}>
-                {draftId ? '编辑草稿' : '写邮件'}
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '2px 0 0', lineHeight: 18, fontFamily: 'var(--font-family-cn)' }}>
-                {draftId ? '修改草稿内容' : '新建邮件消息'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
-            title="关闭"
-          >
-            <i className="ri-close-line" style={{ fontSize: 18 }}></i>
-          </button>
-        </div>
-
         {/* Form body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
           {/* Sender */}
@@ -430,17 +401,15 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
             <button onClick={() => setScheduleAt('')} style={{ fontSize: 12, color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}>取消定时</button>
           </div>
         )}
-      </div>
-
-      <DeleteConfirm
-        open={sendConfirmOpen}
-        title="确认发送"
-        message={`确定将邮件发送给「${to}」吗？${scheduleAt ? '（已设置定时发送）' : ''}`}
-        confirmText="发送"
-        onConfirm={doSend}
-        onCancel={() => setSendConfirmOpen(false)}
-      />
-    </div>,
-    document.body
+        <DeleteConfirm
+          open={sendConfirmOpen}
+          title="确认发送"
+          message={`确定将邮件发送给「${to}」吗？${scheduleAt ? '（已设置定时发送）' : ''}`}
+          confirmText="发送"
+          onConfirm={doSend}
+          onCancel={() => setSendConfirmOpen(false)}
+        />
+      </Modal>
+    </>
   )
 }

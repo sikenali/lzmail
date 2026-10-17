@@ -39,7 +39,8 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   return createPortal(
     <div
-      style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.3s ease', zIndex: 1000 }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.3s ease', zIndex: 1000 }}
       onClick={onClose}
     >
       <div
@@ -50,8 +51,8 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
           maxWidth: '94vw',
           height: '86vh',
           maxHeight: 900,
-          backgroundColor: 'var(--muted)',
-          border: '0.7px solid var(--card-border)',
+          backgroundColor: 'var(--color-bg-secondary)',
+          border: '0.7px solid var(--color-border-soft)',
           borderRadius: 16,
           boxShadow: '0 8px 40px rgba(0,0,0,0.1)',
           padding: '28px 32px',
@@ -63,19 +64,17 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
         {/* Panel Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: 20, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-            <div
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, backgroundColor: 'var(--primary-light)', borderRadius: 12, flexShrink: 0 }}
-            >
-              <Settings style={{ width: 26, height: 26, color: 'var(--primary)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, backgroundColor: 'var(--color-primary-soft)', borderRadius: 12, flexShrink: 0 }}>
+              <Settings style={{ width: 26, height: 26, color: 'var(--color-primary)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--foreground)', margin: 0, lineHeight: 28 }}>设置中心</h2>
-              <p style={{ fontSize: 13, color: 'var(--foreground-tertiary)', margin: 0, lineHeight: 18 }}>选择要进入的设置界面</p>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, lineHeight: '28px', fontFamily: 'var(--font-family-cn)' }}>设置中心</h2>
+              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0, lineHeight: '18px', fontFamily: 'var(--font-family-cn)' }}>选择要进入的设置界面</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, backgroundColor: 'var(--muted)', borderRadius: 9999, color: 'var(--foreground-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, backgroundColor: 'var(--color-bg-white)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
             title="关闭"
           >
             <i className="ri-close-line" style={{ fontSize: 20 }}></i>
@@ -83,10 +82,10 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         {/* Panel Body */}
-        <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', height: '100%', boxSizing: 'border-box' }}>
+        <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex' }}>
           {/* Nav List */}
           <nav
-            style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}
+            style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border-soft)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}
           >
             {MENU_ITEMS.map(item => {
               const Icon = item.icon
@@ -102,18 +101,19 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                     height: 52,
                     padding: '0 20px',
                     borderRadius: 12,
-                    backgroundColor: active ? 'var(--primary-light)' : 'transparent',
-                    color: active ? 'var(--primary)' : 'var(--foreground-secondary)',
+                    backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
+                    color: active ? 'var(--color-primary)' : 'var(--color-text-body)',
                     fontWeight: active ? 500 : 400,
                     border: 'none',
                     cursor: 'pointer',
                     width: '100%',
                     textAlign: 'left',
-                    transition: 'all 0.2s',
+                    transition: 'all var(--transition-base)',
+                    fontFamily: 'var(--font-family-cn)',
                   }}
                 >
-                  <Icon style={{ width: 20, height: 20, flexShrink: 0, color: active ? 'var(--primary)' : 'var(--foreground-tertiary)' }} />
-                  <span style={{ fontSize: 15, whiteSpace: 'nowrap', color: active ? 'var(--primary)' : 'var(--foreground-secondary)' }}>{item.label}</span>
+                  <Icon style={{ width: 20, height: 20, flexShrink: 0, color: active ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
+                  <span style={{ fontSize: 15, whiteSpace: 'nowrap' }}>{item.label}</span>
                 </button>
               )
             })}

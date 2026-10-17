@@ -1,55 +1,48 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
 export function Modal({
   open,
   onClose,
+  icon,
   title,
   subtitle,
-  icon,
-  children,
+  width = 900,
+  height = '86vh',
+  maxHeight,
+  headerExtra,
   footer,
-  width = 'max-w-lg',
+  children,
   closeOnClickOverlay = true,
   closeOnEsc = true,
 }: {
   open: boolean
   onClose: () => void
+  icon?: React.ReactNode
   title?: string
   subtitle?: string
-  icon?: React.ReactNode
-  children: React.ReactNode
+  width?: number
+  height?: string
+  maxHeight?: number
+  headerExtra?: React.ReactNode
   footer?: React.ReactNode
-  width?: string
+  children: React.ReactNode
   closeOnClickOverlay?: boolean
   closeOnEsc?: boolean
 }) {
-  const [visible, setVisible] = useState(false)
-
   useEffect(() => {
-    if (open) {
-      setVisible(true)
-    } else {
-      setVisible(false)
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    if (!open) return
+    document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [open])
 
   useEffect(() => {
-    if (!closeOnEsc) return
+    if (!open || !closeOnEsc) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-    if (open) window.addEventListener('keydown', handler)
+    window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose, closeOnEsc])
 
@@ -57,44 +50,82 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease' }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.3s ease', zIndex: 1000 }}
       onClick={closeOnClickOverlay ? onClose : undefined}
     >
       <div
-        className={`w-full ${width} max-h-[86vh] flex flex-col rounded-2xl shadow-2xl`}
         style={{
-          backgroundColor: 'var(--card)',
-          border: '1px solid var(--card-border)',
-          animation: 'scaleIn 0.2s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          width,
+          maxWidth: '94vw',
+          height,
+          maxHeight: maxHeight ? `${maxHeight}px` : undefined,
+          backgroundColor: 'var(--color-bg-white)',
+          border: '0.7px solid var(--color-border-soft)',
+          borderRadius: 18,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          overflow: 'hidden',
+          animation: 'scaleIn 0.3s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         {(title || icon) && (
-          <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: '1px solid var(--card-border)' }}>
-            <div className="flex items-center gap-3 min-w-0">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 16,
+              padding: '20px 24px',
+              flexShrink: 0,
+              borderBottom: '1px solid var(--color-border-soft)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, minWidth: 0 }}>
               {icon && (
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--primary-light)' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, backgroundColor: 'var(--color-primary-soft)', borderRadius: 12, flexShrink: 0 }}
+                >
                   {icon}
                 </div>
               )}
-              <div className="min-w-0">
-                {title && <h2 className="text-[16px] font-bold leading-tight" style={{ color: 'var(--foreground)' }}>{title}</h2>}
-                {subtitle && <p className="text-[12px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{subtitle}</p>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                {title && (
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, lineHeight: '26px', fontFamily: 'var(--font-family-cn)' }}>
+                    {title}
+                  </h2>
+                )}
+                {subtitle && (
+                  <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, lineHeight: '18px', fontFamily: 'var(--font-family-cn)' }}>
+                    {subtitle}
+                  </p>
+                )}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-[var(--muted)] transition-all shrink-0"
-              style={{ color: 'var(--foreground-tertiary)' }}
-            >
-              <i className="ri-close-line w-5 h-5"></i>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              {headerExtra}
+              <button
+                onClick={onClose}
+                title="关闭"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
+              >
+                <i className="ri-close-line" style={{ fontSize: 18 }}></i>
+              </button>
+            </div>
           </div>
         )}
-        <div className="flex-1 overflow-auto">{children}</div>
+
+        {/* Body */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {children}
+        </div>
+
+        {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--card-border)' }}>
+          <div style={{ padding: '12px 24px', flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
             {footer}
           </div>
         )}

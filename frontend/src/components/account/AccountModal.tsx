@@ -6,11 +6,10 @@ import { api } from '@/lib/api'
 import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
-  Plus, Trash2, Check, Edit, ChevronDown, User, Eye, EyeOff, Mail, X, RefreshCw, Settings,
+  Plus, Trash2, Check, Edit, ChevronDown, User, Eye, EyeOff, Mail, X, RefreshCw,
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
-import { DeleteConfirm } from '@/components/DeleteConfirm'
-import { createPortal } from 'react-dom'
+import { Modal } from '@/components/layout/Modal'
 
 const providerLogoStyle: Record<string, { bg: string; color: string }> = {
   gmail:  { bg: '#ea4335', color: 'white' },
@@ -364,48 +363,19 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
    const isEditing = selectedId !== null
    const selectedAccount = accounts.find(a => a.id === selectedId)
 
-   return createPortal(
-     <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease', zIndex: 1000 }} onClick={onClose}>
-       <div
-         style={{
-           display: 'flex',
-           flexDirection: 'column',
-           width: 1000,
-           maxWidth: '94vw',
-           height: '85vh',
-           maxHeight: 700,
-           backgroundColor: 'var(--color-bg-white)',
-           border: '1px solid var(--color-border-soft)',
-           borderRadius: 16,
-           boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-           padding: '24px 28px',
-           overflow: 'hidden',
-           animation: 'scaleIn 0.2s ease',
-         }}
-         onClick={(e) => e.stopPropagation()}
-       >
-         {/* Header */}
-         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: 20, flexShrink: 0, borderBottom: '1px solid var(--color-border-soft)' }}>
-           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, backgroundColor: 'var(--color-primary-soft)', borderRadius: 12, flexShrink: 0 }}>
-               <Settings style={{ width: 26, height: 26, color: 'var(--color-primary)' }} />
-             </div>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-               <h2 className="font-bold" style={{ fontSize: 20, color: 'var(--color-text-primary)', margin: 0, lineHeight: 26, fontFamily: 'var(--font-family-cn)' }}>账号管理</h2>
-               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 18, fontFamily: 'var(--font-family-cn)' }}>{isEditing ? `编辑：${selectedAccount?.name || selectedAccount?.email || ''}` : '添加新的邮箱账号'}</p>
-             </div>
-           </div>
-           <button
-             onClick={onClose}
-             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
-             title="关闭"
-           >
-             <i className="ri-close-line" style={{ fontSize: 18 }}></i>
-           </button>
-         </div>
-
-          {/* Body: Left list + Right form */}
-          <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', paddingTop: 20, height: '100%', boxSizing: 'border-box' }}>
+   return (
+     <Modal
+       open={open}
+       onClose={onClose}
+       icon={<User style={{ width: 26, height: 26, color: 'var(--color-primary)' }} />}
+       title="账号管理"
+       subtitle={isEditing ? `编辑：${selectedAccount?.name || selectedAccount?.email || ''}` : '添加新的邮箱账号'}
+       width={1000}
+       height="85vh"
+       maxHeight={700}
+     >
+       {/* Body: Left list + Right form */}
+       <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', padding: '20px 24px' }}>
             {/* Left: Account list */}
             <nav style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
              {/* Add new button */}
@@ -648,8 +618,6 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
              </div>
            </div>
          </div>
-       </div>
-     </div>,
-     document.body
+     </Modal>
    )
 }

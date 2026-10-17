@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { createPortal } from 'react-dom'
 import { api } from '@/lib/api'
+import { Modal } from '@/components/layout/Modal'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
@@ -188,72 +188,49 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null
 
-  return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease', zIndex: 1000 }} onClick={onClose}>
-      <div
-        className="flex flex-col"
-        style={{
-          width: 1100,
-          maxWidth: '94vw',
-          maxHeight: '85vh',
-          height: '85vh',
-          backgroundColor: 'var(--card)',
-          borderRadius: 16,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-          overflow: 'hidden',
-          animation: 'scaleIn 0.2s ease',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-4" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
-          <div className="flex items-center gap-4">
-            <div style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'var(--color-primary)' }} />
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: '24px', margin: 0, fontFamily: 'var(--font-family-cn)' }}>联系人</h2>
-              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '2px 0 0', fontFamily: 'var(--font-family-cn)' }}>管理您的联系人列表</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <i className="ri-search-line" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--color-text-muted)' }}></i>
-              <input
-                value={searchQ}
-                onChange={e => handleSearch(e.target.value)}
-                placeholder="搜索姓名或邮箱..."
-                className="w-[200px] h-[36px] pl-9 pr-8 rounded-[8px] outline-none text-[13px]"
-                style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
-              />
-              {searchQ && (
-                <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}>
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            {accounts.length > 1 && (
-              <select
-                value={selectedAccountId ?? ''}
-                onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
-                className="h-[36px] px-3 rounded-[8px] text-[13px] outline-none"
-                style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
-              >
-                {accounts.map(a => (
-                  <option key={a.id} value={a.id}>{a.email}</option>
-                ))}
-              </select>
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      icon={<i className="ri-contacts-book-line" style={{ fontSize: 26, color: 'var(--color-primary)' }}></i>}
+      title="联系人"
+      subtitle="管理您的联系人列表"
+      width={1100}
+      height="85vh"
+      headerExtra={
+        <>
+          <div className="relative">
+            <i className="ri-search-line" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--color-text-muted)' }}></i>
+            <input
+              value={searchQ}
+              onChange={e => handleSearch(e.target.value)}
+              placeholder="搜索姓名或邮箱..."
+              className="w-[200px] h-[36px] pl-9 pr-8 rounded-[8px] outline-none text-[13px]"
+              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+            />
+            {searchQ && (
+              <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
-            <button
-              onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
-              title="关闭"
-            >
-              <i className="ri-close-line" style={{ fontSize: 18 }}></i>
-            </button>
           </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6" style={{ minHeight: 0, height: '100%', boxSizing: 'border-box' }}>
+          {accounts.length > 1 && (
+            <select
+              value={selectedAccountId ?? ''}
+              onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
+              className="h-[36px] px-3 rounded-[8px] text-[13px] outline-none"
+              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+            >
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>{a.email}</option>
+              ))}
+            </select>
+          )}
+        </>
+      }
+    >
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-6" style={{ minHeight: 0 }}>
           {/* Table section */}
           <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--color-bg-secondary)', padding: 20, border: '1px solid var(--color-border-soft)' }}>
             <div style={{ minWidth: 800 }}>
@@ -437,8 +414,6 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
             }
           }}
         />
-      </div>
-    </div>,
-    document.body
+    </Modal>
   )
 }

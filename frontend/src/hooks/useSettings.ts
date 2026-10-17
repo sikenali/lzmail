@@ -16,7 +16,7 @@ const defaults: Settings = {
   auto_sync: 'true',
   minimize_to_tray: 'false',
   theme: 'light',
-  accent_color: '#c43d3d',
+  accent_color: '',
   sidebar_color: '#ffffff',
   layout_density: 'three',
   desktop_notify: 'true',
@@ -42,6 +42,15 @@ const defaults: Settings = {
   })(),
 }
 
+export const DEFAULT_ACCENT = ''
+const LEGACY_DEFAULT_ACCENTS = ['#BE3B2E', '#C43D3D', '#c43d3d']
+
+// 归一化强调色：空值 / 旧默认值统一视为「跟随主题」。
+export function normalizeAccent(color?: string | null): string {
+  if (!color) return DEFAULT_ACCENT
+  return LEGACY_DEFAULT_ACCENTS.includes(color) ? DEFAULT_ACCENT : color
+}
+
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(defaults)
   const [loading, setLoading] = useState(true)
@@ -57,10 +66,23 @@ export function useSettings() {
     }
   }
 
-  const applyAccentColor = (color: string) => {
-    document.documentElement.style.setProperty('--primary', color)
-    document.documentElement.style.setProperty('--primary-light', color + '15')
-    localStorage.setItem('lzmail_accent_color', color)
+  // 双轨镜像：同时写入传统 token 与 DESIGN token，使全站跟随强调色。
+  // 默认色（空）则移除内联覆盖，回落到主题默认主色。
+  const applyAccent = (color?: string | null) => {
+    const root = document.documentElement
+    const value = normalizeAccent(color)
+    const soft = value ? value + '1A' : ''
+    const vars: [string, string][] = [
+      ['--primary', value],
+      ['--primary-light', soft],
+      ['--color-primary', value],
+      ['--color-primary-soft', soft],
+    ]
+    vars.forEach(([name, v]) => {
+      if (v) root.style.setProperty(name, v)
+      else root.style.removeProperty(name)
+    })
+    localStorage.setItem('lzmail_accent_color', value)
   }
 
   const applyFontSize = (size: string) => {
@@ -81,11 +103,7 @@ export function useSettings() {
     applyTheme(initialTheme)
 
     // Apply saved accent color immediately
-    const savedAccent = localStorage.getItem('lzmail_accent_color')
-    if (savedAccent) {
-      document.documentElement.style.setProperty('--primary', savedAccent)
-      document.documentElement.style.setProperty('--primary-light', savedAccent + '15')
-    }
+    applyAccent(localStorage.getItem('lzmail_accent_color'))
 
     // Apply saved font size immediately
     const savedFontSize = localStorage.getItem('lzmail_font_size')
@@ -116,9 +134,9 @@ export function useSettings() {
         ? localStorageTheme
         : (apiTheme && ['light', 'dark', 'system'].includes(apiTheme) ? apiTheme : defaults.theme)) as 'light' | 'dark' | 'system'
       applyTheme(themeToApply)
-      // Apply accent color
-      const accentColor = s?.accent_color || defaults.accent_color
-      applyAccentColor(accentColor)
+      // Apply accent color (localStorage 的显式选择优先，其次 API，再次默认)
+      const lsAccent = localStorage.getItem('lzmail_accent_color')
+      applyAccent(lsAccent !== null ? lsAccent : s?.accent_color)
       // Apply animations
       const anims = s?.animations || defaults.animations
       if (anims === 'false') {
@@ -131,8 +149,7 @@ export function useSettings() {
       // Use saved theme or system preference on error
       applyTheme(initialTheme)
       // Apply saved accent color
-      const savedAccent = localStorage.getItem('lzmail_accent_color')
-      if (savedAccent) applyAccentColor(savedAccent)
+      applyAccent(localStorage.getItem('lzmail_accent_color'))
       // Apply saved animations
       if (savedAnimations === 'false') {
         document.body.classList.add('no-animations')
@@ -155,7 +172,7 @@ export function useSettings() {
       localStorage.setItem('lzmail_theme', value)
     }
     if (key === 'accent_color') {
-      applyAccentColor(value)
+      applyAccent(value)
     }
     if (key === 'font_size') {
       applyFontSize(value)

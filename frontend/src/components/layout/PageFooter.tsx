@@ -80,7 +80,20 @@ export function PageFooter({
           fontFamily: 'var(--font-family-cn)',
         }}
       >
-        &copy; 2026 懒猫微邮
+        &copy; 2026 懒猫微邮 · Powered by{' '}
+        <a
+          href="https://lazycat.cloud/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: 'var(--color-primary)',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          LightOS
+        </a>
       </span>
     </footer>
   )

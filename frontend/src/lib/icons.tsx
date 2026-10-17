@@ -10,6 +10,11 @@ function icon(name: string) {
 }
 
 export const Mail = icon('ri-mail-line')
+export const GoogleLine = icon('ri-google-line')
+export const MicrosoftLine = icon('ri-microsoft-line')
+export const QqLine = icon('ri-qq-line')
+export const AppleLine = icon('ri-apple-line')
+export const MagicLine = icon('ri-magic-line')
 export const MailOpen = icon('ri-mail-open-line')
 export const Search = icon('ri-search-line')
 export const Settings = icon('ri-settings-3-line')

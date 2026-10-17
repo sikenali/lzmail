@@ -7,6 +7,7 @@ import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
   Plus, Trash2, Check, Edit, User, Eye, EyeOff, Mail, X, RefreshCw,
+  MagicLine, GoogleLine, MicrosoftLine, QqLine, AppleLine,
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { Modal } from '@/components/layout/Modal'
@@ -14,25 +15,47 @@ import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 const providerLogoStyle: Record<string, { bg: string; color: string }> = {
-  gmail:  { bg: '#ea4335', color: 'white' },
-  outlook:{ bg: '#0078d4', color: 'white' },
-  qq:     { bg: '#12b7f5', color: 'white' },
-  netease:{ bg: '#e53e3e', color: 'white' },
-  icloud: { bg: '#7c9a5f', color: 'white' },
-  yahoo:  { bg: '#721c90', color: 'white' },
-  other:  { bg: '#5b6abf', color: 'white' },
-  auto:   { bg: 'var(--color-bg-secondary)', color: 'var(--color-text-muted)' },
+  gmail:      { bg: '#ea4335', color: 'white' },
+  outlook:    { bg: '#0078d4', color: 'white' },
+  qq:         { bg: '#12b7f5', color: 'white' },
+  netease:    { bg: '#e53e3e', color: 'white' },
+  netease126: { bg: '#e53e3e', color: 'white' },
+  netease163: { bg: '#e53e3e', color: 'white' },
+  icloud:     { bg: '#7c9a5f', color: 'white' },
+  yahoo:      { bg: '#721c90', color: 'white' },
+  other:      { bg: '#5b6abf', color: 'white' },
+  auto:       { bg: 'var(--color-bg-white)', color: 'var(--color-text-muted)' },
 }
-function ProviderLogo({ provider, size = 18 }: { provider: string; size?: number }) {
+
+// 有官方品牌图标的服务商用 Remixicon 品牌图标，缺失的退回品牌色字母/数字标记
+const providerGlyph: Record<string, { Icon: typeof Mail; iconSize: number } | { text: string }> = {
+  auto:       { Icon: MagicLine, iconSize: 0.66 },
+  gmail:      { Icon: GoogleLine, iconSize: 0.66 },
+  outlook:    { Icon: MicrosoftLine, iconSize: 0.62 },
+  qq:         { Icon: QqLine, iconSize: 0.62 },
+  icloud:     { Icon: AppleLine, iconSize: 0.62 },
+  other:      { Icon: MicrosoftLine, iconSize: 0.62 },
+  netease:    { text: '126' },
+  netease126: { text: '126' },
+  netease163: { text: '163' },
+  yahoo:      { text: 'Y' },
+}
+
+function ProviderMark({ provider, size = 22 }: { provider: string; size?: number }) {
   const s = providerLogoStyle[provider] || providerLogoStyle.auto
+  const g = providerGlyph[provider] || providerGlyph.auto
   return (
-    <span className="shrink-0 flex items-center justify-center rounded"
-      style={{ width: size, height: size, backgroundColor: s.bg, color: s.color }}>
-      <Mail style={{ width: size * 0.6, height: size * 0.6 }} />
+    <span
+      className="shrink-0 flex items-center justify-center"
+      style={{ width: size, height: size, borderRadius: 5, backgroundColor: s.bg, color: s.color, flexShrink: 0, lineHeight: 1 }}
+    >
+      {('text' in g)
+        ? <span style={{ fontSize: g.text.length > 1 ? size * 0.32 : size * 0.5, fontWeight: 700, letterSpacing: -0.4, lineHeight: 1 }}>{g.text}</span>
+        : <g.Icon style={{ width: size * g.iconSize, height: size * g.iconSize }} />}
     </span>
   )
 }
-type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease' | 'icloud' | 'yahoo' | 'other'
+type ProviderKey = 'auto' | 'gmail' | 'outlook' | 'qq' | 'netease163' | 'netease126' | 'icloud' | 'yahoo' | 'other'
 
 const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
   label: string; brand: string;
@@ -64,14 +87,22 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
     usernameHint: 'QQ 邮箱完整地址', passwordTip: '授权码（非QQ密码）',
     guide: '进入 QQ 邮箱 → 设置 → 账户，开启「IMAP/SMTP 服务」后生成授权码，此处填写授权码而非 QQ 登录密码。',
   },
-   netease: {
-     label: '网易126', brand: '#e53e3e',
-    domains: ['163.com', '126.com', 'yeah.net', 'vip.163.com'],
-    imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465,
-    nameHint: '网易邮箱账号', emailHint: 'xxx@163.com',
-    usernameHint: '网易邮箱完整地址', passwordTip: '客户端授权码（非登录密码）',
-    guide: '网易邮箱在 设置 → POP3/SMTP/IMAP 中开启服务，生成专属客户端授权码后在此输入，勿使用登录密码。',
-  },
+   netease163: {
+      label: '网易163', brand: '#e53e3e',
+     domains: ['163.com', 'vip.163.com'],
+     imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465,
+     nameHint: '网易163邮箱账号', emailHint: 'xxx@163.com',
+     usernameHint: '网易163邮箱完整地址', passwordTip: '客户端授权码（非登录密码）',
+     guide: '登录网易163邮箱 → 设置 → POP3/SMTP/IMAP，开启服务并生成客户端授权码，此处填写授权码而非登录密码。',
+   },
+   netease126: {
+      label: '网易126', brand: '#e53e3e',
+     domains: ['126.com', 'vip.126.com', 'yeah.net'],
+     imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465,
+     nameHint: '网易126邮箱账号', emailHint: 'xxx@126.com',
+     usernameHint: '网易126邮箱完整地址', passwordTip: '客户端授权码（非登录密码）',
+     guide: '登录网易126邮箱 → 设置 → POP3/SMTP/IMAP，开启服务并生成客户端授权码，此处填写授权码而非登录密码。',
+   },
   icloud: {
     label: 'iCloud', brand: '#7c9a5f',
     domains: ['icloud.com', 'me.com'],
@@ -90,13 +121,14 @@ const PROVIDER_CONFIG: Record<Exclude<ProviderKey, 'auto' | 'other'>, {
   },
 }
 
-// 服务商选择器：横排 chip，默认「自动识别」
+// 服务商分类：渲染在左侧导航「新建账号」下方，默认「自动识别」
 const PROVIDER_CHIPS: Array<{ key: ProviderKey; label: string; provider: string }> = [
   { key: 'auto', label: '自动识别', provider: 'auto' },
   { key: 'gmail', label: 'Gmail', provider: 'gmail' },
   { key: 'outlook', label: 'Outlook', provider: 'outlook' },
   { key: 'qq', label: 'QQ邮箱', provider: 'qq' },
-  { key: 'netease', label: '网易126', provider: 'netease' },
+  { key: 'netease163', label: '网易163', provider: 'netease163' },
+  { key: 'netease126', label: '网易126', provider: 'netease126' },
   { key: 'icloud', label: 'iCloud', provider: 'icloud' },
   { key: 'yahoo', label: 'Yahoo', provider: 'yahoo' },
   { key: 'other', label: 'Exchange', provider: 'other' },
@@ -175,15 +207,16 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
      }
    }
 
-   const applyProviderHosts = (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
-     const p = PROVIDER_CONFIG[key]
-     setProvider(key)
-     setForm(f => ({
-       ...f,
-       imap_host: p.imapHost, imap_port: p.imapPort,
-       smtp_host: p.smtpHost, smtp_port: p.smtpPort,
-     }))
-   }
+    const applyProviderHosts = (key: Exclude<ProviderKey, 'auto' | 'other'>) => {
+      const p = PROVIDER_CONFIG[key]
+      setProvider(key)
+      setForm(f => ({
+        ...f,
+        provider: key,
+        imap_host: p.imapHost, imap_port: p.imapPort,
+        smtp_host: p.smtpHost, smtp_port: p.smtpPort,
+      }))
+    }
 
    const handleEmailChange = (v: string) => {
      const detected = detectProvider(v)
@@ -380,6 +413,48 @@ const handleSaveEdit = async () => {
                 <span style={{ fontSize: 14, whiteSpace: 'nowrap' }}>新建账号</span>
               </button>
 
+              {/* 服务商分类：选中后直接套用该服务商的服务器预设 */}
+              {PROVIDER_CHIPS.map(({ key, label }) => {
+                const active = key === provider
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      if (key === 'auto' || key === 'other') setProvider(key)
+                      else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
+                    }}
+                    style={isMobile
+                      ? {
+                          display: 'flex', alignItems: 'center', gap: 8, height: 36,
+                          padding: '0 12px', borderRadius: 8, fontSize: 12, whiteSpace: 'nowrap',
+                          fontWeight: active ? 500 : 400, cursor: 'pointer', border: 'none',
+                          flexShrink: 0, fontFamily: 'var(--font-family-cn)',
+                          backgroundColor: active ? 'var(--color-bg-white)' : 'transparent',
+                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                          boxShadow: active ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                          transition: 'all var(--transition-base)',
+                        }
+                      : {
+                          display: 'flex', alignItems: 'center', gap: 8, height: 36,
+                          padding: '0 12px', borderRadius: 8, fontSize: 13, whiteSpace: 'nowrap',
+                          fontWeight: active ? 500 : 400, cursor: 'pointer', border: 'none',
+                          width: '100%', flexShrink: 0, textAlign: 'left',
+                          fontFamily: 'var(--font-family-cn)',
+                          backgroundColor: active ? 'var(--color-bg-white)' : 'transparent',
+                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                          boxShadow: active ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                          transition: 'all var(--transition-base)',
+                        }}
+                  >
+                    <ProviderMark provider={key} size={22} />
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+                    {!isMobile && active && <Check style={{ width: 13, height: 13, flexShrink: 0 }} />}
+                  </button>
+                )
+              })}
+
               <div style={isMobile
                 ? { width: 1, alignSelf: 'stretch', backgroundColor: 'var(--color-border-soft)', margin: '0 2px', flexShrink: 0 }
                 : { height: 1, backgroundColor: 'var(--color-border-soft)', margin: '4px 0' }}></div>
@@ -441,45 +516,7 @@ const handleSaveEdit = async () => {
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
               <div className="p-1" style={{ paddingBottom: 16 }}>
                 <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
-                  <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 16 }}>
-                    {PROVIDER_CHIPS.map(({ key, label, provider }) => {
-                      const active = provider === key
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => {
-                            if (key === 'auto' || key === 'other') setProvider(key)
-                            else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            height: 32,
-                            padding: '0 12px',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: active ? 600 : 400,
-                            cursor: 'pointer',
-                            backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--color-bg-white)',
-                            border: active ? '1px solid var(--color-primary)' : '0.7px solid var(--color-border)',
-                            color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                            fontFamily: 'var(--font-family-cn)',
-                            transition: 'all var(--transition-base)',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <ProviderLogo provider={provider} size={15} />
-                          {label}
-                          {active && <Check style={{ width: 12, height: 12, flexShrink: 0 }} />}
-                        </button>
-                      )
-                    })}
-                  </div>
-                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                      <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>账号名称</label>
                       <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}

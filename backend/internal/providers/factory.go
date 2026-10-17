@@ -37,14 +37,20 @@ func Defaults(provider oauth2.Provider) (ProviderSettings, bool) {
 	return s, ok
 }
 
-// providerBrandColor 根据服务商返回品牌色，未知服务商返回默认色
+// providerBrandColor 根据服务商返回品牌色；key 同时用于邮箱域名子串的兜底匹配
 var providerBrandColor = map[string]string{
-	"gmail":  "#ea4335",
-	"outlook": "#0078d4",
-	"qq":     "#12b7f5",
-	"netease": "#e53e3e",
-	"icloud":  "#7c9a5f",
-	"yahoo":   "#721c90",
+	"gmail":      "#ea4335",
+	"outlook":    "#0078d4",
+	"hotmail":    "#0078d4",
+	"qq":         "#12b7f5",
+	"netease":    "#e53e3e",
+	"netease126": "#e53e3e",
+	"netease163": "#e53e3e",
+	"163":        "#e53e3e",
+	"126":        "#e53e3e",
+	"yeah.net":   "#e53e3e",
+	"icloud":     "#7c9a5f",
+	"yahoo":      "#721c90",
 }
 
 // ApplyDefaults 若账号未填写 IMAP/SMTP 主机或品牌色，则填入服务商预设

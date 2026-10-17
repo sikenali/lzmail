@@ -103,8 +103,8 @@ export function ContactFormModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease' }} onClick={onClose}>
-      <div className="w-[440px] rounded-[16px] p-6" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)', animation: 'scaleIn 0.2s ease' }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease' }} onClick={onClose}>
+      <div className="w-[440px] max-w-full rounded-[16px] p-6" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)', animation: 'scaleIn 0.2s ease' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{editingId ? '编辑联系人' : '新建联系人'}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">

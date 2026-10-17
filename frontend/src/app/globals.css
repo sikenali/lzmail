@@ -2,6 +2,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== Mobile platform baseline ===== */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (pointer: coarse) {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .scroll-contain {
+    overscroll-behavior: contain;
+  }
+}
+
 :root {
   --background: #fbf7f0;
   --card: #ffffff;
@@ -430,11 +458,33 @@ h1, .font-display {
   position: relative;
   flex-shrink: 0;
 }
-.nav-btn:hover {
-  background-color: var(--color-primary);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .nav-btn:hover {
+    background-color: var(--color-primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+  .nav-left:hover .brand-cn {
+    color: var(--color-primary);
+  }
+  .avatar-btn:hover {
+    opacity: 0.9;
+  }
+  .hover-row:hover {
+    background-color: var(--color-bg-secondary);
+  }
+  .hover-row-warm:hover {
+    background-color: rgba(243, 237, 227, 1);
+  }
+}
+@media (pointer: coarse) {
+  .nav-btn:active {
+    background-color: var(--color-primary);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
 }
 .nav-btn .icon {
   font-size: 14px;
@@ -449,9 +499,6 @@ h1, .font-display {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-}
-.nav-left:hover .brand-cn {
-  color: var(--color-primary);
 }
 
 /* Modal animations */

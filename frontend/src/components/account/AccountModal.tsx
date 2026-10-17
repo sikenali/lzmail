@@ -10,6 +10,7 @@ import {
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { Modal } from '@/components/layout/Modal'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const providerLogoStyle: Record<string, { bg: string; color: string }> = {
   gmail:  { bg: '#ea4335', color: 'white' },
@@ -150,6 +151,7 @@ function detectProvider(email: string): ProviderKey {
 
 export function AccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [accounts, setAccounts] = useState<Account[]>([])
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [form, setForm] = useState({
@@ -374,89 +376,97 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
        height="85vh"
        maxHeight={700}
      >
-       {/* Body: Left list + Right form */}
-       <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', padding: '20px 24px' }}>
-            {/* Left: Account list */}
-            <nav style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
-             {/* Add new button */}
-             <button
-               onClick={handleNewAccount}
-               style={{
-                 display: 'flex',
-                 alignItems: 'center',
-                 gap: 10,
-                 height: 44,
-                 padding: '0 14px',
-                 borderRadius: 10,
-                 backgroundColor: !isEditing ? 'var(--color-bg-white)' : 'transparent',
-                 color: !isEditing ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                 fontWeight: !isEditing ? 500 : 400,
-                 border: 'none',
-                 cursor: 'pointer',
-                 width: '100%',
-                 textAlign: 'left',
-                 transition: 'all var(--transition-base)',
-                 boxShadow: !isEditing ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                 fontFamily: 'var(--font-family-cn)',
-               }}
-             >
-               <Plus style={{ width: 18, height: 18, flexShrink: 0 }} />
-               <span style={{ fontSize: 14 }}>新建账号</span>
-             </button>
+        {/* Body: Left list + Right form */}
+        <div style={{ flex: 1, minHeight: 0, gap: isMobile ? 12 : 20, display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '12px 16px' : '20px 24px' }}>
+             {/* Left: Account list */}
+             <nav style={isMobile
+               ? { width: '100%', flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 8, display: 'flex', flexDirection: 'row', gap: 8, overflowX: 'auto' }
+               : { width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
+              {/* Add new button */}
+              <button
+                onClick={handleNewAccount}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  height: 44,
+                  padding: isMobile ? '0 12px' : '0 14px',
+                  borderRadius: 10,
+                  backgroundColor: !isEditing ? 'var(--color-bg-white)' : 'transparent',
+                  color: !isEditing ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: !isEditing ? 500 : 400,
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: isMobile ? 'auto' : '100%',
+                  flexShrink: 0,
+                  textAlign: 'left',
+                  transition: 'all var(--transition-base)',
+                  boxShadow: !isEditing ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                  fontFamily: 'var(--font-family-cn)',
+                }}
+              >
+                <Plus style={{ width: 18, height: 18, flexShrink: 0 }} />
+                <span style={{ fontSize: 14, whiteSpace: 'nowrap' }}>新建账号</span>
+              </button>
 
-             <div style={{ height: 1, backgroundColor: 'var(--color-border-soft)', margin: '4px 0' }}></div>
+              <div style={isMobile
+                ? { width: 1, alignSelf: 'stretch', backgroundColor: 'var(--color-border-soft)', margin: '0 2px', flexShrink: 0 }
+                : { height: 1, backgroundColor: 'var(--color-border-soft)', margin: '4px 0' }}></div>
 
-             {/* Account list */}
-             {loading ? (
-               <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>加载中...</div>
-             ) : accounts.length === 0 ? (
-               <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>暂无账号</div>
-             ) : (
-               accounts.map(a => {
-                 const ac = getAccountAvatarBg(a)
-                 const isSelected = selectedId === a.id
-                 const state = syncStatus[a.id]
-                 const prog = syncProgress[a.id]
-                 const syncState = getSyncBadge(a, state, prog?.mode || (a.use_idle ? 'idle' : 'poll'))
-                 const isSyncing = state === 'syncing'
-                 const progressPct = prog && prog.total ? Math.min(100, Math.round((prog.processed || 0) / prog.total * 100)) : 0
-                 return (
-                   <button
-                     key={a.id}
-                     onClick={() => handleSelectAccount(a)}
-                     style={{
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: 10,
-                       height: 52,
-                       padding: '0 12px',
-                       borderRadius: 10,
-                       backgroundColor: isSelected ? 'var(--color-bg-white)' : 'transparent',
-                       border: 'none',
-                       cursor: 'pointer',
-                       width: '100%',
-                       textAlign: 'left',
-                       transition: 'all var(--transition-base)',
-                       boxShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                     }}
-                   >
-                     <div style={{ width: 32, height: 32, borderRadius: 9999, backgroundColor: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-                       <User style={{ width: '60%', height: '60%', color: 'white', display: 'block', margin: 'auto' }} />
-                     </div>
-                     <div style={{ flex: 1, minWidth: 0 }}>
-                       <div style={{ fontSize: 13, fontWeight: 500, color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                         {a.name || a.email}
-                       </div>
-                       <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                         {a.email}
-                       </div>
-                     </div>
-                     <div style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: syncState.dotColor, flexShrink: 0, animation: isSyncing ? 'pulse 1.5s ease infinite' : 'none' }}></div>
-                   </button>
-                 )
-               })
-             )}
-           </nav>
+              {/* Account list */}
+              {loading ? (
+                <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap' }}>加载中...</div>
+              ) : accounts.length === 0 ? (
+                <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap' }}>暂无账号</div>
+              ) : (
+                accounts.map(a => {
+                  const ac = getAccountAvatarBg(a)
+                  const isSelected = selectedId === a.id
+                  const state = syncStatus[a.id]
+                  const prog = syncProgress[a.id]
+                  const syncState = getSyncBadge(a, state, prog?.mode || (a.use_idle ? 'idle' : 'poll'))
+                  const isSyncing = state === 'syncing'
+                  const progressPct = prog && prog.total ? Math.min(100, Math.round((prog.processed || 0) / prog.total * 100)) : 0
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => handleSelectAccount(a)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        height: 52,
+                        padding: isMobile ? '0 10px' : '0 12px',
+                        borderRadius: 10,
+                        backgroundColor: isSelected ? 'var(--color-bg-white)' : 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        width: isMobile ? 'auto' : '100%',
+                        flexShrink: 0,
+                        textAlign: 'left',
+                        transition: 'all var(--transition-base)',
+                        boxShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                      }}
+                    >
+                      <div style={{ width: 32, height: 32, borderRadius: 9999, backgroundColor: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                        <User style={{ width: '60%', height: '60%', color: 'white', display: 'block', margin: 'auto' }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? 150 : undefined }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {a.name || a.email}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {a.email}
+                        </div>
+                      </div>
+                      {!isMobile && (
+                        <div style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: syncState.dotColor, flexShrink: 0, animation: isSyncing ? 'pulse 1.5s ease infinite' : 'none' }}></div>
+                      )}
+                    </button>
+                  )
+                })
+              )}
+            </nav>
 
             {/* Right: Form */}
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
@@ -465,7 +475,7 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16, fontFamily: 'var(--font-family-cn)' }}>
                    {isEditing ? '编辑账号' : '新建账号'}
                  </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
                    <span style={{ fontSize: 12, flexShrink: 0, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>邮箱服务商：</span>
                    <CustomSelect
                      value={provider}
@@ -492,8 +502,8 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
                      </div>
                    )}
                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div style={{ gridColumn: 'span 2' }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                     <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>账号名称</label>
                       <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                         className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
@@ -588,7 +598,7 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
                        {syncStatus[selectedAccount.id] === 'syncing' ? '同步中' : syncStatus[selectedAccount.id] === 'error' ? '连接异常' : `已同步 ${formatLastSync(lastSyncedAt[selectedAccount.id] || 0)}`}
                      </span>
                    </div>
-                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                      {[
                        { label: '认证方式', value: selectedAccount.auth_method === 'oauth2' ? 'OAuth 2.0' : '授权码' },
                        { label: 'IMAP 服务器', value: `${selectedAccount.imap_host}:${selectedAccount.imap_port}` },

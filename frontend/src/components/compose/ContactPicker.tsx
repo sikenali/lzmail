@@ -291,10 +291,8 @@ export default function ContactPicker({
                 return (
                   <div
                     key={contact.id}
-                    className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
+                    className="hover-row-warm flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
                     style={{ backgroundColor: isSelected ? 'rgba(243,237,227,0.5)' : 'transparent' }}
-                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(243,237,227,1)' }}
-                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                     onClick={() => toggleSelect(contact)}
                   >
                     {/* 勾选框 */}

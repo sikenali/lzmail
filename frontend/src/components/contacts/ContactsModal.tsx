@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import { ContactFormModal } from './ContactFormModal'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
@@ -37,6 +38,7 @@ const PAGE_SIZE = 10
 export function ContactsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter()
   const { settings } = useSettings()
+  const isMobile = useIsMobile()
   const [accounts, setAccounts] = useState<{ id: number; email: string }[]>([])
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -197,7 +199,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
       subtitle="管理您的联系人列表"
       width={1100}
       height="85vh"
-      headerExtra={
+      headerExtra={isMobile ? undefined : (
         <>
           <div className="relative">
             <i className="ri-search-line" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--color-text-muted)' }}></i>
@@ -227,15 +229,46 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
             </select>
           )}
         </>
-      }
+      )}
     >
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6" style={{ minHeight: 0 }}>
+      <div className={`flex-1 overflow-auto ${isMobile ? 'p-3' : 'p-6'}`} style={{ minHeight: 0 }}>
+          {isMobile && (
+            <div className="flex flex-col gap-2 mb-3">
+              <div className="relative">
+                <i className="ri-search-line" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--color-text-muted)' }}></i>
+                <input
+                  value={searchQ}
+                  onChange={e => handleSearch(e.target.value)}
+                  placeholder="搜索姓名或邮箱..."
+                  className="w-full h-[40px] pl-9 pr-8 rounded-[8px] outline-none text-[13px]"
+                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+                />
+                {searchQ && (
+                  <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              {accounts.length > 1 && (
+                <select
+                  value={selectedAccountId ?? ''}
+                  onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
+                  className="h-[40px] px-3 rounded-[8px] text-[13px] outline-none w-full"
+                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+                >
+                  {accounts.map(a => (
+                    <option key={a.id} value={a.id}>{a.email}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
           {/* Table section */}
-          <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--color-bg-secondary)', padding: 20, border: '1px solid var(--color-border-soft)' }}>
-            <div style={{ minWidth: 800 }}>
+          <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--color-bg-secondary)', padding: isMobile ? 12 : 20, border: '1px solid var(--color-border-soft)' }}>
+            <div style={{ minWidth: isMobile ? undefined : 800 }}>
               {/* Table title bar */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4" style={{ flexWrap: 'wrap', rowGap: 8 }}>
                 <div className="flex items-center gap-3">
                   <div style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: 'var(--color-primary)' }} />
                   <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
@@ -262,6 +295,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
               </div>
 
               {/* Table header */}
+              {!isMobile && (
               <div className="flex items-center" style={{ height: 36, padding: '0 12px', marginBottom: 0 }}>
                 <div style={{ width: 180, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>姓名</span></div>
                 <div style={{ width: 240, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>邮箱</span></div>
@@ -269,6 +303,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                 <div style={{ width: 160, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>公司</span></div>
                 <div style={{ width: 100, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>操作</span></div>
               </div>
+              )}
 
               {/* Table body */}
               <div className="flex flex-col" style={{ paddingTop: 4 }}>
@@ -287,6 +322,40 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                     const rowHeight = density === 'compact' ? 40 : 52
                     return (
                       <div key={c.id} style={{ borderBottom: '1px solid var(--card-border)', position: 'relative' }}>
+                        {isMobile ? (
+                          <div className="flex items-center gap-3" style={{ padding: '10px 4px' }}>
+                            <div className="flex items-center justify-center shrink-0" style={{ width: 36, height: 36, borderRadius: 9999, backgroundColor: s.bg }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: s.text }}>{c.name?.[0] || '?'}</span>
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name || '(无名)'}</div>
+                              <div style={{ fontSize: 12, color: 'var(--foreground-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</div>
+                              {(c.phone || c.company) && (
+                                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>
+                                  {[c.phone, c.company].filter(Boolean).join(' · ')}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+                              <button
+                                onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                                className="flex items-center justify-center"
+                                style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: s.bg }}
+                                title="发邮件"
+                              >
+                                <MailIcon className="w-4 h-4" style={{ color: s.text }} />
+                              </button>
+                              <button
+                                onClick={() => setMenuId(menuId === c.id ? null : c.id)}
+                                className="flex items-center justify-center"
+                                style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: 'var(--muted)' }}
+                                title="更多"
+                              >
+                                <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
                         <div className="flex items-center" style={{ height: rowHeight, padding: '0 12px' }}>
                           <div className="flex items-center gap-3" style={{ width: 180, flexShrink: 0 }}>
                             <div className="flex items-center justify-center shrink-0" style={{ width: density === 'compact' ? 24 : 30, height: density === 'compact' ? 24 : 30, borderRadius: 9999, backgroundColor: s.bg }}>
@@ -322,6 +391,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                             </button>
                           </div>
                         </div>
+                        )}
                         {menuId === c.id && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setMenuId(null)} />
@@ -351,7 +421,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
               {/* Pagination */}
               {!loading && total > PAGE_SIZE && (
-                <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+                <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid var(--card-border)', flexWrap: 'wrap', gap: 8 }}>
                   <span style={{ fontSize: 13, color: 'var(--foreground-tertiary)' }}>共 {total} 条，第 {page + 1} / {totalPages} 页</span>
                   <div className="flex items-center gap-2">
                     <button

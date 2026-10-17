@@ -47,14 +47,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--color-bg-main)' }}>
+    <div className="flex flex-col h-dvh" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       <Suspense fallback={null}>
         <TopNav
           onOpenSettings={() => openHash('settings')}
           onOpenAddAccount={() => openHash('account')}
         />
       </Suspense>
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto scroll-contain">{children}</main>
       <PageFooter
         onCompose={() => openHash('compose')}
         onContacts={() => openHash('contact')}

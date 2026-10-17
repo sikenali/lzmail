@@ -272,9 +272,8 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
                 <div style={{ position: 'absolute', zIndex: 9999, top: '100%', left: 0, marginTop: 4, borderRadius: 12, overflow: 'hidden', backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 240 }}>
                   {accounts.map(account => (
                     <div key={account.id}
+                      className="hover-row"
                       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', cursor: 'pointer', transition: 'background-color var(--transition-base)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       onClick={() => { setAccountId(account.id); setShowSenderPicker(false) }}>
                       <span style={{ width: 24, height: 24, borderRadius: 9999, backgroundColor: account.brand_color || 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
                         {(account.name || 'G')[0].toUpperCase()}

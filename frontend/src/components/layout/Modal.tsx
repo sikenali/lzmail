@@ -1,6 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function Modal({
   open,
@@ -31,6 +32,8 @@ export function Modal({
   closeOnClickOverlay?: boolean
   closeOnEsc?: boolean
 }) {
+  const isMobile = useIsMobile()
+
   useEffect(() => {
     if (!open) return
     document.body.style.overflow = 'hidden'
@@ -58,14 +61,14 @@ export function Modal({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          width,
-          maxWidth: '94vw',
-          height,
-          maxHeight: maxHeight ? `${maxHeight}px` : undefined,
+          width: isMobile ? '100%' : width,
+          maxWidth: isMobile ? '100%' : '94vw',
+          height: isMobile ? '100dvh' : height,
+          maxHeight: isMobile ? undefined : (maxHeight ? `${maxHeight}px` : undefined),
           backgroundColor: 'var(--color-bg-white)',
-          border: '0.7px solid var(--color-border-soft)',
-          borderRadius: 18,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          border: isMobile ? 'none' : '0.7px solid var(--color-border-soft)',
+          borderRadius: isMobile ? 0 : 18,
+          boxShadow: isMobile ? 'none' : '0 12px 40px rgba(0,0,0,0.2)',
           overflow: 'hidden',
           animation: 'scaleIn 0.3s ease',
         }}
@@ -79,7 +82,8 @@ export function Modal({
               alignItems: 'flex-start',
               justifyContent: 'space-between',
               gap: 16,
-              padding: '20px 24px',
+              padding: isMobile ? '12px 16px' : '20px 24px',
+              paddingTop: isMobile ? 'calc(12px + env(safe-area-inset-top))' : 20,
               flexShrink: 0,
               borderBottom: '1px solid var(--color-border-soft)',
             }}
@@ -125,7 +129,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div style={{ padding: '12px 24px', flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
+          <div style={{ padding: isMobile ? '12px 16px' : '12px 24px', paddingBottom: isMobile ? 'calc(12px + env(safe-area-inset-bottom))' : 12, flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
             {footer}
           </div>
         )}

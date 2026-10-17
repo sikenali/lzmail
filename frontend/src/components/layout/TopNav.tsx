@@ -148,9 +148,11 @@ export function TopNav({
 
   return (
     <header
+      className="px-3 sm:px-6"
       style={{
-        height: '72px',
-        padding: '0 24px',
+        height: 'calc(72px + env(safe-area-inset-top))',
+        paddingTop: 'env(safe-area-inset-top)',
+        boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
         backgroundColor: 'var(--color-bg-white)',
@@ -177,6 +179,7 @@ export function TopNav({
           懒猫微邮
         </span>
         <div
+          className="hidden sm:block"
           style={{
             width: '2px',
             height: '20px',
@@ -184,6 +187,7 @@ export function TopNav({
           }}
         ></div>
         <span
+          className="hidden sm:inline"
           style={{
             fontSize: '16px',
             color: 'var(--color-text-secondary)',
@@ -369,7 +373,7 @@ export function TopNav({
 
         {userAccount && (
           <div
-            className="flex items-center justify-center cursor-pointer"
+            className="avatar-btn flex items-center justify-center cursor-pointer"
             style={{
               width: '28px',
               height: '28px',
@@ -380,8 +384,6 @@ export function TopNav({
             }}
             title={userAccount.name || userAccount.email}
             onClick={() => onOpenSettings?.()}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
           >
             <span style={{ fontSize: '10px', fontWeight: 700, color: '#ffffff' }}>{avatarText}</span>
           </div>

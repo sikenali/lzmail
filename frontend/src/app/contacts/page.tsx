@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import { ContactFormModal } from '@/components/contacts/ContactFormModal'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
@@ -37,6 +38,7 @@ const PAGE_SIZE = 10
 export default function ContactsPage() {
   const router = useRouter()
   const { settings } = useSettings()
+  const isMobile = useIsMobile()
   const [accounts, setAccounts] = useState<{ id: number; email: string }[]>([])
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -171,10 +173,10 @@ export default function ContactsPage() {
 
   return (
     <AppShell>
-      <div className="px-6 py-6 md:px-10 md:py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+      <div className="px-4 py-5 md:px-10 md:py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* 标题行 */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-4 mb-6" style={{ flexWrap: 'wrap', rowGap: 12 }}>
+          <div className={isMobile ? 'flex items-center gap-4 w-full' : 'flex items-center gap-4 flex-1'}>
             <div className="shrink-0" style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
             <div>
               <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--foreground)', lineHeight: '36px', margin: 0 }}>
@@ -199,7 +201,7 @@ export default function ContactsPage() {
             </select>
           )}
           {/* 搜索框 */}
-          <div className="relative flex-1 max-w-[280px]" style={{ flexShrink: 0 }}>
+          <div className="relative flex-1 max-w-[280px]" style={{ flexShrink: 0, flexBasis: isMobile ? '100%' : undefined, maxWidth: isMobile ? '100%' : undefined }}>
             <input
               value={searchQ}
               onChange={e => handleSearch(e.target.value)}
@@ -225,8 +227,8 @@ export default function ContactsPage() {
 
         {/* Featured contacts grid */}
         {!loading && contacts.length > 0 && (
-          <div className="mb-8" style={{ paddingTop: 32 }}>
-            <div className="flex gap-5" style={{ display: 'flex' }}>
+          <div className="mb-8" style={{ paddingTop: isMobile ? 12 : 32 }}>
+            <div className="flex gap-5" style={{ display: 'flex', overflowX: isMobile ? 'auto' : undefined, paddingBottom: isMobile ? 4 : undefined }}>
               {contacts.slice(0, 4).map((c) => (
                 <div key={c.id}
                   className="flex flex-col"
@@ -237,6 +239,7 @@ export default function ContactsPage() {
                     padding: 24,
                     boxShadow: '0 2px 12px rgba(139,115,85,0.06)',
                     flex: 1,
+                    minWidth: isMobile ? 260 : 0,
                   }}
                 >
                   <div className="flex items-center gap-4 mb-4">
@@ -284,10 +287,10 @@ export default function ContactsPage() {
         )}
 
         {/* Table section */}
-        <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--card)', padding: 24 }}>
-          <div style={{ minWidth: 1056 }}>
+        <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--card)', padding: isMobile ? 12 : 24 }}>
+          <div style={{ minWidth: isMobile ? undefined : 1056 }}>
           {/* Table title bar */}
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-5" style={{ flexWrap: 'wrap', rowGap: 8 }}>
             <div className="flex items-center gap-3">
               <div className="shrink-0" style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
               <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
@@ -306,6 +309,7 @@ export default function ContactsPage() {
           </div>
 
           {/* Table header */}
+          {!isMobile && (
           <div className="flex items-center" style={{ height: 41, padding: '0 16px', marginBottom: 0 }}>
             <div style={{ width: 220, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>姓名</span></div>
             <div style={{ width: 308, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>邮箱</span></div>
@@ -313,6 +317,7 @@ export default function ContactsPage() {
             <div style={{ width: 198, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>公司</span></div>
             <div style={{ width: 132, flexShrink: 0 }}><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>操作</span></div>
           </div>
+          )}
 
           {/* Table body */}
           <div className="flex flex-col" style={{ paddingTop: 4 }}>
@@ -331,6 +336,40 @@ export default function ContactsPage() {
                 const rowHeight = density === 'compact' ? 40 : 57
                 return (
                   <div key={c.id} style={{ borderBottom: '1px solid var(--card-border)', position: 'relative' }}>
+                    {isMobile ? (
+                      <div className="flex items-center gap-3" style={{ padding: '10px 4px' }}>
+                        <div className="flex items-center justify-center shrink-0" style={{ width: 38, height: 38, borderRadius: 9999, backgroundColor: s.bg }}>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: s.text }}>{c.name?.[0] || '?'}</span>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name || '(无名)'}</div>
+                          <div style={{ fontSize: 12, color: 'var(--foreground-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</div>
+                          {(c.phone || c.company) && (
+                            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>
+                              {[c.phone, c.company].filter(Boolean).join(' · ')}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+                          <button
+                            onClick={() => router.push(`/compose?to=${encodeURIComponent(c.email)}`)}
+                            className="flex items-center justify-center"
+                            style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: s.bg }}
+                            title="发邮件"
+                          >
+                            <MailIcon className="w-4 h-4" style={{ color: s.text }} />
+                          </button>
+                          <button
+                            onClick={() => setMenuId(menuId === c.id ? null : c.id)}
+                            className="flex items-center justify-center"
+                            style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: 'var(--muted)' }}
+                            title="更多"
+                          >
+                            <MoreHorizontal className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
                     <div className="flex items-center" style={{ height: rowHeight, padding: '0 16px' }}>
                       <div className="flex items-center gap-3" style={{ width: 220, flexShrink: 0 }}>
                         <div className="flex items-center justify-center shrink-0" style={{ width: density === 'compact' ? 24 : 32, height: density === 'compact' ? 24 : 32, borderRadius: 9999, backgroundColor: s.bg }}>
@@ -366,6 +405,7 @@ export default function ContactsPage() {
                         </button>
                       </div>
                     </div>
+                    )}
                     {menuId === c.id && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setMenuId(null)} />
@@ -395,7 +435,7 @@ export default function ContactsPage() {
 
           {/* Pagination */}
           {!loading && total > PAGE_SIZE && (
-            <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: '1px solid var(--card-border)', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ fontSize: 13, color: 'var(--foreground-tertiary)' }}>共 {total} 条，第 {page + 1} / {totalPages} 页</span>
               <div className="flex items-center gap-2">
                 <button

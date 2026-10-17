@@ -21,9 +21,11 @@ export function PageFooter({
 }) {
   return (
     <footer
+      className="px-4 sm:px-8"
       style={{
-        height: '58px',
-        padding: '0 32px',
+        height: 'calc(58px + env(safe-area-inset-bottom))',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
         backgroundColor: 'linear-gradient(180deg, var(--color-bg-white) 0%, var(--color-bg-secondary) 100%)',
@@ -38,6 +40,7 @@ export function PageFooter({
       >
         <LogoIcon size={20} />
         <span
+          className="hidden sm:inline"
           style={{
             fontSize: '14px',
             fontWeight: 500,
@@ -67,6 +70,7 @@ export function PageFooter({
       </div>
 
       <span
+        className="hidden sm:inline"
         style={{
           fontSize: '14px',
           color: 'var(--color-text-muted)',

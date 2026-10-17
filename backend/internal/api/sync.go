@@ -1,0 +1,54 @@
+package api
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/lzmail/backend/internal/sync"
+)
+
+func (h *Handler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
+	if h.syncEngine == nil {
+		writeJSON(w, http.StatusOK, map[string]string{})
+		return
+	}
+	statuses := h.syncEngine.Statuses()
+	if statuses == nil {
+		statuses = map[int64]string{}
+	}
+	writeJSON(w, http.StatusOK, statuses)
+}
+
+func (h *Handler) handleSyncStatusDetail(w http.ResponseWriter, r *http.Request) {
+	if h.syncEngine == nil {
+		writeJSON(w, http.StatusOK, map[string]interface{}{})
+		return
+	}
+	details := h.syncEngine.StatusDetails()
+	if details == nil {
+		details = map[int64]sync.SyncStatus{}
+	}
+	writeJSON(w, http.StatusOK, details)
+}
+
+func (h *Handler) handleSync(w http.ResponseWriter, r *http.Request) {
+	if h.syncEngine == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "sync engine unavailable"})
+		return
+	}
+
+	// Optional ?account_id=<id> to refresh a single account.
+	if idStr := r.URL.Query().Get("account_id"); idStr != "" {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid account_id"})
+			return
+		}
+		h.syncEngine.RefreshAccount(id)
+		writeJSON(w, http.StatusOK, map[string]string{"status": "syncing", "account_id": idStr})
+		return
+	}
+
+	h.syncEngine.RefreshAll()
+	writeJSON(w, http.StatusOK, map[string]string{"status": "syncing"})
+}

@@ -1,0 +1,465 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #fbf7f0;
+  --card: #ffffff;
+  --card-border: #f3ede3;
+  --foreground: #3d2b1f;
+  --foreground-secondary: #6b5b4f;
+  --foreground-tertiary: #8b7355;
+  --muted: #f3ede3;
+  --muted-foreground: #b8a88a;
+  --primary: #c43d3d;
+  --primary-light: #fdf2f2;
+  --teal: #6b8fa3;
+  --teal-light: #f0f4f7;
+  --gold: #c9a96e;
+  --gold-light: #fef9f0;
+  --green: #5b8c5a;
+  --green-light: #edf5ec;
+  --blue: #6b8fa3;
+  --blue-light: #f0f4f7;
+  --primary-foreground: #ffffff;
+  --accent: #fef9f0;
+  --accent-foreground: #3d2b1f;
+  --border: #f3ede3;
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  --gmail: #ea4335;
+  --outlook: #0078d4;
+  --qq: #12b7f5;
+  --netease: #e53e3e;
+  --app-background: #fbf7f0;
+  --sidebar-bg: #fbf7f0;
+  --sidebar-border: #f3ede3;
+  --success: #5b8c5a;
+  --success-bg: #edf5ec;
+  --danger: #c43d3d;
+  --danger-bg: #fdf2f2;
+  --gold: #c9a96e;
+  --gold-bg: #faf3e8;
+  --skeleton-base: #e8e0d4;
+  --skeleton-shine: #f5f0e8;
+
+  /* DESIGN.md Tokens - Light */
+  --color-primary: #C0392B;
+  --color-primary-soft: #FBE9E7;
+  --color-bg-main: #FAF7F2;
+  --color-bg-secondary: #F7F3EA;
+  --color-bg-card: #FCFBF8;
+  --color-bg-white: #FFFFFF;
+  --color-text-primary: #1F1D1A;
+  --color-text-body: #3A3A3A;
+  --color-text-secondary: #6E6A60;
+  --color-text-muted: #8A8578;
+  --color-text-faint: #A7A296;
+  --color-border: #E5DFD3;
+  --color-border-soft: #EDE9E0;
+  --color-border-hover: #D9D2C2;
+  --color-success: #4E9B7A;
+  --color-info: #4A72A8;
+  --color-warning: #F39C12;
+  --color-error: #E74C3C;
+  --font-family-cn: 'SourceHanSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Serif SC', sans-serif;
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+[data-theme="light"] {
+  --background: #fbf7f0;
+  --card: #ffffff;
+  --card-border: #f3ede3;
+  --foreground: #3d2b1f;
+  --foreground-secondary: #6b5b4f;
+  --foreground-tertiary: #8b7355;
+  --muted: #f3ede3;
+  --muted-foreground: #b8a88a;
+  --primary: #c43d3d;
+  --primary-light: #fdf2f2;
+  --teal: #6b8fa3;
+  --teal-light: #f0f4f7;
+  --gold: #c9a96e;
+  --gold-light: #fef9f0;
+  --green: #5b8c5a;
+  --green-light: #edf5ec;
+  --blue: #6b8fa3;
+  --blue-light: #f0f4f7;
+  --primary-foreground: #ffffff;
+  --accent: #fef9f0;
+  --accent-foreground: #3d2b1f;
+  --border: #f3ede3;
+  --app-background: #fbf7f0;
+  --sidebar-bg: #fbf7f0;
+  --sidebar-border: #f3ede3;
+  --success: #5b8c5a;
+  --success-bg: #edf5ec;
+  --danger: #c43d3d;
+  --danger-bg: #fdf2f2;
+  --gold: #c9a96e;
+  --gold-bg: #faf3e8;
+  --skeleton-base: #e8e0d4;
+  --skeleton-shine: #f5f0e8;
+}
+
+[data-theme="dark"] {
+  --background: #1a1612;
+  --card: #2a2320;
+  --card-border: #3d3430;
+  --foreground: #f5f0e8;
+  --foreground-secondary: #d4c8b8;
+  --foreground-tertiary: #a09080;
+  --muted: #2a2320;
+  --muted-foreground: #8b7355;
+  --primary: #d44638;
+  --primary-light: #2e1e1e;
+  --teal: #6b8fa3;
+  --teal-light: #1e2e32;
+  --gold: #c9a96e;
+  --gold-light: #2e2a1e;
+  --green: #5b8c5a;
+  --green-light: #1e2e1e;
+  --blue: #6b8fa3;
+  --blue-light: #1e2e32;
+  --primary-foreground: #ffffff;
+  --accent: #2a2320;
+  --accent-foreground: #f5f0e8;
+  --border: #3d3430;
+  --app-background: #1a1612;
+  --sidebar-bg: #2a2320;
+  --sidebar-border: #3d3430;
+  --success: #6b9b6a;
+  --success-bg: #1e2e1e;
+  --danger: #d44638;
+  --danger-bg: #2e1e1e;
+  --gold: #d4b87a;
+  --gold-bg: #2e2a1e;
+  --skeleton-base: #3d3430;
+  --skeleton-shine: #4a4038;
+
+  /* DESIGN.md Tokens - Dark */
+  --color-primary: #E05050;
+  --color-primary-soft: #3A2323;
+  --color-bg-main: #17171A;
+  --color-bg-secondary: #1C1C1F;
+  --color-bg-card: #232324;
+  --color-bg-white: #232324;
+  --color-text-primary: #F2F3F5;
+  --color-text-body: #DDE0E6;
+  --color-text-secondary: #C9CDD4;
+  --color-text-muted: #A7AEB9;
+  --color-text-faint: #86909C;
+  --color-border: #2A2B2E;
+  --color-border-soft: #2A2B2E;
+  --color-border-hover: #3A3B3F;
+  --color-success: #5CB98C;
+  --color-info: #82AEDD;
+  --color-warning: #F2B23E;
+  --color-error: #E86A5A;
+}
+
+.dark {
+  --background: #1a1612;
+  --card: #2a2320;
+  --card-border: #3d3430;
+  --foreground: #f5f0e8;
+  --foreground-secondary: #d4c8b8;
+  --foreground-tertiary: #a09080;
+  --muted: #2a2320;
+  --muted-foreground: #8b7355;
+  --primary: #d44638;
+  --primary-light: #2e1e1e;
+  --teal: #6b8fa3;
+  --teal-light: #1e2e32;
+  --gold: #c9a96e;
+  --gold-light: #2e2a1e;
+  --green: #5b8c5a;
+  --green-light: #1e2e1e;
+  --blue: #6b8fa3;
+  --blue-light: #1e2e32;
+  --primary-foreground: #ffffff;
+  --accent: #2a2320;
+  --accent-foreground: #f5f0e8;
+  --border: #3d3430;
+  --app-background: #1a1612;
+  --sidebar-bg: #2a2320;
+  --sidebar-border: #3d3430;
+  --success: #6b9b6a;
+  --success-bg: #1e2e1e;
+  --danger: #d44638;
+  --danger-bg: #2e1e1e;
+  --gold: #d4b87a;
+  --gold-bg: #2e2a1e;
+  --skeleton-base: #3d3430;
+  --skeleton-shine: #4a4038;
+
+  /* DESIGN.md Tokens - Dark */
+  --color-primary: #E05050;
+  --color-primary-soft: #3A2323;
+  --color-bg-main: #17171A;
+  --color-bg-secondary: #1C1C1F;
+  --color-bg-card: #232324;
+  --color-bg-white: #232324;
+  --color-text-primary: #F2F3F5;
+  --color-text-body: #DDE0E6;
+  --color-text-secondary: #C9CDD4;
+  --color-text-muted: #A7AEB9;
+  --color-text-faint: #86909C;
+  --color-border: #2A2B2E;
+  --color-border-soft: #2A2B2E;
+  --color-border-hover: #3A3B3F;
+  --color-success: #5CB98C;
+  --color-info: #82AEDD;
+  --color-warning: #F2B23E;
+  --color-error: #E86A5A;
+}
+
+* {
+  border-color: var(--card-border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Noto Serif SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, .font-display {
+  font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+}
+
+.font-zcool {
+  font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+}
+
+@media (max-width: 768px) {
+  .sidebar-hidden { display: none; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: var(--card-radius);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--card-shadow);
+}
+
+/* Page transition animations */
+.page-enter {
+  animation: pageSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.no-animations .page-enter {
+  animation: none;
+}
+
+.no-animations .nav-slider {
+  transition: none !important;
+}
+
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tiptap Editor styles */
+.ProseMirror {
+  outline: none;
+  min-height: 200px;
+}
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.ProseMirror ul { list-style-type: disc; }
+.ProseMirror ol { list-style-type: decimal; }
+.ProseMirror li { margin: 0.25em 0; }
+.ProseMirror blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: var(--foreground-secondary);
+}
+.ProseMirror h1 { font-size: 1.5em; font-weight: 700; margin: 0.75em 0 0.5em; }
+.ProseMirror h2 { font-size: 1.25em; font-weight: 600; margin: 0.6em 0 0.4em; }
+.ProseMirror code {
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+  font-size: 0.9em;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+.ProseMirror pre {
+  background: var(--muted);
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  margin: 0.5em 0;
+}
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+.ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.ProseMirror table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  width: 100%;
+}
+.ProseMirror table td,
+.ProseMirror table th {
+  border: 1px solid var(--card-border);
+  padding: 8px 12px;
+  min-width: 60px;
+}
+.ProseMirror table th {
+  background: var(--muted);
+  font-weight: 600;
+}
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+.ProseMirror table td,
+.ProseMirror table th {
+  border: 1px solid var(--card-border);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.ProseMirror pre {
+  background: var(--muted);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+/* 发票/带水印背景邮件：限制背景图尺寸，防止溢出 */
+.ProseMirror div[style*="background"] {
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+.ProseMirror-focused {
+  outline: none;
+}
+
+/* Mobile detail slide-in/out animations */
+@keyframes mobileSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes mobileSlideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+.mobile-slide-in {
+  animation: mobileSlideIn 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+.mobile-slide-out {
+  animation: mobileSlideOut 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ===== DESIGN.md Layout Components ===== */
+
+/* Navigation Button (circular icon button) */
+.nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--color-bg-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  color: var(--color-text-secondary);
+  position: relative;
+  flex-shrink: 0;
+}
+.nav-btn:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+.nav-btn .icon {
+  font-size: 14px;
+  color: inherit;
+  line-height: 1;
+}
+
+/* Top Nav Left Section */
+.nav-left {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.nav-left:hover .brand-cn {
+  color: var(--color-primary);
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}

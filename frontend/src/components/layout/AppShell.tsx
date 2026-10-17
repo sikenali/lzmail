@@ -10,10 +10,7 @@ import { ContactsModal } from '@/components/contacts/ContactsModal'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [hash, setHash] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    return window.location.hash.replace('#', '')
-  })
+  const [hash, setHash] = useState('')
 
   useEffect(() => {
     const onHash = () => setHash(window.location.hash.replace('#', ''))

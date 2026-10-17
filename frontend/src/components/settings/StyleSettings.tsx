@@ -113,7 +113,7 @@ export function StyleSettings() {
                 display: 'flex',
                 alignItems: 'center',
                 padding: '2px',
-                backgroundColor: (settings.animations || 'true') === 'true' ? 'var(--success)' : 'var(--border)',
+                backgroundColor: (settings.animations || 'true') === 'true' ? 'var(--primary)' : 'var(--border)',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',

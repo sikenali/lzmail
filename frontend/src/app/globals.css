@@ -492,6 +492,47 @@ h1, .font-display {
   line-height: 1;
 }
 
+/* Folder tab — icon over label */
+.nav-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 9px 9px;
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-family-cn);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color 200ms ease, background-color 150ms ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.nav-tab.is-active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.nav-tab:active {
+  transform: scale(0.95);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nav-tab:hover:not(.is-active) {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-secondary);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-tab {
+    transition: color 200ms ease;
+  }
+  .nav-tab:active {
+    transform: none;
+  }
+}
+
 /* Top Nav Left Section */
 .nav-left {
   cursor: pointer;

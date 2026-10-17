@@ -4,6 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { api } from '@/lib/api'
 import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, FolderMove, Mail, RefreshCw, Download, Check, User, AlertTriangle } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
@@ -63,6 +64,8 @@ function MailPageInner() {
   const listCache = useRef<Record<string, Email[]>>({})
   const reqId = useRef(0)
   const prevListKeyRef = useRef('')
+  const [firstLoad, setFirstLoad] = useState(true)
+  const [storeEmpty, setStoreEmpty] = useState(false)
   const scrollHandlerRef = useRef<() => void>(() => {})
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
@@ -72,13 +75,7 @@ function MailPageInner() {
   const { settings } = useSettings()
   const mailDensity: 'comfortable' | 'compact' = (settings.mail_density as 'comfortable' | 'compact') || 'comfortable'
 
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false)
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
+  const isMobile = useIsMobile()
 
   const selectAllChecked = useMemo(() => emails.length > 0 && selectedIds.size > 0 && [...emails].every(e => selectedIds.has(e.id)), [emails, selectedIds])
   const handleSelectAll = () => {
@@ -103,8 +100,16 @@ function MailPageInner() {
     return () => clearInterval(timer)
   }, [])
 
+  const loadAccounts = useCallback(async () => {
+    try {
+      const accs = await api.accounts.list()
+      setStoreEmpty(!accs || accs.length === 0)
+    } catch {}
+  }, [])
+
+  useEffect(() => { loadAccounts() }, [loadAccounts])
+
   const resetList = useCallback(() => {
-    setEmails([])
     setOffset(0)
     setHasMore(true)
     setSelectedIds(new Set())
@@ -134,6 +139,7 @@ function MailPageInner() {
       }
       if (id !== reqId.current) return
       setEmails(prev => append ? [...prev, ...items] : items)
+      setFirstLoad(false)
       if (!append) listCache.current[`${folder}:${debouncedSearch}`] = items
       setOffset(off)
       setHasMore(more)
@@ -150,22 +156,24 @@ function MailPageInner() {
   const listKey = `${folder}:${debouncedSearch}`
 
   useEffect(() => {
+    if (storeEmpty) {
+      if (searchParams?.get('id')) router.replace(`/mail?folder=${encodeURIComponent(folder)}`)
+      setEmails([])
+      setTotalCount(0)
+      setHasMore(false)
+      setLoading(false)
+      setLoadingMore(false)
+      return
+    }
     const keyChanged = prevListKeyRef.current !== listKey
     prevListKeyRef.current = listKey
     if (keyChanged) {
       const cached = listCache.current[listKey]
-      if (cached) {
-        setEmails(cached)
-        setOffset(0)
-        setHasMore(true)
-        setSelectedIds(new Set())
-      } else {
-        resetList()
-      }
+      resetList()
+      if (cached) setEmails(cached)
     }
-    delete listCache.current[listKey]
     fetchPage(0, false)
-  }, [listKey, refresh, fetchPage, resetList])
+  }, [listKey, refresh, fetchPage, resetList, storeEmpty, searchParams, router])
 
   useEffect(() => {
     scrollHandlerRef.current = () => {
@@ -485,6 +493,7 @@ function MailPageInner() {
     try {
       await api.sync.all()
     } catch {}
+    await loadAccounts()
     setSyncing(false)
     setRefresh(n => n + 1)
     refreshCounts()
@@ -624,7 +633,7 @@ function MailPageInner() {
                <div className="flex items-center gap-2">
 <Tooltip text="刷新" side="bottom">
                   <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
-                    <RefreshCw className={`w-4 h-4 ${loading || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', animationDuration: '0.8s' }} />
+                    <RefreshCw className={`w-4 h-4 ${(firstLoad && loading) || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', animationDuration: '0.8s' }} />
                   </button>
 </Tooltip>
                </div>
@@ -653,7 +662,7 @@ function MailPageInner() {
 
           {/* Email list */}
           <div ref={listRef} className="flex-1 overflow-auto">
-            {loading && emails.length === 0 ? (
+            {firstLoad && loading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-3 border-b">
                   <div className="w-8 h-8 rounded-full skeleton shrink-0" />
@@ -965,8 +974,8 @@ function MailPageInner() {
                 </div>
               )}
             </div>
-          ) : loading ? (
-            <div className="max-w-[780px] mx-auto px-10 py-6 space-y-6">
+            ) : firstLoad && loading ? (
+              <div className="max-w-[780px] mx-auto px-10 py-6 space-y-6">
               <div className="h-6 w-1/2 skeleton" />
               <div className="flex gap-3">
                 <div className="w-12 h-12 rounded-full skeleton shrink-0" />

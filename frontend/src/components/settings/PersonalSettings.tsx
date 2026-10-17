@@ -33,7 +33,7 @@ export function PersonalSettings() {
                 borderRadius: 8,
                 fontSize: 13,
                 fontWeight: 500,
-                backgroundColor: active ? 'var(--teal)' : 'var(--muted)',
+                backgroundColor: active ? 'var(--primary)' : 'var(--muted)',
                 color: active ? '#ffffff' : 'var(--foreground-secondary)',
                 border: 'none',
                 cursor: 'pointer',

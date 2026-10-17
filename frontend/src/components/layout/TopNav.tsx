@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import { Tooltip } from '@/components/Tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { motion, useReducedMotion, type Transition } from 'framer-motion'
 import type { Account } from '@/types'
 
 type NavItem = {
@@ -85,6 +86,7 @@ export function TopNav({
   const searchParams = useSearchParams()
   const { settings } = useSettings()
   const isMobile = useIsMobile()
+  const reduceMotion = useReducedMotion()
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
@@ -149,6 +151,10 @@ export function TopNav({
     }
     router.push(href)
   }
+
+  const pillTransition: Transition = reduceMotion
+    ? { duration: 0 }
+    : { type: 'spring', stiffness: 400, damping: 22 }
 
   return (
     <header
@@ -321,68 +327,96 @@ export function TopNav({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '2px',
+              padding: '6px 0',
               flexShrink: 0,
             }}
           >
-            {navItems.map(item => (
-              <button
-                key={item.href}
-                onClick={() => handleNavClick(item.href)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive(item.href, fullPath) ? 'var(--color-primary-soft)' : 'transparent',
-                  color: isActive(item.href, fullPath) ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-family-cn)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  transition: 'all var(--transition-base)',
-                }}
-              >
-                <div style={{ position: 'relative' }}>
-                  <i
-                    className={item.icon}
-                    style={{
-                      fontSize: '16px',
-                      width: '16px',
-                      height: '16px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  ></i>
+            {navItems.map(item => {
+              const active = isActive(item.href, fullPath)
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => handleNavClick(item.href)}
+                  className={`nav-tab${active ? ' is-active' : ''}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="mail-folder-pill"
+                      transition={pillTransition}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 0,
+                        borderRadius: 10,
+                        backgroundColor: 'var(--color-primary-soft)',
+                        boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 26%, transparent), 0 2px 10px color-mix(in srgb, var(--color-primary) 14%, transparent)',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: 'absolute',
+                          left: '50%',
+                          bottom: 2,
+                          transform: 'translateX(-50%)',
+                          width: 4,
+                          height: 4,
+                          borderRadius: 9999,
+                          backgroundColor: 'var(--color-primary)',
+                        }}
+                      />
+                    </motion.span>
+                  )}
+                  <span
+                    style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16 }}
+                  >
+                    <i
+                      className={item.icon}
+                      style={{
+                        fontSize: '15px',
+                        width: 15,
+                        height: 15,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1,
+                      }}
+                    ></i>
+                  </span>
+                  <span
+                    style={{ position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.2 }}
+                  >
+                    {item.label}
+                  </span>
                   {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
                     <span
                       style={{
                         position: 'absolute',
-                        top: '-6px',
-                        right: '-8px',
-                        minWidth: '16px',
-                        height: '16px',
-                        padding: '0 2px',
-                        borderRadius: '9999px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      backgroundColor: 'var(--color-primary)',
-                      color: '#ffffff',
+                        top: 2,
+                        right: 5,
+                        minWidth: 12,
+                        height: 12,
+                        padding: '0 3px',
+                        borderRadius: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 8,
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#ffffff',
+                        zIndex: 1,
                       }}
                     >
                       {inboxUnread > 99 ? '99+' : inboxUnread}
                     </span>
                   )}
-                </div>
-                <span className="truncate hidden sm:inline">{item.label}</span>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>

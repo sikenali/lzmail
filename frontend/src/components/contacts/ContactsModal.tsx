@@ -457,7 +457,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                           key={p}
                           onClick={() => setPage(p)}
                           className="h-7 w-7 rounded-[8px] text-[13px] flex items-center justify-center"
-                          style={{ backgroundColor: page === p ? 'var(--teal)' : 'var(--muted)', color: page === p ? '#fff' : 'var(--foreground-secondary)' }}
+                          style={{ backgroundColor: page === p ? 'var(--primary)' : 'var(--muted)', color: page === p ? '#fff' : 'var(--foreground-secondary)' }}
                         >
                           {p + 1}
                         </button>

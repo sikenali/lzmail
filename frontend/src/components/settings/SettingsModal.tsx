@@ -83,7 +83,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         {/* Panel Body */}
-        <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex' }}>
+        <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', height: '100%', boxSizing: 'border-box' }}>
           {/* Nav List */}
           <nav
             style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}

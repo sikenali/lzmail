@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
@@ -187,7 +188,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease', zIndex: 1000 }} onClick={onClose}>
       <div
         className="flex flex-col"
@@ -195,9 +196,11 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
           width: 1100,
           maxWidth: '94vw',
           maxHeight: '85vh',
+          height: '85vh',
           backgroundColor: 'var(--card)',
           borderRadius: 16,
           boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          overflow: 'hidden',
           animation: 'scaleIn 0.2s ease',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -435,6 +438,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
           }}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -404,10 +404,10 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
            </button>
          </div>
 
-         {/* Body: Left list + Right form */}
-         <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', paddingTop: 20 }}>
-           {/* Left: Account list */}
-           <nav style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
+          {/* Body: Left list + Right form */}
+          <div style={{ flex: 1, minHeight: 0, gap: 20, display: 'flex', paddingTop: 20 }}>
+            {/* Left: Account list */}
+            <nav style={{ width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
              {/* Add new button */}
              <button
                onClick={handleNewAccount}
@@ -488,9 +488,9 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
              )}
            </nav>
 
-           {/* Right: Form */}
-           <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
-             <div className="p-1">
+            {/* Right: Form */}
+            <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
+              <div className="p-1" style={{ paddingBottom: 16 }}>
                <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16, fontFamily: 'var(--font-family-cn)' }}>
                    {isEditing ? '编辑账号' : '新建账号'}
@@ -522,36 +522,58 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
                      </div>
                    )}
                  </div>
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                   <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                     className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }} />
-                   <input placeholder={activeProvider ? `邮箱：${activeProvider.emailHint}` : '邮箱：例如 xxx@example.com'} value={form.email} onChange={e => handleEmailChange(e.target.value)}
-                     className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }} />
-                   <input placeholder={activeProvider ? `IMAP：${activeProvider.imapHost}` : 'IMAP 服务器（如 imap.qq.com）'} value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
-                     className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }} />
-                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                     <span style={{ fontSize: 12, flexShrink: 0, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>IMAP 端口</span>
-                     <input type="number" value={form.imap_port} onChange={e => setForm({ ...form, imap_port: Number(e.target.value) })}
-                       className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', width: 70 }} />
-                   </div>
-                   <input placeholder={activeProvider ? `SMTP：${activeProvider.smtpHost}` : 'SMTP 服务器（如 smtp.qq.com）'} value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
-                     className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }} />
-                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                     <span style={{ fontSize: 12, flexShrink: 0, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>SMTP 端口</span>
-                     <input type="number" value={form.smtp_port} onChange={e => setForm({ ...form, smtp_port: Number(e.target.value) })}
-                       className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', width: 70 }} />
-                   </div>
-                   <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
-                     className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }} />
-                   {form.auth_method !== 'oauth2' && (
-                     <div style={{ position: 'relative' }}>
-                       <input type={showPassword ? 'text' : 'password'} placeholder={isEditing ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                         className="h-9 px-3 rounded-lg outline-none text-sm" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', width: '100%', paddingRight: 36, fontFamily: 'var(--font-family-cn)' }} />
-                       <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }} aria-label={showPassword ? '隐藏密码' : '显示密码'}>
-                         {showPassword ? <EyeOff style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} /> : <Eye style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} />}
-                       </button>
-                     </div>
-                   )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>账号名称</label>
+                      <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>邮箱地址</label>
+                      <input placeholder={activeProvider ? `邮箱：${activeProvider.emailHint}` : '邮箱：例如 xxx@example.com'} value={form.email} onChange={e => handleEmailChange(e.target.value)}
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>IMAP 服务器</label>
+                      <input placeholder={activeProvider ? `IMAP：${activeProvider.imapHost}` : 'IMAP 服务器（如 imap.qq.com）'} value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>IMAP 端口</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="number" value={form.imap_port} onChange={e => setForm({ ...form, imap_port: Number(e.target.value) })}
+                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>SMTP 服务器</label>
+                      <input placeholder={activeProvider ? `SMTP：${activeProvider.smtpHost}` : 'SMTP 服务器（如 smtp.qq.com）'} value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>SMTP 端口</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="number" value={form.smtp_port} onChange={e => setForm({ ...form, smtp_port: Number(e.target.value) })}
+                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>用户名</label>
+                      <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                    </div>
+                    {form.auth_method !== 'oauth2' && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>密码</label>
+                        <div style={{ position: 'relative' }}>
+                          <input type={showPassword ? 'text' : 'password'} placeholder={isEditing ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                            className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', paddingRight: 36, fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }} aria-label={showPassword ? '隐藏密码' : '显示密码'}>
+                            {showPassword ? <EyeOff style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} /> : <Eye style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                    {form.auth_method === 'oauth2' && !isEditing && (
                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 12, backgroundColor: 'var(--color-bg-white)', color: 'var(--color-text-muted)' }}>
                        <span>已授权</span>

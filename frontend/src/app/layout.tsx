@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Toaster } from 'sonner'
 import './globals.css'
 import './remixicon.css'
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ErrorBoundary>{children}</ErrorBoundary>
+        <Toaster richColors position="top-center" closeButton />
       </body>
     </html>
   )

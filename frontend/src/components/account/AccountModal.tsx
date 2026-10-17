@@ -10,6 +10,7 @@ import {
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { Modal } from '@/components/layout/Modal'
+import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 const providerLogoStyle: Record<string, { bg: string; color: string }> = {
@@ -274,12 +275,13 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
      }
    }
 
-   const handleDelete = async (id: number) => { setDeleteTarget(id) }
+   const handleDelete = (id: number) => { setDeleteTarget(id) }
    const handleConfirmDelete = async () => {
      if (deleteTarget === null) return
      try {
        await api.accounts.delete(deleteTarget)
        toast.success('账号已删除')
+       try { new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' }) } catch {}
        if (selectedId === deleteTarget) { setSelectedId(null); resetForm() }
        load()
      } catch (e: any) { toast.error(e.message || '删除失败') }
@@ -628,6 +630,15 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
              </div>
            </div>
          </div>
+
+         <DeleteConfirm
+           open={deleteTarget !== null}
+           title="删除账号"
+           message={selectedAccount ? `确定删除账号「${selectedAccount.name || selectedAccount.email}」吗？本地已同步的邮件仍会保留，但该账号将不再同步。` : '确定删除该账号吗？'}
+           confirmText="删除"
+           onConfirm={handleConfirmDelete}
+           onCancel={() => setDeleteTarget(null)}
+         />
      </Modal>
    )
 }

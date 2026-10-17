@@ -47,7 +47,6 @@ export default function Dashboard() {
   const [syncProgress, setSyncProgress] = useState<Record<number, import('@/hooks/useSSE').SyncStatusData>>({})
   const [refresh, setRefresh] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [trendDays, setTrendDays] = useState(7)
   const trendCache = useRef<Record<number, Array<{date: string; receive: number; send: number}>>>({})
@@ -69,8 +68,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setLoading(true)
-    let failed = 0
-    const guard = <T,>(p: Promise<T>) => p.then(d => (d ?? (undefined as unknown)) as T).catch(() => { failed++; return undefined as unknown as T })
+    const guard = <T,>(p: Promise<T>) => p.then(d => (d ?? (undefined as unknown)) as T).catch(() => undefined as unknown as T)
     Promise.all([
       guard(api.mails.stats(undefined, selectedDate)).then(d => d && setStats(d)),
       guard(api.mails.counts()).then(d => d && setSentCount(d.sent ?? 0)),
@@ -79,7 +77,6 @@ export default function Dashboard() {
       guard(api.sync.status()).then(d => d && setSyncStatus(d)),
     ]).finally(() => {
       setLoading(false)
-      setLoadError(failed > 0)
     })
   }, [refresh, selectedDate])
 
@@ -125,7 +122,7 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="px-4 py-5 sm:px-6 sm:py-6 md:px-10 md:py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
+      <div className="px-3 py-4 sm:px-5 sm:py-5 md:px-8 md:py-6" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
         {/* Page title */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -138,32 +135,26 @@ export default function Dashboard() {
           <DateTimePicker value={selectedDate} onChange={setSelectedDate} />
         </div>
 
-        {loadError && !loading && (
-          <div className="mt-4 sm:mt-5 rounded-[10px] px-4 py-3 text-[13px]" style={{ backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger)', color: 'var(--danger)' }}>
-            部分数据加载失败，请检查网络或后端服务后刷新重试。
-          </div>
-        )}
-
-        {/* Stats cards - 2×2 grid on mobile, 4-column flex on tablet+ */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 mt-5 sm:mt-7 md:mt-8">
+        {/* Stats cards - 4-column on all screen sizes */}
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mt-4 sm:mt-5 md:mt-6">
           {statCards.map((card, i) => {
             const Icon = card.icon
             return (
-              <div key={i} className="p-4 sm:p-5 md:p-6" style={cardStyle}>
+              <div key={i} className="p-3 sm:p-4 md:p-5" style={cardStyle}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] sm:text-[12px] md:text-[13px]" style={{ color: 'var(--foreground-tertiary)' }}>{card.label}</span>
-                   <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-[10px] sm:rounded-[12px] flex items-center justify-center" style={{ backgroundColor: card.iconBg }}>
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5" style={{ color: card.iconColor }} />
+                  <span className="text-[10px] sm:text-[11px] md:text-[12px]" style={{ color: 'var(--foreground-tertiary)' }}>{card.label}</span>
+                   <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[8px] sm:rounded-[10px] flex items-center justify-center" style={{ backgroundColor: card.iconBg }}>
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" style={{ color: card.iconColor }} />
                   </div>
                 </div>
-                <div className="text-[24px] sm:text-[28px] md:text-[36px] leading-none font-bold mt-3 sm:mt-4 md:mt-5" style={{ color: 'var(--foreground)' }}>{statValues[i]}</div>
+                <div className="text-[20px] sm:text-[24px] md:text-[28px] leading-none font-bold mt-2 sm:mt-3 md:mt-4" style={{ color: 'var(--foreground)' }}>{statValues[i]}</div>
                 {card.trendUp != null ? (
-                  <div className="flex items-center gap-1 mt-2 sm:mt-3 md:mt-4">
+                  <div className="flex items-center gap-1 mt-1.5 sm:mt-2 md:mt-3">
                     {card.trendUp ? <TrendingUp className="w-3 h-3" style={{ color: 'var(--success)' }} /> : <TrendingDown className="w-3 h-3" style={{ color: 'var(--danger)' }} />}
-                    <span className="text-[10px] sm:text-xs ml-0.5" style={{ color: 'var(--muted-foreground)' }}>{card.note}</span>
+                    <span className="text-[10px] sm:text-[11px] md:text-xs ml-0.5" style={{ color: 'var(--muted-foreground)' }}>{card.note}</span>
                   </div>
                 ) : (
-                  <div className="text-[10px] sm:text-xs mt-2 sm:mt-3 md:mt-4" style={{ color: 'var(--muted-foreground)' }}>{card.note}</div>
+                  <div className="text-[10px] sm:text-[11px] md:text-xs mt-1.5 sm:mt-2 md:mt-3" style={{ color: 'var(--muted-foreground)' }}>{card.note}</div>
                 )}
               </div>
             )
@@ -171,7 +162,7 @@ export default function Dashboard() {
         </div>
 
         {/* Two-column: recent emails + right panel - stacks on mobile */}
-        <div className="flex flex-col md:flex-row gap-5 mt-5 sm:mt-7 md:mt-8">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-5 md:gap-5 mt-4 sm:mt-5 md:mt-6">
           {/* Recent emails */}
           <div className="flex-[3] min-w-0 p-4 sm:p-5 md:p-6" style={cardStyle}>
             <div className="flex items-center justify-between">
@@ -287,7 +278,7 @@ export default function Dashboard() {
         </div>
 
         {/* Trend chart - full width on all sizes */}
-        <div className="p-4 sm:p-5 md:p-6 mt-5 sm:mt-7 md:mt-8 rounded-[16px]" style={{ ...cardStyle, border: '1px solid rgba(229,217,196,1)' }}>
+        <div className="p-4 sm:p-5 md:p-6 mt-4 sm:mt-5 md:mt-6 rounded-[16px]" style={{ ...cardStyle, border: '1px solid rgba(229,217,196,1)' }}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <div className="w-1 h-5 rounded-sm shrink-0" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
@@ -321,7 +312,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="h-40 sm:h-48 mt-4 sm:mt-6">
+          <div className="h-36 sm:h-44 mt-3 sm:mt-4">
             <TrendChart data={trendData} />
           </div>
         </div>

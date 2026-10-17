@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useSettings } from '@/hooks/useSettings'
+import { useSettings, normalizeAccent } from '@/hooks/useSettings'
 import { Check } from '@/lib/icons'
 
 interface ThemeOption {
@@ -18,6 +18,7 @@ interface AccentOption {
   key: string
   name: string
   color: string
+  value: string
 }
 
 interface LayoutOption {
@@ -34,7 +35,7 @@ const THEMES: ThemeOption[] = [
     skin: '#FBF7F0',
     topbar: '#FFFFFF',
     content: '#F3EDE3',
-    previewBg: '#FBF7F0',
+    previewBg: '#F7EED4',
   },
   {
     id: 'dark',
@@ -43,16 +44,16 @@ const THEMES: ThemeOption[] = [
     skin: '#1E1E24',
     topbar: '#2A2A32',
     content: '#3A3A42',
-    previewBg: '#1E1E24',
+    previewBg: '#333A45',
   },
 ]
 
 const ACCENTS: AccentOption[] = [
-  { key: '#c43d3d', name: '朱红 · 默认', color: '#C43D3D' },
-  { key: '#c9a96e', name: '鎏金', color: '#C9A96E' },
-  { key: '#5b8c5a', name: '玉绿', color: '#5B8C5A' },
-  { key: '#6b8fa3', name: '云蓝', color: '#6B8FA3' },
-  { key: '#3d2b1f', name: '黛墨', color: '#3D2B1F' },
+  { key: 'default', name: '朱红 · 默认', color: '#BE3B2E', value: '' },
+  { key: '#d3a93f', name: '鎏金', color: '#D3A93F', value: '#D3A93F' },
+  { key: '#3e8c6e', name: '玉绿', color: '#3E8C6E', value: '#3E8C6E' },
+  { key: '#4a72a8', name: '云蓝', color: '#4A72A8', value: '#4A72A8' },
+  { key: '#2f3640', name: '黛墨', color: '#2F3640', value: '#2F3640' },
 ]
 
 const LAYOUTS: LayoutOption[] = [
@@ -63,12 +64,12 @@ const LAYOUTS: LayoutOption[] = [
 export function ThemeSettings() {
   const { settings, setSetting } = useSettings()
   const [selectedTheme, setSelectedTheme] = useState(settings.theme || 'light')
-  const [selectedAccent, setSelectedAccent] = useState(settings.accent_color || '#c43d3d')
+  const [selectedAccent, setSelectedAccent] = useState(normalizeAccent(settings.accent_color))
   const [selectedLayout, setSelectedLayout] = useState(settings.layout_density || 'three')
 
   useEffect(() => {
     setSelectedTheme(settings.theme || 'light')
-    setSelectedAccent(settings.accent_color || '#c43d3d')
+    setSelectedAccent(normalizeAccent(settings.accent_color))
     setSelectedLayout(settings.layout_density || 'three')
   }, [settings.theme, settings.accent_color, settings.layout_density])
 
@@ -77,9 +78,9 @@ export function ThemeSettings() {
     setSetting('theme', id)
   }
 
-  const handleSelectAccent = (color: string) => {
-    setSelectedAccent(color)
-    setSetting('accent_color', color)
+  const handleSelectAccent = (value: string) => {
+    setSelectedAccent(value)
+    setSetting('accent_color', value)
   }
 
   const handleSelectLayout = (id: string) => {
@@ -103,8 +104,8 @@ export function ThemeSettings() {
                 className="flex flex-col gap-6 relative"
                 style={{
                   flex: 1,
-                  border: '0.7px solid var(--card-border)',
-                  backgroundColor: active ? 'var(--primary-light)' : 'var(--card)',
+                  border: '0.7px solid ' + (active ? 'var(--color-primary)' : 'var(--card-border)'),
+                  backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--card)',
                   borderRadius: 14,
                   padding: 24,
                   cursor: 'pointer',
@@ -113,7 +114,7 @@ export function ThemeSettings() {
               >
                 <div
                   className="absolute"
-                  style={{ top: 14, right: 14, zIndex: 2, width: 22, height: 22, borderRadius: 9999, backgroundColor: active ? 'var(--primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ top: 14, right: 14, zIndex: 2, width: 22, height: 22, borderRadius: 9999, backgroundColor: active ? 'var(--color-primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {active && <Check className="w-4 h-4 text-white" />}
                 </div>
@@ -136,11 +137,11 @@ export function ThemeSettings() {
         <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>强调色</div>
         <div className="flex" style={{ gap: 40, marginTop: 24 }}>
           {ACCENTS.map(accent => {
-            const active = selectedAccent === accent.color
+            const active = selectedAccent === accent.value
             return (
               <div
                 key={accent.key}
-                onClick={() => handleSelectAccent(accent.color)}
+                onClick={() => handleSelectAccent(accent.value)}
                 className="flex flex-col items-center"
                 style={{ gap: 16, cursor: 'pointer' }}
               >
@@ -154,7 +155,7 @@ export function ThemeSettings() {
                   style={{
                     fontSize: 15,
                     color: active ? 'var(--foreground)' : 'var(--foreground-secondary)',
-                    fontWeight: active ? 500 : 400,
+                    fontWeight: active ? 700 : 400,
                   }}
                 >
                   {accent.name}

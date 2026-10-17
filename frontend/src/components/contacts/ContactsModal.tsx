@@ -7,8 +7,10 @@ import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { Plus, Mail as MailIcon, Star, Send, Phone, MoreHorizontal, UserAdd, ArrowUpDown, X, Trash2, Edit, Search, ChevronLeft, ChevronRight } from '@/lib/icons'
 import { ContactFormModal } from './ContactFormModal'
+import { DeleteConfirm } from '@/components/DeleteConfirm'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Tooltip } from '@/components/Tooltip'
+import { useDebounce } from '@/hooks/useSSE'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
@@ -33,7 +35,6 @@ function getAvatarStyle(name: string) {
   return AVATAR_COLOR_PAIRS[idx]
 }
 
-const emptyForm = { name: '', email: '', phone: '', company: '', title: '' }
 const PAGE_SIZE = 10
 
 export function ContactsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -46,11 +47,11 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchQ, setSearchQ] = useState('')
+  const debouncedSearchQ = useDebounce(searchQ, 300)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
-  const [sortAsc, setSortAsc] = 0 > 0 ? useState(true) : useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null)
+  const [sortAsc, setSortAsc] = useState(true)
   const [menuId, setMenuId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
   const reqId = useRef(0)
@@ -99,11 +100,16 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   useEffect(() => {
     if (open && selectedAccountId !== null) {
-      load(searchQ, page, selectedAccountId)
+      load(debouncedSearchQ, page, selectedAccountId)
     } else if (open) {
       setLoading(false)
     }
-  }, [open, selectedAccountId, page])
+  }, [open, selectedAccountId, page, debouncedSearchQ])
+
+  // 搜索词变化时回到第 0 页（避免停留在超出的页码）
+  useEffect(() => {
+    if (open) setPage(0)
+  }, [debouncedSearchQ, open])
 
   useEffect(() => {
     if (open) {
@@ -124,8 +130,6 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   const handleSearch = (q: string) => {
     setSearchQ(q)
-    setPage(0)
-    load(q, 0, selectedAccountId)
   }
 
   const density = settings.mail_density || 'comfortable'
@@ -133,43 +137,13 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   const openCreate = () => {
     setEditingId(null)
-    setForm(emptyForm)
     setShowForm(true)
   }
 
   const openEdit = (c: Contact) => {
     setEditingId(c.id)
-    setForm({ name: c.name || '', email: c.email || '', phone: c.phone || '', company: c.company || '', title: c.title || '' })
     setShowForm(true)
     setMenuId(null)
-  }
-
-  const saveContact = async () => {
-    if (!form.name || !form.email) { toast.error('请填写姓名和邮箱'); return }
-    setSaving(true)
-    const extra = { phone: form.phone, company: form.company, title: form.title }
-    const accountId = selectedAccountId ?? accounts[0]?.id ?? 0
-    try {
-      if (editingId) {
-        await api.contacts.update(editingId, { name: form.name, email: form.email, account_id: accountId, ...extra })
-        setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, account_id: accountId, ...extra } : c))
-        toast.success('联系人已更新')
-      } else {
-        const created = await api.contacts.create({ name: form.name, email: form.email, account_id: accountId, ...extra })
-        setContacts(prev => [...prev, { ...created, ...extra, id: created.id, account_id: accountId }])
-        setTotal(t => t + 1)
-        toast.success('联系人已添加')
-      }
-    } catch (e: any) {
-      toast.error(e.message || '保存失败')
-      if (editingId) {
-        setContacts(prev => prev.map(c => c.id === editingId ? { ...c, name: form.name, email: form.email, ...extra } : c))
-      }
-    } finally {
-      setSaving(false)
-      setShowForm(false)
-      setEditingId(null)
-    }
   }
 
   const deleteContact = async (c: Contact) => {
@@ -278,8 +252,10 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                   </span>
                   <button
                     onClick={openCreate}
+                    disabled={accounts.length === 0}
+                    title={accounts.length === 0 ? '请先在「账号管理」中添加邮箱账号' : undefined}
                     className="flex items-center gap-1.5 h-[32px] px-3 rounded-[8px] text-[13px] font-medium transition-all hover:opacity-90"
-                    style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}
+                    style={{ backgroundColor: accounts.length === 0 ? 'var(--color-border)' : 'var(--color-primary)', color: accounts.length === 0 ? 'var(--color-text-faint)' : '#ffffff', border: 'none', cursor: accounts.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-family-cn)' }}
                   >
                     <UserAdd className="w-4 h-4" />
                     添加联系人
@@ -338,11 +314,12 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                               )}
                             </div>
                             <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-                              <Tooltip text="发邮件">
+                              <Tooltip text={c.email ? "发邮件" : "该联系人无邮箱地址"}>
                                 <button
-                                  onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                                  disabled={!c.email}
+                                  onClick={() => { if (!c.email) return; onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
                                   className="flex items-center justify-center"
-                                  style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: s.bg }}
+                                  style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: s.bg, opacity: c.email ? 1 : 0.4, cursor: c.email ? 'pointer' : 'not-allowed' }}
                                   aria-label="发邮件"
                                 >
                                   <MailIcon className="w-4 h-4" style={{ color: s.text }} />
@@ -378,11 +355,12 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                             <span style={{ fontSize: 13, color: 'var(--foreground-secondary)' }}>{c.company || '—'}</span>
                           </div>
                           <div className="flex items-center gap-2" style={{ width: 100, flexShrink: 0 }}>
-                            <Tooltip text="发邮件">
+                            <Tooltip text={c.email ? "发邮件" : "该联系人无邮箱地址"}>
                               <button
-                                onClick={() => { onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                                disabled={!c.email}
+                                onClick={() => { if (!c.email) return; onClose(); router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
                                 className="flex items-center justify-center"
-                                style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: s.bg }}
+                                style={{ width: density === 'compact' ? 26 : 30, height: density === 'compact' ? 26 : 30, borderRadius: 8, backgroundColor: s.bg, opacity: c.email ? 1 : 0.4, cursor: c.email ? 'pointer' : 'not-allowed' }}
                                 aria-label="发邮件"
                               >
                                 <MailIcon className="w-4 h-4" style={{ color: s.text }} />
@@ -412,11 +390,11 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                               >
                                 <Edit className="w-3.5 h-3.5" /> 编辑
                               </button>
-                              <button
-                                onClick={() => deleteContact(c)}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[var(--danger-bg)]"
-                                style={{ color: 'var(--danger)' }}
-                              >
+                               <button
+                                 onClick={() => { setDeleteTarget(c); setMenuId(null) }}
+                                 className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[var(--danger-bg)]"
+                                 style={{ color: 'var(--danger)' }}
+                               >
                                 <Trash2 className="w-3.5 h-3.5" /> 删除
                               </button>
                             </div>
@@ -484,6 +462,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
           onClose={() => { setShowForm(false); setEditingId(null) }}
           contact={editingId ? contacts.find(c => c.id === editingId) : null}
           accountId={selectedAccountId ?? accounts[0]?.id ?? 0}
+          hasAccount={accounts.length > 0}
           onSave={(updated) => {
             if (editingId) {
               setContacts(prev => prev.map(c => c.id === editingId ? { ...c, ...updated } : c))
@@ -492,6 +471,18 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
               setTotal(t => t + 1)
             }
           }}
+        />
+
+        {/* 删除确认 */}
+        <DeleteConfirm
+          open={deleteTarget !== null}
+          title="删除联系人"
+          message={deleteTarget ? `确定删除「${deleteTarget.name || deleteTarget.email}」吗？此操作不可撤销。` : '确定删除该联系人吗？'}
+          onConfirm={async () => {
+            if (deleteTarget) await deleteContact(deleteTarget)
+            setDeleteTarget(null)
+          }}
+          onCancel={() => setDeleteTarget(null)}
         />
     </Modal>
   )

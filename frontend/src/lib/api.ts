@@ -92,10 +92,27 @@ export const api = {
       }
     },
     get: (id: number) => fetchJSON<EmailDetail>(`/api/v1/mails/${id}`),
-    search: (q: string, accountId?: number, limit = 50, offset = 0) => {
+    search: async (q: string, accountId?: number, limit = 50, offset = 0, folder?: string): Promise<{ items: Email[]; total: number }> => {
       const params = new URLSearchParams({ q: q, limit: String(limit), offset: String(offset) })
       if (accountId) params.set('account_id', String(accountId))
-      return fetchJSON<Email[]>(`/api/v1/mails/search?${params}`)
+      if (folder) params.set('folder', folder)
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/mails/search?${params}`, { signal: controller.signal })
+        if (!res.ok) {
+          const text = await res.text()
+          let msg = `HTTP ${res.status}`
+          try { const j = JSON.parse(text); msg = j.error || msg } catch {}
+          if (res.headers.get('content-type')?.includes('text/html')) msg = '后端连接异常，请检查网络或稍后重试'
+          throw new Error(msg)
+        }
+        const total = parseInt(res.headers.get('X-Total-Count') || '0', 10) || 0
+        const items = (await res.json()) as Email[] | null
+        return { items: items || [], total }
+      } finally {
+        clearTimeout(timeout)
+      }
     },
     stats: (fromDate?: string, toDate?: string) => {
       const params = new URLSearchParams()

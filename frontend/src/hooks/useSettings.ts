@@ -152,6 +152,9 @@ export function useSettings() {
       } else {
         document.body.classList.remove('no-animations')
       }
+      // Apply font size: localStorage 的显式选择优先，其次 API，再次默认（避免新设备打开时字体与服务器值不一致）
+      const lsFont = localStorage.getItem('lzmail_font_size')
+      applyFontSize(lsFont || s?.font_size || defaults.font_size)
     }).catch(() => {
       setSettings(defaults)
       // Use saved theme or system preference on error

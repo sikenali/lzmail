@@ -392,7 +392,12 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
             {!isMobile && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>最大 50MB，支持拖拽上传</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexBasis: isMobile ? '100%' : undefined }}>
-            <button onClick={() => setScheduleAt(scheduleAt ? '' : new Date().toISOString().slice(0, 10) + 'T' + new Date().toTimeString().slice(0, 5))}
+            <button onClick={() => setScheduleAt(scheduleAt ? '' : (() => {
+              // 用本地时间（非 UTC 日期）+1 小时作为默认值，避免跨时区时得到过去时间导致立即发送
+              const t = new Date(Date.now() + 60 * 60 * 1000)
+              const p = (n: number) => String(n).padStart(2, '0')
+              return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}T${p(t.getHours())}:${p(t.getMinutes())}`
+            })())}
               style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, transition: 'all var(--transition-base)', backgroundColor: scheduleAt ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', color: scheduleAt ? 'var(--color-error)' : 'var(--color-text-secondary)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-family-cn)' }}>
               <Clock style={{ width: 16, height: 16, flexShrink: 0 }} />
               <span style={{ fontSize: 12, fontWeight: 500 }}>{scheduleAt ? '取消定时' : '定时发送'}</span>

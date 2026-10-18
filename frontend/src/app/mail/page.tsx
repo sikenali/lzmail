@@ -141,10 +141,10 @@ function MailPageInner() {
       let items: Email[] = []
       let more = false
       if (isSearch) {
-        const res = await api.mails.search(debouncedSearch, undefined, PAGE_SIZE + 1, off)
-        items = res?.slice(0, PAGE_SIZE) || []
-        more = (res?.length || 0) > PAGE_SIZE
-        if (!append) setTotalCount(items.length)
+        const res = await api.mails.search(debouncedSearch, undefined, PAGE_SIZE + 1, off, folder === 'ALL' ? '' : folder)
+        items = res.items.slice(0, PAGE_SIZE)
+        more = res.items.length > PAGE_SIZE
+        if (!append) setTotalCount(res.total || items.length)
       } else {
         const res = await api.mails.listWithTotal(undefined, folder === 'ALL' ? '' : folder, PAGE_SIZE, off)
         items = res.items
@@ -288,6 +288,7 @@ function MailPageInner() {
       const email = emails.find(e => e.id === id)
       if (email && !email.is_read) {
         api.mails.markRead(id).catch(() => {})
+        detailCache.current.delete(id)
       }
       // 同步更新本地列表的 is_read 状态
       setEmails(prev => prev.map(e => e.id === id ? { ...e, is_read: true } : e))
@@ -373,6 +374,7 @@ function MailPageInner() {
         const isRead = detail?.email.is_read ?? false
         await api.mails.bulk({ action: isRead ? 'mark_unread' : 'mark_read', ids: [selectedId!] })
         toast.success(isRead ? '已标记为未读' : '已标记为已读')
+        if (selectedId) detailCache.current.delete(selectedId)
         setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_read: !isRead } : e))
       }
     } catch {
@@ -619,9 +621,10 @@ function MailPageInner() {
               <button onClick={() => {
                 setMoreOpen(false)
                 if (!selectedId) return
-                const newStarred = !detail.email.is_starred
-                setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
-                setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
+                      const newStarred = !detail.email.is_starred
+                      if (selectedId) detailCache.current.delete(selectedId)
+                      setDetail(prev => prev ? { ...prev, email: { ...prev.email, is_starred: newStarred } } : prev)
+                      setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: newStarred } : e))
                 api.mails.markStar(selectedId, newStarred).then(() => {
                   refreshCounts()
                 }).catch(() => {
@@ -732,6 +735,7 @@ function MailPageInner() {
                           setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: starred } : e))
                           try {
                             await api.mails.markStar(id, starred)
+                            detailCache.current.delete(id)
                             refreshCounts()
                           } catch {
                             setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: prev } : e))
@@ -825,15 +829,16 @@ function MailPageInner() {
                      <div className="fixed inset-0 z-40" onClick={() => setFolderMoveOpen(false)} />
                      <div className="absolute left-0 top-full z-50 mt-1 rounded-[10px] py-1 shadow-lg"
                        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: 140 }}>
-                        {[
-                          { value: 'INBOX', label: '收件箱' },
-                          { value: 'Sent', label: '已发送' },
-                          { value: 'Archive', label: '归档' },
-                          { value: 'STARRED', label: '标星邮件' },
-                          { value: 'Drafts', label: '草稿箱' },
-                          { value: 'Trash', label: '已删除' },
-                          { value: 'SPAM', label: '垃圾邮件' },
-                        ].map(f => (
+                         {[
+                           { value: 'INBOX', label: '收件箱' },
+                           { value: 'Sent', label: '已发送' },
+                           { value: 'Archive', label: '归档' },
+                           { value: 'DEFERRED', label: '稍后处理' },
+                           { value: 'STARRED', label: '标星邮件' },
+                           { value: 'Drafts', label: '草稿箱' },
+                           { value: 'Trash', label: '已删除' },
+                           { value: 'SPAM', label: '垃圾邮件' },
+                         ].map(f => (
                          <button key={f.value} onClick={() => handleMove(f.value)}
                            className="w-full px-3 py-2 text-left text-[13px] hover:bg-[var(--muted)]"
                            style={{ color: 'var(--foreground)' }}>

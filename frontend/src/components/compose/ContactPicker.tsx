@@ -52,18 +52,30 @@ export default function ContactPicker({
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 解析已有值
+  // 解析已有值：能匹配到联系人的进 selected（按 id），未匹配的（如回复对象不是联系人、
+  // 或联系人排在已加载名单之外）进 manualEmails，保证任何收件人都能显示为可移除的 chip。
   useEffect(() => {
     if (!value) {
       setSelected(new Set())
+      setManualEmails([])
       return
     }
-    if (allContacts.length > 0) {
-      const emails = value.split(',').map(s => s.trim()).filter(Boolean)
-      const ids = new Set<string>()
-      allContacts.forEach(c => { if (emails.includes(c.email)) ids.add(String(c.id)) })
-      setSelected(ids)
+    const emails = value.split(',').map(s => s.trim()).filter(Boolean)
+    if (allContacts.length === 0) {
+      // 联系人尚未加载完成：先全部作为手输邮箱展示，避免丢失
+      setSelected(new Set())
+      setManualEmails(emails)
+      return
     }
+    const ids = new Set<string>()
+    const unmanaged: string[] = []
+    emails.forEach(email => {
+      const c = allContacts.find(cc => cc.email === email)
+      if (c) ids.add(String(c.id))
+      else unmanaged.push(email)
+    })
+    setSelected(ids)
+    setManualEmails(unmanaged)
   }, [value, allContacts])
 
   useEffect(() => {
@@ -97,7 +109,16 @@ export default function ContactPicker({
     setLoading(true)
     try {
       const result = await api.contacts.search(q, accountId ?? undefined, 50, 0)
-      setFiltered(result?.items || [])
+      const items = result?.items || []
+      // 把搜索结果并入已解析集合，保证搜索选中的联系人在确认时也能解析出邮箱
+      setAllContacts(prev => {
+        const map = new Map(prev.map(c => [String(c.id), c]))
+        for (const c of items) {
+          if (c && c.id != null && !map.has(String(c.id))) map.set(String(c.id), c)
+        }
+        return [...map.values()]
+      })
+      setFiltered(items)
     } catch {
       toast.error('联系人搜索失败')
       setFiltered([])

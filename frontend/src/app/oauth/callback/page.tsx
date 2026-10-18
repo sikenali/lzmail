@@ -96,6 +96,7 @@ function OAuthCallbackInner() {
         username: email.trim(),
         imap_port: 993,
         smtp_port: 587,
+        use_idle: true,
         auth_method: 'oauth2',
         provider: tokenData.provider,
         access_token: tokenData.access_token,

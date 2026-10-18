@@ -228,10 +228,21 @@ export function AccountModal({ open, onClose }: { open: boolean; onClose: () => 
      }
    }
 
-   const load = () => {
-     setLoading(true)
-     api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}).finally(() => setLoading(false))
-   }
+    const load = () => {
+      setLoading(true)
+      api.accounts.list().then(d => setAccounts(d ?? [])).catch(() => {}).finally(() => setLoading(false))
+      // 用真实同步状态初始化徽标，避免打开弹窗时一律显示「IDLE·实时」
+      api.sync.statusDetail().then(d => {
+        setSyncStatus(prev => {
+          const next = { ...prev }
+          for (const [k, v] of Object.entries(d || {})) {
+            const id = Number(k)
+            if (id && v && v.status) next[id] = v.status
+          }
+          return next
+        })
+      }).catch(() => {})
+    }
    useEffect(() => { if (open) load() }, [open])
 
    useEffect(() => {
@@ -389,10 +400,17 @@ const handleCreate = async () => {
                     key={key}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => {
-                      if (key === 'auto' || key === 'other') setProvider(key)
-                      else applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
-                    }}
+                     onClick={() => {
+                       if (key === 'auto') {
+                         setProvider('auto')
+                         setForm(f => ({ ...f, provider: '', imap_host: '', smtp_host: '' }))
+                       } else if (key === 'other') {
+                         setProvider('other')
+                         setForm(f => ({ ...f, provider: 'other', imap_host: '', smtp_host: '' }))
+                       } else {
+                         applyProviderHosts(key as Exclude<ProviderKey, 'auto' | 'other'>)
+                       }
+                     }}
                     style={isMobile
                       ? {
                           display: 'flex', alignItems: 'center', gap: 8, height: 36,

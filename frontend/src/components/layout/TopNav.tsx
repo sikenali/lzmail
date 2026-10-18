@@ -99,7 +99,7 @@ export function TopNav({
   const fullPath = pathname + search
   const pageTitle = getPageTitle(fullPath)
 
-  const showSearch = pathname === '/' || pathname === '/mail' || pathname === '/contacts' || pathname.includes('?id=')
+  const showSearch = pathname === '/' || pathname === '/mail' || pathname === '/contacts'
 
   useEffect(() => {
     const accountsChannel = new BroadcastChannel('lzmail_accounts')

@@ -157,6 +157,7 @@ export function StorageSettings() {
     if (!p) return
     try {
       await api.settings.set({ archive_path: p })
+      setSetting('archive_path', p) // 同步本地 settings，立即刷新显示的归档路径与目录树（幂等）
       toast.success('归档目录已更新，重启服务后生效')
       setEditingPath(false)
       setTreeOpen(false)

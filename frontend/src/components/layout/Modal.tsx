@@ -116,7 +116,7 @@ export function Modal({
                 aria-label="关闭"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, backgroundColor: 'var(--color-bg-secondary)', borderRadius: 9999, color: 'var(--color-text-secondary)', border: 'none', flexShrink: 0, cursor: 'pointer', transition: 'all var(--transition-base)' }}
               >
-                <i className="ri-close-line" style={{ fontSize: 18 }}></i>
+                <i className="ri-close-line" style={{ fontSize: 20 }}></i>
               </button>
             </div>
           </div>

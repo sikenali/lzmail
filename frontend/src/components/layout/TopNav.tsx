@@ -1,13 +1,12 @@
 'use client'
 import { Search, getAccountAvatarBg } from '@/lib/icons'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
 import { Tooltip } from '@/components/Tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { motion, useReducedMotion, type Transition } from 'framer-motion'
 import type { Account } from '@/types'
 
 type NavItem = {
@@ -86,13 +85,14 @@ export function TopNav({
   const searchParams = useSearchParams()
   const { settings } = useSettings()
   const isMobile = useIsMobile()
-  const reduceMotion = useReducedMotion()
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
+  const navMenuRef = useRef<HTMLDivElement>(null)
+  const indicatorRef = useRef<HTMLDivElement>(null)
 
   const searchString = searchParams.toString()
   const search = searchString ? `?${searchString}` : ''
@@ -151,9 +151,41 @@ export function TopNav({
     router.push(href)
   }
 
-  const pillTransition: Transition = reduceMotion
-    ? { duration: 0 }
-    : { type: 'spring', stiffness: 400, damping: 22 }
+  const activeHref = navItems.find(item => isActive(item.href, fullPath))?.href
+
+  useEffect(() => {
+    if (isMobile || !activeHref) return
+    const updatePosition = () => {
+      if (!navMenuRef.current || !indicatorRef.current) return
+      const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const m = navMenuRef.current.getBoundingClientRect()
+      indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
+      indicatorRef.current.style.width = r.width + 'px'
+      indicatorRef.current.classList.add('active')
+    }
+    requestAnimationFrame(updatePosition)
+  }, [activeHref, isMobile])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!activeHref || isMobile) return
+      const updatePosition = () => {
+        if (!navMenuRef.current || !indicatorRef.current) return
+        const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const m = navMenuRef.current.getBoundingClientRect()
+        indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
+        indicatorRef.current.style.width = r.width + 'px'
+        indicatorRef.current.classList.add('active')
+      }
+      requestAnimationFrame(updatePosition)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [activeHref, isMobile])
 
   return (
     <header
@@ -322,52 +354,18 @@ export function TopNav({
             )}
           </div>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px',
-              padding: '6px 0',
-              flexShrink: 0,
-            }}
-          >
+          <div className="nav-menu" ref={navMenuRef}>
+            <div ref={indicatorRef} className="nav-indicator" />
             {navItems.map(item => {
               const active = isActive(item.href, fullPath)
               return (
                 <button
                   key={item.href}
+                  data-nav={item.href}
                   onClick={() => handleNavClick(item.href)}
                   className={`nav-tab${active ? ' is-active' : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  {active && (
-                    <motion.span
-                      layoutId="mail-folder-pill"
-                      transition={pillTransition}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        zIndex: 0,
-                        borderRadius: 10,
-                        backgroundColor: 'var(--color-primary-soft)',
-                        boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 26%, transparent), 0 2px 10px color-mix(in srgb, var(--color-primary) 14%, transparent)',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <span
-                        style={{
-                          position: 'absolute',
-                          left: '50%',
-                          bottom: 2,
-                          transform: 'translateX(-50%)',
-                          width: 4,
-                          height: 4,
-                          borderRadius: 9999,
-                          backgroundColor: 'var(--color-primary)',
-                        }}
-                      />
-                    </motion.span>
-                  )}
                   <span
                     style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16 }}
                   >

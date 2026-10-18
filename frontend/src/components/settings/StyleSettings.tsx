@@ -22,7 +22,7 @@ export function StyleSettings() {
                 const idx = sizes.indexOf((settings.font_size || 'medium') as 'small' | 'medium' | 'large')
                 setSetting('font_size', sizes[Math.max(0, idx - 1)])
               }} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)', border: 'none', cursor: 'pointer' }}>
-                <Minus style={{ width: 16, height: 16, color: 'var(--foreground-secondary)' }} />
+                <Minus style={{ fontSize: 16, width: 16, height: 16, color: 'var(--foreground-secondary)' }} />
               </button>
               <div style={{ padding: '6px 16px', borderRadius: 8, border: '0.7px solid var(--card-border)', backgroundColor: 'var(--accent)', minWidth: 95, textAlign: 'center' }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{sizeLabels[settings.font_size || 'medium']}</span>
@@ -31,7 +31,7 @@ export function StyleSettings() {
                 const idx = sizes.indexOf((settings.font_size || 'medium') as 'small' | 'medium' | 'large')
                 setSetting('font_size', sizes[Math.min(sizes.length - 1, idx + 1)])
               }} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)', border: 'none', cursor: 'pointer' }}>
-                <Plus style={{ width: 16, height: 16, color: 'var(--foreground-secondary)' }} />
+                <Plus style={{ fontSize: 16, width: 16, height: 16, color: 'var(--foreground-secondary)' }} />
               </button>
             </div>
           </div>
@@ -60,7 +60,7 @@ export function StyleSettings() {
                       transition: 'all 0.2s',
                     }}
                   >
-                    <item.icon style={{ width: 16, height: 16, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
+                    <item.icon style={{ fontSize: 16, width: 16, height: 16, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
                     {item.label}
                   </button>
                 )
@@ -93,7 +93,7 @@ export function StyleSettings() {
                       transition: 'all 0.2s',
                     }}
                   >
-                    <DensityIcon style={{ width: 18, height: 18, flexShrink: 0, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
+                    <DensityIcon style={{ fontSize: 18, width: 18, height: 18, flexShrink: 0, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
                     {item}
                   </button>
                 )

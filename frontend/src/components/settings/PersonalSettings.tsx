@@ -40,7 +40,7 @@ export function PersonalSettings() {
                 transition: 'all 0.2s',
               }}
             >
-              <Icon style={{ width: 16, height: 16, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
+              <Icon style={{ fontSize: 16, width: 16, height: 16, color: active ? '#ffffff' : 'var(--foreground-secondary)' }} />
               {t.label}
             </button>
           )

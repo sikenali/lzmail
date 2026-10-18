@@ -69,7 +69,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             {!isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, backgroundColor: 'var(--color-primary-soft)', borderRadius: 12, flexShrink: 0 }}>
-                <Settings style={{ width: 26, height: 26, color: 'var(--color-primary)' }} />
+                <Settings style={{ fontSize: 26, width: 26, height: 26, color: 'var(--color-primary)' }} />
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -106,8 +106,8 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: isMobile ? 8 : 14,
-                    height: isMobile ? 40 : 52,
+                    gap: isMobile ? 10 : 16,
+                    height: isMobile ? 44 : 56,
                     padding: isMobile ? '0 14px' : '0 20px',
                     borderRadius: isMobile ? 8 : 12,
                     backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
@@ -122,8 +122,8 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                     fontFamily: 'var(--font-family-cn)',
                   }}
                 >
-                  <Icon style={{ width: 20, height: 20, flexShrink: 0, color: active ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
-                  <span style={{ fontSize: isMobile ? 14 : 15, whiteSpace: 'nowrap' }}>{item.label}</span>
+                  <Icon style={{ fontSize: 20, width: 22, height: 22, flexShrink: 0, color: active ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
+                  <span style={{ fontSize: isMobile ? 14 : 16, whiteSpace: 'nowrap' }}>{item.label}</span>
                 </button>
               )
             })}

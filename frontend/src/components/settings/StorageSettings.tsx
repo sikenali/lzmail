@@ -51,9 +51,9 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
       <div key={node.path}>
         <div className="flex items-center gap-2 rounded-[6px]" style={{ paddingLeft: depth * 24 }}>
           {isDir ? (
-            <Folder className="w-[17px] h-[17px] shrink-0" style={{ color: 'var(--gold)' }} />
+                <Folder className="w-[17px] h-[17px] shrink-0" style={{ fontSize: 17, color: 'var(--gold)' }} />
           ) : (
-            <FileText className="w-[17px] h-[17px] shrink-0" style={{ color: 'var(--foreground-tertiary)' }} />
+                <FileText className="w-[17px] h-[17px] shrink-0" style={{ fontSize: 17, color: 'var(--foreground-tertiary)' }} />
           )}
           <span className="truncate" style={{ fontSize: depth <= 1 ? 14 : 13, fontWeight: depth <= 1 ? 600 : 500, color: isDir ? 'var(--foreground)' : 'var(--foreground-secondary)' }}>
             {node.name}{isDir ? '/' : ''}
@@ -188,9 +188,9 @@ export function StorageSettings() {
             {!editingPath ? (
               <button onClick={handleStartEdit} disabled={!hasAccount} title={!hasAccount ? '请先添加邮箱账号' : '点击修改归档目录'}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500, backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)', color: 'var(--foreground-secondary)', opacity: hasAccount ? 1 : 0.5, cursor: hasAccount ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
-                <Folder style={{ width: 16, height: 16, color: 'var(--gold)' }} />
+                <Folder style={{ fontSize: 16, width: 16, height: 16, color: 'var(--gold)' }} />
                 <span style={{ fontFamily: 'monospace' }}>{hasAccount ? archivePath : '添加账号后显示'}</span>
-                <Edit style={{ width: 14, height: 14, color: 'var(--foreground-tertiary)' }} />
+                <Edit style={{ fontSize: 14, width: 14, height: 14, color: 'var(--foreground-tertiary)' }} />
               </button>
             ) : (
               <div className="flex-1 max-w-[600px] ml-8">

@@ -379,7 +379,7 @@ const handleCreate = async () => {
      <Modal
        open={open}
        onClose={onClose}
-       icon={<User style={{ width: 26, height: 26, color: 'var(--color-primary)' }} />}
+        icon={<User style={{ fontSize: 26, width: 26, height: 26, color: 'var(--color-primary)' }} />}
        title="账号管理"
        subtitle={isEditing ? `编辑：${selectedAccount?.name || selectedAccount?.email || ''}` : '添加新的邮箱账号'}
        width={1000}

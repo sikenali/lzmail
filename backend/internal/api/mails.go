@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/lzmail/backend/internal/models"
 )
 
 func (h *Handler) handleListMails(w http.ResponseWriter, r *http.Request) {
@@ -179,18 +181,41 @@ func (h *Handler) handleMoveMail(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "folder required"})
 		return
 	}
-	if err := h.emails.Move(id, body.Folder); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
+	switch body.Folder {
+	case "STARRED":
+		// 「标星邮件」是虚拟视图：只打星标，不改变邮件所在文件夹
+		if err := h.emails.MarkStar(id, true); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		if h.syncEngine != nil {
+			go func() {
+				if err := h.syncEngine.ApplyFlag(email.AccountID, email.Folder, email.UID, "\\Flagged", true); err != nil {
+					log.Printf("[sync] star %d failed: %v", id, err)
+				}
+			}()
+		}
+	case "DEFERRED":
+		// 「稍后处理」是本地虚拟文件夹：仅本地落库，不回写 IMAP（服务器无此文件夹）
+		if err := h.emails.Move(id, "DEFERRED"); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+	default:
+		if err := h.emails.Move(id, body.Folder); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		if h.syncEngine != nil && email.Folder != body.Folder {
+			go func() {
+				dest := h.emails.ResolveFolder(body.Folder)
+				if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, dest); err != nil {
+					log.Printf("[sync] move %d to %s failed: %v", id, body.Folder, err)
+				}
+			}()
+		}
 	}
-	if h.syncEngine != nil && email.Folder != body.Folder {
-		go func() {
-			dest := h.emails.ResolveFolder(body.Folder)
-			if err := h.syncEngine.MoveMessage(email.AccountID, email.Folder, email.UID, dest); err != nil {
-				log.Printf("[sync] move %d to %s failed: %v", id, body.Folder, err)
-			}
-		}()
-	}
+
 	if h.sseHub != nil {
 		d, _ := json.Marshal(map[string]string{"id": strconv.FormatInt(id, 10), "folder": body.Folder})
 		h.sseHub.Publish("mail:updated", string(d))
@@ -304,16 +329,20 @@ func (h *Handler) handleSearchMails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	accountID, _ := strconv.ParseInt(r.URL.Query().Get("account_id"), 10, 64)
+	folder := r.URL.Query().Get("folder")
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit == 0 {
 		limit = 50
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	emails, err := h.emails.Search(q, accountID, limit, offset)
+	emails, err := h.emails.Search(q, accountID, folder, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
+	}
+	if total, terr := h.emails.SearchCount(q, accountID, folder); terr == nil {
+		w.Header().Set("X-Total-Count", strconv.Itoa(total))
 	}
 	writeJSON(w, http.StatusOK, emails)
 }
@@ -515,14 +544,13 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "folder required for all_in_folder"})
 			return
 		}
-		emails, err := h.emails.ListAll(req.Folder, "", "", 10000, 0)
-		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		// 取整夹全部 ID（不做 200 上限裁剪），与前端展示的总数保持一致
+		allIDs, aerr := h.emails.AllIDsInFolder(req.Folder, "", "")
+		if aerr != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": aerr.Error()})
 			return
 		}
-		for _, e := range emails {
-			ids = append(ids, e.ID)
-		}
+		ids = allIDs
 	} else {
 		ids = req.IDs
 	}
@@ -537,6 +565,7 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 	case "delete":
 		// 删除操作：已在 Trash 中则永久删除，否则移到 Trash
 		trashFolder := h.emails.ResolveFolder("Trash")
+		imapLeft := maxBulkIMAPWriteback // 限制整夹删除时对 IMAP 的回写总量，避免连接风暴
 		for _, id := range ids {
 			if e, eerr := h.emails.GetByID(id); eerr == nil {
 				isInTrash := strings.EqualFold(e.Folder, trashFolder) ||
@@ -548,7 +577,8 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 						err = merr
 						break
 					}
-					if h.syncEngine != nil {
+					if h.syncEngine != nil && imapLeft > 0 {
+						imapLeft--
 						eid := e.ID
 						eacc := e.AccountID
 						efolder := e.Folder
@@ -565,7 +595,8 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 						err = merr
 						break
 					}
-					if h.syncEngine != nil {
+					if h.syncEngine != nil && imapLeft > 0 {
+						imapLeft--
 						eid := e.ID
 						eacc := e.AccountID
 						efolder := e.Folder
@@ -583,20 +614,48 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-	case "mark_read":
-		err = h.emails.BulkUpdateFlags(ids, ptr(true), nil)
-	case "mark_unread":
-		err = h.emails.BulkUpdateFlags(ids, ptr(false), nil)
-	case "star":
-		err = h.emails.BulkUpdateFlags(ids, nil, ptr(true))
-	case "unstar":
-		err = h.emails.BulkUpdateFlags(ids, nil, ptr(false))
+	case "mark_read", "mark_unread":
+		val := req.Action == "mark_read"
+		err = h.emails.BulkUpdateFlags(ids, ptr(val), nil)
+		if err == nil && h.syncEngine != nil {
+			// 回写 IMAP，避免下次同步把本地改动冲掉（上限 100 条以防连接风暴）
+			if ems, _ := h.emails.GetByIDs(ids); ems != nil {
+				h.writebackFlag(ems, "\\Seen", val)
+			}
+		}
+	case "star", "unstar":
+		val := req.Action == "star"
+		err = h.emails.BulkUpdateFlags(ids, nil, ptr(val))
+		if err == nil && h.syncEngine != nil {
+			if ems, _ := h.emails.GetByIDs(ids); ems != nil {
+				h.writebackFlag(ems, "\\Flagged", val)
+			}
+		}
 	case "move":
 		if req.DestinationFolder == "" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "destination_folder required for move"})
 			return
 		}
-		err = h.emails.BulkMove(ids, req.DestinationFolder)
+		switch req.DestinationFolder {
+		case "STARRED":
+			// 移动到「标星邮件」= 打星标（虚拟视图，不改文件夹）
+			err = h.emails.BulkUpdateFlags(ids, nil, ptr(true))
+			if err == nil && h.syncEngine != nil {
+				if ems, _ := h.emails.GetByIDs(ids); ems != nil {
+					h.writebackFlag(ems, "\\Flagged", true)
+				}
+			}
+		case "DEFERRED":
+			// 稍后处理 = 本地虚拟文件夹，仅落库，不回写 IMAP
+			err = h.emails.BulkMove(ids, "DEFERRED")
+		default:
+			ems, _ := h.emails.GetByIDs(ids) // 记录移动前的来源文件夹
+			err = h.emails.BulkMove(ids, req.DestinationFolder)
+			if err == nil && h.syncEngine != nil && ems != nil {
+				dest := h.emails.ResolveFolder(req.DestinationFolder)
+				h.writebackMove(ems, dest)
+			}
+		}
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown action"})
 		return
@@ -617,6 +676,44 @@ func (h *Handler) handleBulkMails(w http.ResponseWriter, r *http.Request) {
 		"success":          true,
 		"affected_count":   len(ids),
 	})
+}
+
+// maxBulkIMAPWriteback 限制一次批量操作回写 IMAP 的最大条数，避免整夹操作对服务器造成连接风暴；
+// 超出部分由下一次同步对账补齐。
+const maxBulkIMAPWriteback = 100
+
+// writebackFlag 将批量改动的标记回写 IMAP（并发 5、上限 maxBulkIMAPWriteback）。
+func (h *Handler) writebackFlag(ems []models.Email, flag string, set bool) {
+	sem := make(chan struct{}, 5)
+	for i, e := range ems {
+		if i >= maxBulkIMAPWriteback {
+			break
+		}
+		go func(e models.Email) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			if err := h.syncEngine.ApplyFlag(e.AccountID, e.Folder, e.UID, flag, set); err != nil {
+				log.Printf("[sync] bulk flag %d failed: %v", e.ID, err)
+			}
+		}(e)
+	}
+}
+
+// writebackMove 将批量移动回写 IMAP（使用移动前的来源文件夹）。
+func (h *Handler) writebackMove(ems []models.Email, dest string) {
+	sem := make(chan struct{}, 5)
+	for i, e := range ems {
+		if i >= maxBulkIMAPWriteback {
+			break
+		}
+		go func(e models.Email) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			if err := h.syncEngine.MoveMessage(e.AccountID, e.Folder, e.UID, dest); err != nil {
+				log.Printf("[sync] bulk move %d failed: %v", e.ID, err)
+			}
+		}(e)
+	}
 }
 
 // findEmlByUid 当 archive_path 为空时，按 accountID/uid/year/month 在归档目录中查找 EML 文件。

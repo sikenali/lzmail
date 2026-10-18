@@ -189,6 +189,58 @@ func (s *EmailStore) GetByID(id int64) (*models.Email, error) {
 	return &e, nil
 }
 
+// GetByIDs 批量取回邮件（含 account/folder/uid，用于批量 IMAP 回写）。
+func (s *EmailStore) GetByIDs(ids []int64) ([]models.Email, error) {
+	if len(ids) == 0 {
+		return []models.Email{}, nil
+	}
+	placeholders := strings.Repeat("?,", len(ids)-1) + "?"
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	rows, err := s.db.Query(
+		`SELECT `+emailSelectCols+`
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id WHERE e.id IN (`+placeholders+`)`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var emails []models.Email
+	for rows.Next() {
+		e, err := scanEmail(rows)
+		if err != nil {
+			return nil, err
+		}
+		emails = append(emails, e)
+	}
+	return emails, nil
+}
+
+// AllIDsInFolder 返回符合文件夹/日期条件的全部邮件 ID（不做 200 上限裁剪），
+// 供「整夹」批量操作使用，保证与前端展示的总数一致。
+func (s *EmailStore) AllIDsInFolder(folder, fromDate, toDate string) ([]int64, error) {
+	cond, args := buildListCond(folder, fromDate, toDate)
+	where := ""
+	if cond != "" {
+		where = " WHERE " + cond
+	}
+	rows, err := s.db.Query(`SELECT e.id FROM emails e`+where, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 func (s *EmailStore) GetAttachmentsByEmailID(emailID int64) ([]models.Attachment, error) {
 	rows, err := s.db.Query(`SELECT id, email_id, filename, mime_type, size, path FROM attachments WHERE email_id = ?`, emailID)
 	if err != nil {
@@ -206,10 +258,10 @@ func (s *EmailStore) GetAttachmentsByEmailID(emailID int64) ([]models.Attachment
 	return atts, nil
 }
 
-func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([]models.Email, error) {
+func (s *EmailStore) Search(query string, accountID int64, folder string, limit, offset int) ([]models.Email, error) {
 	// trigram 索引对 <3 字符的查询无效，回退到 LIKE 全表扫描以保持「边输入边搜」体验
 	if len([]rune(strings.TrimSpace(query))) < 3 {
-		return s.searchLike(query, accountID, limit, offset)
+		return s.searchLike(query, accountID, folder, limit, offset)
 	}
 	// 把整个查询作为一个 FTS5 短语，等价于连续子串匹配（trigram），并对特殊字符转义
 	phrase := strings.ReplaceAll(query, `"`, `""`)
@@ -219,6 +271,11 @@ func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([
 	if accountID > 0 {
 		where += ` AND e.account_id = ?`
 		args = append(args, accountID)
+	}
+	cond, condArgs := buildListCond(folder, "", "")
+	if cond != "" {
+		where += ` AND ` + cond
+		args = append(args, condArgs...)
 	}
 	args = append(args, limit, offset)
 	rows, err := s.db.Query(
@@ -245,25 +302,28 @@ func (s *EmailStore) Search(query string, accountID int64, limit, offset int) ([
 }
 
 // searchLike 使用 LIKE 子串匹配的旧实现，用于短查询（<3 字符）回退。
-func (s *EmailStore) searchLike(query string, accountID int64, limit, offset int) ([]models.Email, error) {
+func (s *EmailStore) searchLike(query string, accountID int64, folder string, limit, offset int) ([]models.Email, error) {
 	q := "%" + query + "%"
-	var rows *sql.Rows
-	var err error
+	var whereParts []string
+	var args []any
 	if accountID > 0 {
-		rows, err = s.db.Query(
-			`SELECT `+emailSelectCols+`
-			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
-			 WHERE e.account_id = ? AND (e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?)
-			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
-			accountID, q, q, q, q, limit, offset)
-	} else {
-		rows, err = s.db.Query(
-			`SELECT `+emailSelectCols+`
-			 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
-			 WHERE e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?
-			 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
-			q, q, q, q, limit, offset)
+		whereParts = append(whereParts, `e.account_id = ?`)
+		args = append(args, accountID)
 	}
+	whereParts = append(whereParts, `(e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?)`)
+	args = append(args, q, q, q, q)
+	if cond, condArgs := buildListCond(folder, "", ""); cond != "" {
+		whereParts = append(whereParts, cond)
+		args = append(args, condArgs...)
+	}
+	where := " WHERE " + strings.Join(whereParts, " AND ")
+	args = append(args, limit, offset)
+	rows, err := s.db.Query(
+		`SELECT `+emailSelectCols+`
+		 FROM emails e LEFT JOIN accounts a ON a.id = e.account_id
+		 `+where+`
+		 ORDER BY e.date DESC LIMIT ? OFFSET ?`,
+		args...)
 	if err != nil {
 		return nil, err
 	}
@@ -277,6 +337,47 @@ func (s *EmailStore) searchLike(query string, accountID int64, limit, offset int
 		emails = append(emails, e)
 	}
 	return emails, nil
+}
+
+// SearchCount 返回与 Search 相同过滤条件下命中的邮件总数（供搜索分页显示）。
+func (s *EmailStore) SearchCount(query string, accountID int64, folder string) (int, error) {
+	var n int
+	if len([]rune(strings.TrimSpace(query))) < 3 {
+		q := "%" + query + "%"
+		var whereParts []string
+		var args []any
+		if accountID > 0 {
+			whereParts = append(whereParts, `e.account_id = ?`)
+			args = append(args, accountID)
+		}
+		whereParts = append(whereParts, `(e.subject LIKE ? OR e.from_addr LIKE ? OR e.from_name LIKE ? OR e.body_preview LIKE ?)`)
+		args = append(args, q, q, q, q)
+		if cond, condArgs := buildListCond(folder, "", ""); cond != "" {
+			whereParts = append(whereParts, cond)
+			args = append(args, condArgs...)
+		}
+		where := " WHERE " + strings.Join(whereParts, " AND ")
+		if err := s.db.QueryRow(`SELECT COUNT(*) FROM emails e `+where, args...).Scan(&n); err != nil {
+			return 0, err
+		}
+		return n, nil
+	}
+	phrase := strings.ReplaceAll(query, `"`, `""`)
+	matchSQL := `"` + phrase + `"`
+	where := `WHERE emails_fts MATCH ?`
+	args := []any{matchSQL}
+	if accountID > 0 {
+		where += ` AND e.account_id = ?`
+		args = append(args, accountID)
+	}
+	if cond, condArgs := buildListCond(folder, "", ""); cond != "" {
+		where += ` AND ` + cond
+		args = append(args, condArgs...)
+	}
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM emails_fts JOIN emails e ON e.id = emails_fts.rowid `+where, args...).Scan(&n); err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 type MailStats struct {

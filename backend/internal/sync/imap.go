@@ -863,6 +863,23 @@ func (s *Syncer) closeConn(lastErr error) {
 	}
 }
 
+// directIMAPDial 直连 IMAP 服务器（含 IPv6 优先解析与 TLS/StartTLS）。
+// 代理模式下仅作为「代理未配置或建连失败」的回退使用。
+func (s *Syncer) directIMAPDial(dialer *net.Dialer, addr string) (*client.Client, error) {
+	preferredAddr, resolveErr := preferAddress(addr, dialer)
+	if resolveErr == nil {
+		addr = preferredAddr
+	}
+	if s.account.IMAPPort == 993 {
+		return client.DialWithDialerTLS(dialer, addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
+	}
+	c, err := client.DialWithDialer(dialer, addr)
+	if err == nil {
+		err = c.StartTLS(&tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
+	}
+	return c, err
+}
+
 // preferAddress 优先使用 IPv6，因为部分国内邮箱服务商（如 QQ）对 IPv4 连接有限制。
 // 若无 IPv6 地址则退回 IPv4。
 func preferAddress(addr string, d *net.Dialer) (string, error) {
@@ -1020,7 +1037,7 @@ func (s *Syncer) dialLocked() (*client.Client, error) {
 				}
 			}
 		} else if s.proxyMode == "global" {
-			// 全局代理：从环境变量读取
+			// 全局代理：从环境变量 http_proxy/https_proxy/all_proxy 读取
 			proxyURL := getProxyURL()
 			if proxyURL != nil {
 				dialConn, connErr := dialer.Dial("tcp", proxyURL.Host)
@@ -1033,35 +1050,13 @@ func (s *Syncer) dialLocked() (*client.Client, error) {
 					err = connErr
 				}
 			}
-			// 无环境变量则直连
-			if err == nil {
-				preferredAddr, resolveErr := preferAddress(addr, dialer)
-				if resolveErr == nil {
-					addr = preferredAddr
-				}
-				if s.account.IMAPPort == 993 {
-					c, err = client.DialWithDialerTLS(dialer, addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
-				} else {
-					c, err = client.DialWithDialer(dialer, addr)
-					if err == nil {
-						err = c.StartTLS(&tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
-					}
-				}
+			// 仅当「未配置全局代理」或「代理建连失败」时（此时 c 仍为 nil）才回退直连；
+			// 代理建连成功则保留 c，避免被直连覆盖（旧逻辑会把代理连接丢弃改直连）。
+			if c == nil {
+				c, err = s.directIMAPDial(dialer, addr)
 			}
 		} else {
-			preferredAddr, resolveErr := preferAddress(addr, dialer)
-			if resolveErr == nil {
-				addr = preferredAddr
-			}
-
-			if s.account.IMAPPort == 993 {
-				c, err = client.DialWithDialerTLS(dialer, addr, &tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
-			} else {
-				c, err = client.DialWithDialer(dialer, addr)
-				if err == nil {
-					err = c.StartTLS(&tls.Config{ServerName: s.account.IMAPHost, InsecureSkipVerify: false})
-				}
-			}
+			c, err = s.directIMAPDial(dialer, addr)
 		}
 		if err != nil {
 			continue

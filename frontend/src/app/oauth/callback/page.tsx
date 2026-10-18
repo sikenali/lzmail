@@ -13,6 +13,7 @@ function OAuthCallbackInner() {
   const [tokenData, setTokenData] = useState<{
     provider: string
     access_token: string
+    refresh_token?: string
     expires_in: number
     scope?: string
   } | null>(null)
@@ -49,6 +50,7 @@ function OAuthCallbackInner() {
       setTokenData({
         provider: resp.provider || provider,
         access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
         expires_in: resp.expires_in,
         scope: resp.scope,
       })
@@ -100,6 +102,7 @@ function OAuthCallbackInner() {
         auth_method: 'oauth2',
         provider: tokenData.provider,
         access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token || '',
         token_type: 'Bearer',
         expiry: expiresAt,
         scope: tokenData.scope || '',

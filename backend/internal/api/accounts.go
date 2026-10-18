@@ -27,6 +27,7 @@ type CreateAccountRequest struct {
 	TokenType   string `json:"token_type"`
 	Expiry      string `json:"expiry"`
 	Scope       string `json:"scope"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (h *Handler) handleListAccounts(w http.ResponseWriter, r *http.Request) {
@@ -102,9 +103,10 @@ func (h *Handler) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	if isOAuth2 {
 		tok := &models.OAuth2TokenData{
-			AccessToken: req.AccessToken,
-			TokenType:   req.TokenType,
-			Scope:       req.Scope,
+			AccessToken:  req.AccessToken,
+			RefreshToken: req.RefreshToken,
+			TokenType:    req.TokenType,
+			Scope:        req.Scope,
 		}
 		if req.Expiry != "" {
 			if t, err := time.Parse(time.RFC3339, req.Expiry); err == nil {

@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const currentSchemaVersion = 9
+const currentSchemaVersion = 10
 
 func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)")
@@ -127,6 +127,7 @@ func migrate(db *sql.DB) error {
 		from_addr TEXT,
 		to_addr TEXT,
 		cc TEXT,
+		bcc TEXT NOT NULL DEFAULT '',
 		date DATETIME,
 		body_preview TEXT,
 		is_read INTEGER NOT NULL DEFAULT 0,
@@ -202,6 +203,9 @@ func migrate(db *sql.DB) error {
 		return err
 	}
 	if err := migrateToV9(db); err != nil {
+		return err
+	}
+	if err := migrateToV10(db); err != nil {
 		return err
 	}
 	return nil
@@ -398,6 +402,20 @@ func migrateToV9(db *sql.DB) error {
 	if !exists {
 		if _, err := db.Exec(`ALTER TABLE emails ADD COLUMN recipient_avatar_url TEXT DEFAULT ''`); err != nil {
 			return fmt.Errorf("add column recipient_avatar_url: %w", err)
+		}
+	}
+	return nil
+}
+
+// migrateToV10 为 emails 表增加 bcc 列（草稿/已发送邮件的密送地址），幂等。
+func migrateToV10(db *sql.DB) error {
+	exists, err := columnExists(db, "emails", "bcc")
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if _, err := db.Exec(`ALTER TABLE emails ADD COLUMN bcc TEXT DEFAULT ''`); err != nil {
+			return fmt.Errorf("add column bcc: %w", err)
 		}
 	}
 	return nil

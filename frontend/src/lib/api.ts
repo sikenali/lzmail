@@ -38,7 +38,7 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   accounts: {
     list: () => fetchJSON<Account[]>('/api/v1/accounts'),
-    create: (data: Partial<Account> & { password?: string; access_token?: string; token_type?: string; expiry?: string; scope?: string }) =>
+    create: (data: Partial<Account> & { password?: string; access_token?: string; refresh_token?: string; token_type?: string; expiry?: string; scope?: string }) =>
       fetchJSON<Account>('/api/v1/accounts', { method: 'POST', body: JSON.stringify(data) }),
     delete: (id: number) => fetchJSON<void>(`/api/v1/accounts/${id}`, { method: 'DELETE' }),
     update: (id: number, data: Partial<Account> & { password?: string }) =>

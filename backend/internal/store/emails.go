@@ -17,13 +17,13 @@ func NewEmailStore(db *sql.DB) *EmailStore {
 	return &EmailStore{db: db}
 }
 
-const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.from_name, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, ''), COALESCE(e.sender_avatar_url, ''), COALESCE(e.recipient_avatar_url, '')`
+const emailSelectCols = `e.id, e.account_id, e.uid, e.folder, e.subject, e.from_addr, e.from_name, e.to_addr, e.cc, e.date, e.body_preview, e.is_read, e.is_starred, e.has_attachments, e.archive_path, e.message_id, e.created_at, COALESCE(a.name, ''), COALESCE(a.brand_color, ''), COALESCE(e.sender_avatar_url, ''), COALESCE(e.recipient_avatar_url, ''), COALESCE(e.bcc,'')`
 
 func scanEmail(scanner interface {
 	Scan(dest ...any) error
 }) (models.Email, error) {
 	var e models.Email
-	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.FromName, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand, &e.SenderAvatarURL, &e.RecipientAvatarURL)
+	err := scanner.Scan(&e.ID, &e.AccountID, &e.UID, &e.Folder, &e.Subject, &e.From, &e.FromName, &e.To, &e.CC, &e.Date, &e.BodyPreview, &e.IsRead, &e.IsStarred, &e.HasAttachments, &e.ArchivePath, &e.MessageID, &e.CreatedAt, &e.AccountName, &e.AccountBrand, &e.SenderAvatarURL, &e.RecipientAvatarURL, &e.BCC)
 	return e, err
 }
 
@@ -636,9 +636,9 @@ func (s *EmailStore) UpdateBody(accountID int64, uid uint32, folder, bodyPreview
 
 func (s *EmailStore) InsertSent(e *models.Email) (int64, error) {
 	result, err := s.db.Exec(
-		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, date, body_preview, is_read, has_attachments, archive_path, message_id)
-		 VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?,?)`,
-		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC, formatDate(e.Date),
+		`INSERT INTO emails (account_id, uid, folder, subject, from_addr, from_name, to_addr, cc, bcc, date, body_preview, is_read, has_attachments, archive_path, message_id)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)`,
+		e.AccountID, e.UID, e.Folder, e.Subject, e.From, e.FromName, e.To, e.CC, e.BCC, formatDate(e.Date),
 		e.BodyPreview, e.HasAttachments, e.ArchivePath, e.MessageID)
 	if err != nil {
 		return 0, err
@@ -656,10 +656,10 @@ func (s *EmailStore) Move(id int64, folder string) error {
 
 // UpdateDraft 更新草稿的正文、主题、收件人等信息（不改变 UID/ID，保持同一条记录）
 func (s *EmailStore) UpdateDraft(id int64, subject, to, cc, bcc, bodyPreview string, hasAttachments bool, archivePath string) error {
-	_, err := s.db.Exec(`UPDATE emails SET subject=?, to_addr=?, cc=?, date=CURRENT_TIMESTAMP,
+	_, err := s.db.Exec(`UPDATE emails SET subject=?, to_addr=?, cc=?, bcc=?, date=CURRENT_TIMESTAMP,
 		body_preview=?, has_attachments=?, archive_path=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=? AND folder IN (`+folderLiterals("Drafts")+`)`,
-		subject, to, cc, bodyPreview, hasAttachments, archivePath, id)
+		subject, to, cc, bcc, bodyPreview, hasAttachments, archivePath, id)
 	return err
 }
 

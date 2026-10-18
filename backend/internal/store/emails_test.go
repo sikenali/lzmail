@@ -26,6 +26,7 @@ func setupTestDB(t *testing.T) *EmailStore {
 			from_name TEXT,
 			to_addr TEXT,
 			cc TEXT,
+			bcc TEXT DEFAULT '',
 			date TEXT,
 			body_preview TEXT,
 			is_read INTEGER NOT NULL DEFAULT 0,

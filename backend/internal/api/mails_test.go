@@ -351,6 +351,7 @@ func setupTestDBForAPI(t *testing.T) (*sql.DB, error) {
 			from_name TEXT,
 			to_addr TEXT,
 			cc TEXT,
+			bcc TEXT DEFAULT '',
 			date DATETIME,
 			body_preview TEXT,
 			is_read INTEGER NOT NULL DEFAULT 0,

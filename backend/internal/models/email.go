@@ -12,6 +12,7 @@ type Email struct {
 	FromName        string     `json:"from_name"`
 	To              string     `json:"to"`
 	CC              string     `json:"cc"`
+	BCC             string     `json:"bcc"`
 	Date            time.Time  `json:"date"`
 	BodyPreview     string     `json:"body_preview"`
 	IsRead          bool       `json:"is_read"`

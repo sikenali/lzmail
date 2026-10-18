@@ -58,9 +58,6 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
   const displayInitial = isSent
     ? (email.to ? email.to[0]?.toUpperCase() || '?' : '?')
     : senderInitials(email.from)
-  const avatarContent = (isSent ? (email.to?.trim() || email.from?.trim()) : (email.from_name?.trim() || email.from?.trim()))
-    ? displayInitial
-    : '🐱'
   const senderAvatarURL = email.sender_avatar_url || ''
   const recipientAvatarURL = email.recipient_avatar_url || ''
   // 已发送邮件显示收件人头像，其他显示发件人头像

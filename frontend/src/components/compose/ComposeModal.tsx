@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { api } from '@/lib/api'
 import { Modal } from '@/components/layout/Modal'
-import { Paperclip, Send, X, ChevronDown, Clock, Mail, Check } from '@/lib/icons'
+import { Paperclip, Send, X, ChevronDown, Clock, Check } from '@/lib/icons'
 const RichTextEditor = dynamic(() => import('@/components/editor/RichTextEditor').then(m => m.RichTextEditor), {
   ssr: false,
   loading: () => <div className="h-64 flex items-center justify-center" style={{ color: 'var(--color-text-muted)' }}>编辑器加载中...</div>,
@@ -62,7 +62,12 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
   }, [open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setTo(''); setCc(''); setBcc(''); setSubject(''); setBody('')
+      setReplyTo(''); setDraftId(null); setShowCc(false); setShowBcc(false)
+      setTimeout(() => editorRef.current?.setContent?.(''), 50)
+      return
+    }
     if (params?.to) setTo(params.to)
     if (params?.cc) setCc(params.cc)
     if (params?.bcc) setBcc(params.bcc)

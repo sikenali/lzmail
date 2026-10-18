@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
+import { formatBytes } from '@/lib/format'
 import { CustomSelect } from '@/components/ui/CustomSelect'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import type { MailStats, StorageTreeNode } from '@/types'
@@ -70,16 +71,8 @@ function StorageTreeView({ root }: { root: StorageTreeNode }) {
   return renderNode(root, 0)
 }
 
-function formatBytes(b: number): string {
-  if (b === 0) return '0 B'
-  const k = 1024, sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(b) / Math.log(k))
-  return (b / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i]
-}
-
 export function StorageSettings() {
   const [stats, setStats] = useState<MailStats | null>(null)
-  const [loading, setLoading] = useState(true)
   const { settings, loading: settingsLoading, setSetting } = useSettings()
   const [accounts, setAccounts] = useState<Array<{ id: number; name?: string; email: string }>>([])
   const [editingPath, setEditingPath] = useState(false)
@@ -111,7 +104,7 @@ export function StorageSettings() {
   }, [])
 
   useEffect(() => {
-    api.mails.stats().then(d => setStats(d ?? null)).catch(() => {}).finally(() => setLoading(false))
+    api.mails.stats().then(d => setStats(d ?? null)).catch(() => {})
   }, [])
 
   useEffect(() => {

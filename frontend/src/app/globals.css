@@ -143,73 +143,17 @@ html {
   --foreground-secondary: #d4c8b8;
   --foreground-tertiary: #a09080;
   --muted: #2a2320;
-  --muted-foreground: #8b7355;
+  --muted-foreground: #a09080;
   --primary: #d44638;
-  --primary-light: #2e1e1e;
-  --teal: #6b8fa3;
-  --teal-light: #1e2e32;
+  --primary-light: #3a2323;
+  --teal: #7ba0b8;
+  --teal-light: #2a3a42;
   --gold: #c9a96e;
-  --gold-light: #2e2a1e;
-  --green: #5b8c5a;
-  --green-light: #1e2e1e;
-  --blue: #6b8fa3;
-  --blue-light: #1e2e32;
-  --primary-foreground: #ffffff;
-  --accent: #2a2320;
-  --accent-foreground: #f5f0e8;
-  --border: #3d3430;
-  --app-background: #1a1612;
-  --sidebar-bg: #2a2320;
-  --sidebar-border: #3d3430;
-  --success: #6b9b6a;
-  --success-bg: #1e2e1e;
-  --danger: #d44638;
-  --danger-bg: #2e1e1e;
-  --gold: #d4b87a;
-  --gold-bg: #2e2a1e;
-  --skeleton-base: #3d3430;
-  --skeleton-shine: #4a4038;
-
-  /* DESIGN.md Tokens - Dark */
-  --color-primary: #E05050;
-  --color-primary-soft: #3A2323;
-  --color-bg-main: #17171A;
-  --color-bg-secondary: #1C1C1F;
-  --color-bg-card: #232324;
-  --color-bg-white: #232324;
-  --color-text-primary: #F2F3F5;
-  --color-text-body: #DDE0E6;
-  --color-text-secondary: #C9CDD4;
-  --color-text-muted: #A7AEB9;
-  --color-text-faint: #86909C;
-  --color-border: #2A2B2E;
-  --color-border-soft: #2A2B2E;
-  --color-border-hover: #3A3B3F;
-  --color-success: #5CB98C;
-  --color-info: #82AEDD;
-  --color-warning: #F2B23E;
-  --color-error: #E86A5A;
-}
-
-.dark {
-  --background: #1a1612;
-  --card: #2a2320;
-  --card-border: #3d3430;
-  --foreground: #f5f0e8;
-  --foreground-secondary: #d4c8b8;
-  --foreground-tertiary: #a09080;
-  --muted: #2a2320;
-  --muted-foreground: #8b7355;
-  --primary: #d44638;
-  --primary-light: #2e1e1e;
-  --teal: #6b8fa3;
-  --teal-light: #1e2e32;
-  --gold: #c9a96e;
-  --gold-light: #2e2a1e;
-  --green: #5b8c5a;
-  --green-light: #1e2e1e;
-  --blue: #6b8fa3;
-  --blue-light: #1e2e32;
+  --gold-light: #3a3428;
+  --green: #6b9b6a;
+  --green-light: #2a3a2a;
+  --blue: #7ba0b8;
+  --blue-light: #2a3a42;
   --primary-foreground: #ffffff;
   --accent: #2a2320;
   --accent-foreground: #f5f0e8;
@@ -400,23 +344,6 @@ body {
   height: auto;
   border-radius: 8px;
 }
-.ProseMirror table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 8px 0;
-}
-.ProseMirror table td,
-.ProseMirror table th {
-  border: 1px solid var(--card-border);
-  padding: 6px 10px;
-  font-size: 13px;
-}
-.ProseMirror pre {
-  background: var(--muted);
-  padding: 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-}
 /* 发票/带水印背景邮件：限制背景图尺寸，防止溢出 */
 .ProseMirror div[style*="background"] {
   background-size: contain !important;
@@ -479,7 +406,7 @@ body {
     background-color: var(--color-bg-secondary);
   }
   .hover-row-warm:hover {
-    background-color: rgba(243, 237, 227, 1);
+    background-color: var(--color-bg-secondary);
   }
 }
 @media (pointer: coarse) {

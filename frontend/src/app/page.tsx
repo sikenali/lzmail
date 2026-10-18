@@ -14,17 +14,7 @@ import type { MailStats, Email, Account } from '@/types'
 
 const TrendChart = dynamic(() => import('./TrendChart'), { ssr: false })
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i]
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString('en-US')
-}
+import { formatBytes, formatNumber } from '@/lib/format'
 
 const brandAvatarBg: Record<string, string> = {
   '#ea4335': '#fdf2f2',
@@ -103,15 +93,15 @@ export default function Dashboard() {
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--card)',
     boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-    border: '1px solid rgba(229,217,196,1)',
+    border: '0.7px solid var(--card-border)',
     borderRadius: '16px',
   }
 
   const statCards = [
-    { icon: Mail, iconBg: '#fdf2f2', iconColor: '#c43d3d', trendUp: true, trendNote: '较上月', label: '总邮件数', note: '较上月' },
-    { icon: MailOpen, iconBg: '#fef9f0', iconColor: '#c9a96e', trendUp: true, trendNote: '较昨日', label: '未读邮件', note: '较昨日' },
-    { icon: Send, iconBg: '#edf5ec', iconColor: '#5b8c5a', trendUp: true, trendNote: '较上月', label: '已发送', note: '较上月' },
-    { icon: Contact, iconBg: '#fdf2f2', iconColor: '#c43d3d', trendUp: null, label: '联系人', note: '同步自邮箱' },
+    { icon: Mail, iconBg: 'var(--danger-bg)', iconColor: 'var(--primary)', trendUp: true, trendNote: '较上月', label: '总邮件数', note: '较上月' },
+    { icon: MailOpen, iconBg: 'var(--gold-bg)', iconColor: 'var(--gold)', trendUp: true, trendNote: '较昨日', label: '未读邮件', note: '较昨日' },
+    { icon: Send, iconBg: 'var(--success-bg)', iconColor: 'var(--success)', trendUp: true, trendNote: '较上月', label: '已发送', note: '较上月' },
+    { icon: Contact, iconBg: 'var(--danger-bg)', iconColor: 'var(--primary)', trendUp: null, label: '联系人', note: '同步自邮箱' },
   ]
   const statValues = [
     formatNumber(totalEmails),
@@ -126,10 +116,10 @@ export default function Dashboard() {
         {/* Page title */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-[5px] h-7 rounded-[2px] shrink-0" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
+            <div className="w-[5px] h-7 rounded-[2px] shrink-0" style={{ backgroundColor: 'var(--primary)' }} />
             <div className="min-w-0">
-              <h1 className="text-[20px] sm:text-[24px] md:text-[28px] font-bold leading-none truncate" style={{ color: 'rgba(61,43,31,1)' }}>仪表盘</h1>
-              <p className="text-[11px] sm:text-[12px] md:text-[13px] mt-0.5 truncate" style={{ color: 'rgba(139,115,85,1)' }}>邮件概览与同步状态</p>
+              <h1 className="text-[20px] sm:text-[24px] md:text-[28px] font-bold leading-none truncate" style={{ color: 'var(--foreground)' }}>仪表盘</h1>
+              <p className="text-[11px] sm:text-[12px] md:text-[13px] mt-0.5 truncate" style={{ color: 'var(--foreground-tertiary)' }}>邮件概览与同步状态</p>
             </div>
           </div>
           <DateTimePicker value={selectedDate} onChange={setSelectedDate} />
@@ -167,10 +157,10 @@ export default function Dashboard() {
           <div className="flex-[3] min-w-0 p-4 sm:p-5 md:p-6" style={cardStyle}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-[4px] h-5 rounded-[2px] shrink-0" style={{ backgroundColor: 'rgba(196,61,61,1)' }} />
-              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'rgba(61,43,31,1)' }}>最近邮件</h2>
+              <div className="w-[4px] h-5 rounded-[2px] shrink-0" style={{ backgroundColor: 'var(--primary)' }} />
+              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'var(--foreground)' }}>最近邮件</h2>
               </div>
-              <Link href="/mail" className="flex items-center gap-1 text-[12px] sm:text-[13px] font-medium hover:underline shrink-0" style={{ color: 'rgba(196,61,61,1)' }}>
+              <Link href="/mail" className="flex items-center gap-1 text-[12px] sm:text-[13px] font-medium hover:underline shrink-0" style={{ color: 'var(--primary)' }}>
                 查看全部 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -220,7 +210,7 @@ export default function Dashboard() {
             <div className="p-4 sm:p-5 md:p-6" style={cardStyle}>
               <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-1 h-5 rounded-sm shrink-0" style={{ backgroundColor: 'rgba(91,140,90,1)' }} />
-              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'rgba(61,43,31,1)' }}>同步状态</h2>
+              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'var(--foreground)' }}>同步状态</h2>
               </div>
               <div className="mt-4 sm:mt-5">
                 {accounts.length === 0 ? (
@@ -259,7 +249,7 @@ export default function Dashboard() {
             <div className="p-4 sm:p-5 md:p-6" style={cardStyle}>
               <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-1 h-5 rounded-sm shrink-0" style={{ backgroundColor: 'rgba(201,169,110,1)' }} />
-              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'rgba(61,43,31,1)' }}>本地存储</h2>
+              <h2 className="text-[13px] sm:text-[14px] font-bold truncate" style={{ color: 'var(--foreground)' }}>本地存储</h2>
               </div>
               <div className="mt-4 sm:mt-5">
                 <div className="flex items-center justify-between">
@@ -278,11 +268,11 @@ export default function Dashboard() {
         </div>
 
         {/* Trend chart - full width on all sizes */}
-        <div className="p-4 sm:p-5 md:p-6 mt-4 sm:mt-5 md:mt-6 rounded-[16px]" style={{ ...cardStyle, border: '1px solid rgba(229,217,196,1)' }}>
+        <div className="p-4 sm:p-5 md:p-6 mt-4 sm:mt-5 md:mt-6 rounded-[16px]" style={cardStyle}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <div className="w-1 h-5 rounded-sm shrink-0" style={{ backgroundColor: 'rgba(107,143,163,1)' }} />
-              <h2 className="text-[13px] sm:text-[14px] font-bold" style={{ color: 'rgba(61,43,31,1)' }}>邮件趋势（近{trendDays}天）</h2>
+              <div className="w-1 h-5 rounded-sm shrink-0" style={{ backgroundColor: 'var(--teal)' }} />
+              <h2 className="text-[13px] sm:text-[14px] font-bold" style={{ color: 'var(--foreground)' }}>邮件趋势（近{trendDays}天）</h2>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <div className="flex items-center gap-2">
@@ -300,7 +290,7 @@ export default function Dashboard() {
                     onClick={() => setTrendDays(days)}
                     className="h-6 sm:h-[26px] px-2.5 sm:px-3 rounded-full text-[11px] sm:text-[12px] font-medium transition-all"
                     style={{
-                      backgroundColor: trendDays === days ? 'rgba(196,61,61,1)' : 'var(--muted)',
+                      backgroundColor: trendDays === days ? 'var(--primary)' : 'var(--muted)',
                       color: trendDays === days ? '#fff' : 'var(--foreground-secondary)',
                       border: 'none',
                       cursor: 'pointer',

@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
-  Trash2, Check, Edit, User, Eye, EyeOff, Mail, X, RefreshCw,
+  Trash2, Check, User, Eye, EyeOff, Mail, RefreshCw,
   MagicLine, GoogleLine, MicrosoftLine, QqLine, AppleLine,
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
@@ -272,7 +272,7 @@ const handleCreate = async () => {
        setSelectedId(null)
        resetForm()
        load()
-       new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' })
+        const bc = new BroadcastChannel('lzmail_accounts'); bc.postMessage({ type: 'accounts:updated' }); bc.close()
        const newId = result?.id
        if (newId) {
          setTimeout(() => api.sync.account(newId).catch(() => {}), 500)
@@ -290,7 +290,7 @@ const handleCreate = async () => {
      try {
        await api.accounts.delete(deleteTarget)
        toast.success('账号已删除')
-       try { new BroadcastChannel('lzmail_accounts').postMessage({ type: 'accounts:updated' }) } catch {}
+        try { const bc = new BroadcastChannel('lzmail_accounts'); bc.postMessage({ type: 'accounts:updated' }); bc.close() } catch {}
        if (selectedId === deleteTarget) { setSelectedId(null); resetForm() }
        load()
      } catch (e: any) { toast.error(e.message || '删除失败') }

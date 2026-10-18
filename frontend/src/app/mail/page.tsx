@@ -7,12 +7,11 @@ import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { api } from '@/lib/api'
-import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, Tag, FolderMove, Mail, RefreshCw, Download, Check, User, AlertTriangle } from '@/lib/icons'
+import { Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, MailCheck, Search, Tags, Tag, FolderMove, Mail, RefreshCw, Download, Check, User, AlertTriangle } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
-import { Skeleton } from '@/components/Skeleton'
 import { sanitizeHTML } from '@/lib/sanitize'
 import { Tooltip } from '@/components/Tooltip'
 import { RichTextEditor, RichTextEditorHandle } from '@/components/editor/RichTextEditor'
@@ -56,8 +55,8 @@ function MailPageInner() {
   const [tagMgrOpen, setTagMgrOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [syncing, setSyncing] = useState(false)
-  const [sortAsc, setSortAsc] = useState(false)
-  const [sortMode, setSortMode] = useState<'date' | 'name' | 'subject'>('date')
+  const [sortMode] = useState<'date' | 'name' | 'subject'>('date')
+  void sortMode
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -317,7 +316,7 @@ function MailPageInner() {
   const handleMove = async (folder: string) => {
     if (!selectedId && selectedIds.size === 0) return
     try {
-      if (selectedIds.size > 1 || selectAllChecked) {
+      if (selectedIds.size >= 1 || selectAllChecked) {
         const bt = bulkTarget()
         await api.mails.bulk({
           action: 'move',
@@ -353,7 +352,7 @@ function MailPageInner() {
   const handleMarkRead = async () => {
     if (!selectedId && selectedIds.size === 0) return
     try {
-      if (selectedIds.size > 1 || selectAllChecked) {
+      if (selectedIds.size >= 1 || selectAllChecked) {
         // When detail is null (bulk select without opening), check first selected email
         const targetEmail = detail?.email || emails.find(e => selectedIds.has(e.id))
         const isRead = targetEmail?.is_read ?? false
@@ -470,6 +469,19 @@ function MailPageInner() {
     api.mails.counts().catch(() => {})
   }, [])
 
+  const handleStar = useCallback(async (id: number, starred: boolean) => {
+    const prev = !starred
+    setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: starred } : e))
+    try {
+      await api.mails.markStar(id, starred)
+      detailCache.current.delete(id)
+      refreshCounts()
+    } catch {
+      setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: prev } : e))
+      toast.error('标星失败，请重试')
+    }
+  }, [refreshCounts])
+
   useEffect(() => {
     const handler = () => {
       setRefresh(n => n + 1)
@@ -492,7 +504,7 @@ function MailPageInner() {
   const handleDelete = async () => {
     if (!selectedId && selectedIds.size === 0) return
     try {
-      if (selectedIds.size > 1 || selectAllChecked) {
+      if (selectedIds.size >= 1 || selectAllChecked) {
         const bt = bulkTarget()
         await api.mails.bulk({
           action: 'delete',
@@ -569,8 +581,8 @@ function MailPageInner() {
     } else {
       cmp = new Date(a.date).getTime() - new Date(b.date).getTime()
     }
-    return sortAsc ? cmp : -cmp
-  }), [emails, sortAsc, sortMode])
+    return -cmp
+  }), [emails, sortMode])
 
   // 按 今天/昨天/上周/更早 分组
   const groupedEmails = useMemo(() => {
@@ -740,18 +752,7 @@ function MailPageInner() {
                   </div>
                   {group.items.map((email) => (
                     <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
-                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect}                         onStar={async (id, starred) => {
-                          const prev = !starred
-                          setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: starred } : e))
-                          try {
-                            await api.mails.markStar(id, starred)
-                            detailCache.current.delete(id)
-                            refreshCounts()
-                          } catch {
-                            setEmails(ems => ems.map(e => e.id === id ? { ...e, is_starred: prev } : e))
-                            toast.error('标星失败，请重试')
-                          }
-                        }} density={mailDensity} isMobile={isMobile && mobileView !== 'detail'} />
+                        <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect} onStar={handleStar} density={mailDensity} isMobile={isMobile && mobileView !== 'detail'} />
                       </div>
                   ))}
                 </div>

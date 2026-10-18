@@ -1,9 +1,24 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 type TrendPoint = { date: string; receive: number; send: number }
 
+function useThemeColor(varName: string, fallback: string) {
+  const [color, setColor] = useState(fallback)
+  useEffect(() => {
+    const update = () => setColor(document.documentElement.style.getPropertyValue(varName) || fallback)
+    update()
+    const obs = new MutationObserver(update)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-theme'] })
+    return () => obs.disconnect()
+  }, [varName, fallback])
+  return color
+}
+
 export default function TrendChart({ data }: { data: TrendPoint[] }) {
+  const tickColor = useThemeColor('--foreground-tertiary', '#a09080')
+
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[192px] text-sm" style={{ color: 'var(--muted-foreground)' }}>
@@ -27,8 +42,8 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
             <stop offset="95%" style={{ stopColor: 'var(--success)', stopOpacity: 0 }} />
           </linearGradient>
         </defs>
-        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8b7355' }} />
-        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8b7355' }} />
+        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: tickColor }} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: tickColor }} />
         <Tooltip
           formatter={(value, name) => {
             const label = name === 'send' ? '发送' : name === 'receive' ? '接收' : name

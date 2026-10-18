@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 
 export function useDebounce<T>(value: T, delay: number): T {

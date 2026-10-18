@@ -93,8 +93,6 @@ export function ThemeSettings() {
 
   const cardPadding = isMobile ? '16px 16px' : '24px 28px'
   const cardTitleSize = isMobile ? 15 : 17
-  const cardRowGap = isMobile ? 12 : 24
-  const optionGap = isMobile ? 10 : 24
   const nameSize = isMobile ? 14 : 16
   const descSize = isMobile ? 12 : 14
   const descMargin = isMobile ? 6 : 8

@@ -1,5 +1,5 @@
 'use client'
-import { useEditor, EditorContent, type Editor as TiptapEditor } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'

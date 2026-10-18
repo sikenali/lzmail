@@ -51,6 +51,7 @@ export default function ContactPicker({
   const MAX_DISPLAY = 10
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchSeq = useRef(0)
 
   // 解析已有值：能匹配到联系人的进 selected（按 id），未匹配的（如回复对象不是联系人、
   // 或联系人排在已加载名单之外）进 manualEmails，保证任何收件人都能显示为可移除的 chip。
@@ -101,6 +102,7 @@ export default function ContactPicker({
   }, [])
 
   const doSearch = async (q: string) => {
+    const seq = ++searchSeq.current
     setQuery(q)
     if (q.trim().length === 0) {
       setFiltered(showAll ? allContacts : allContacts.slice(0, MAX_DISPLAY))
@@ -109,6 +111,7 @@ export default function ContactPicker({
     setLoading(true)
     try {
       const result = await api.contacts.search(q, accountId ?? undefined, 50, 0)
+      if (seq !== searchSeq.current) return
       const items = result?.items || []
       // 把搜索结果并入已解析集合，保证搜索选中的联系人在确认时也能解析出邮箱
       setAllContacts(prev => {
@@ -120,6 +123,7 @@ export default function ContactPicker({
       })
       setFiltered(items)
     } catch {
+      if (seq !== searchSeq.current) return
       toast.error('联系人搜索失败')
       setFiltered([])
     }

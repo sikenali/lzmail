@@ -2,11 +2,12 @@
 import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MailItem } from '@/components/mail/MailItem'
+import { TagManager } from '@/components/mail/TagManager'
 import { useSSE, useDebounce } from '@/hooks/useSSE'
 import { useSettings } from '@/hooks/useSettings'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { api } from '@/lib/api'
-import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, FolderMove, Mail, RefreshCw, Download, Check, User, AlertTriangle } from '@/lib/icons'
+import { Archive, Trash2, Star, ChevronUp, ChevronDown, Reply, Forward, Paperclip, Send, Clock, MailCheck, Search, Tags, Tag, FolderMove, Mail, RefreshCw, Download, Check, User, AlertTriangle } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Email, EmailDetail } from '@/types'
@@ -52,6 +53,7 @@ function MailPageInner() {
   const [detail, setDetail] = useState<EmailDetail | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [folderMoveOpen, setFolderMoveOpen] = useState(false)
+  const [tagMgrOpen, setTagMgrOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [sortAsc, setSortAsc] = useState(false)
@@ -639,10 +641,18 @@ function MailPageInner() {
               <button onClick={() => { setMoreOpen(false); setFolderMoveOpen(v => !v) }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className="ri-folder-transfer-line w-4 h-4"></i> 移动到
               </button>
-            </div>
-          </>
-        )}
-      </div>
+                      </div>
+                    </>
+                  )}
+                  {tagMgrOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setTagMgrOpen(false)} />
+                      <div className="absolute right-0 top-full z-50 mt-1">
+                        <TagManager email={detail.email} onClose={() => setTagMgrOpen(false)} />
+                      </div>
+                    </>
+                  )}
+                  </div>
     )
   }, [moreOpen, detail, selectedId, handleDeleteRequest, handleReplyAll, handleMarkAllRead, refreshCounts])
 
@@ -824,6 +834,7 @@ function MailPageInner() {
                   <div className="flex items-center gap-1 relative">
                   <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                   <Tooltip text={detail.email.is_read ? '标记未读' : '标记已读'}><button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="标签"><button onClick={() => setTagMgrOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tag className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                  {folderMoveOpen && (
                    <>
                      <div className="fixed inset-0 z-40" onClick={() => setFolderMoveOpen(false)} />

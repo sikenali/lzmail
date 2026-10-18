@@ -359,7 +359,8 @@ func setupTestDBForAPI(t *testing.T) (*sql.DB, error) {
 			archive_path TEXT,
 			message_id TEXT,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			sender_avatar_url TEXT DEFAULT ''
+			sender_avatar_url TEXT DEFAULT '',
+			recipient_avatar_url TEXT DEFAULT ''
 		)
 	`)
 	if err != nil {

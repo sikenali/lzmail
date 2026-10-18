@@ -46,6 +46,7 @@ type Syncer struct {
 	proxyPort     string
 	syncMu        sync.Mutex
 	stopCh        chan struct{}
+	wakeCh        chan struct{} // 手动同步唤醒信号：让 IDLE 提前返回，避免与 Idle 抢用同一连接
 	doneCh        chan struct{}
 	statusMu      sync.RWMutex
 	status        string
@@ -66,6 +67,7 @@ func NewSyncer(account *models.Account, emailStore *store.EmailStore, archiveDir
 		sseHub:      sseHub,
 		tokenSource: tokenSource,
 		stopCh:      make(chan struct{}),
+		wakeCh:      make(chan struct{}, 1),
 		doneCh:      make(chan struct{}),
 		status:      "ok",
 	}
@@ -117,6 +119,16 @@ func (s *Syncer) ForceSync() {
 	case <-s.stopCh:
 		return
 	default:
+	}
+	// IDLE 账号的连接由 idleSync 独占（Select/Idle 期间不能并发命令）。
+	// 通过唤醒信号让 IDLE 立即返回并触发同步，而不是直接在另一 goroutine
+	// 抢用同一连接（会导致协议错乱/连接卡死）。
+	if s.account.UseIDLE {
+		select {
+		case s.wakeCh <- struct{}{}:
+		default:
+		}
+		return
 	}
 	s.syncAllFolders()
 }
@@ -243,6 +255,9 @@ func (s *Syncer) idleLoop(syncOnce func()) {
 		select {
 		case <-s.stopCh:
 			return
+		case <-s.wakeCh:
+			// 手动同步：立即同步并重新进入 IDLE（不等 5 分钟周期）
+			syncOnce()
 		case <-ticker.C:
 			syncOnce()
 		}
@@ -260,15 +275,29 @@ func (s *Syncer) idleSync() idleSyncResult {
 		return idleError
 	}
 
+	// 合并 stopCh 与 wakeCh 作为 Idle 的停止信号：手动同步（ForceSync）通过向
+	// wakeCh 发信号，让 IDLE 立即返回并在同一 goroutine 中触发同步，避免并发使用连接。
+	stopIdle := make(chan struct{})
+	mergeQuit := make(chan struct{})
+	go func() {
+		select {
+		case <-s.stopCh:
+		case <-s.wakeCh:
+		case <-mergeQuit:
+		}
+		close(stopIdle)
+	}()
+
 	// 60s IDLE 续期，防止 NAT 路由断连无感知
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Idle(s.stopCh, &client.IdleOptions{LogoutTimeout: 60 * time.Second})
+		done <- c.Idle(stopIdle, &client.IdleOptions{LogoutTimeout: 60 * time.Second})
 	}()
 
 	select {
 	case err := <-done:
-		// 正常 IDLE 结束（收到新邮件通知或 60s 续期）时 err 为 nil 或 "use of closed network connection"
+		close(mergeQuit) // Idle 已返回，确保合并 goroutine 退出
+		// 正常 IDLE 结束（收到新邮件通知、60s 续期或手动同步唤醒）时 err 为 nil 或 "use of closed network connection"
 		isNormalClose := err == nil ||
 			strings.Contains(err.Error(), "use of closed network connection") ||
 			strings.Contains(err.Error(), "EOF") ||
@@ -282,6 +311,7 @@ func (s *Syncer) idleSync() idleSyncResult {
 		s.syncAllFolders()
 		return idleOK
 	case <-s.stopCh:
+		close(mergeQuit)
 		s.closeConn(nil)
 		return idleOK
 	}

@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/lzmail/backend/internal/models"
 	"github.com/lzmail/backend/internal/providers"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -204,7 +205,13 @@ func (h *Handler) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	if h.syncEngine != nil {
 		h.syncEngine.RemoveAccount(existing.ID)
-		h.syncEngine.AddAccount(existing)
+		// Update() 会把 existing 的 password/oauth2_token 原地替换为密文；
+		// 必须重新读取解密后的账号再交给同步器，否则同步会用密文登录而一直失败。
+		if fresh, err := h.accounts.GetByID(existing.ID); err == nil {
+			h.syncEngine.AddAccount(fresh)
+		} else {
+			log.Printf("[account] reload after update for sync failed (id=%d): %v", existing.ID, err)
+		}
 	}
 	writeJSON(w, http.StatusOK, existing)
 }

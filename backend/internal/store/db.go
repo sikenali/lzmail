@@ -12,10 +12,13 @@ import (
 const currentSchemaVersion = 9
 
 func OpenDB(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
+	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)")
 	if err != nil {
 		return nil, err
 	}
+	// SQLite 同一时刻只允许一个写事务。并发写入（如设置页连续保存多个选项）时，
+	// 未加锁的连接会立即返回 SQLITE_BUSY；busy_timeout 让写操作自旋等待而非直接失败。
+	// _pragma=busy_timeout(...) 由驱动在每个新连接上应用，无需额外连接池限制。
 	if err := migrate(db); err != nil {
 		return nil, err
 	}

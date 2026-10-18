@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import type { Account } from '@/types'
 import type { SyncStatusData } from '@/hooks/useSSE'
 import {
-  Plus, Trash2, Check, Edit, User, Eye, EyeOff, Mail, X, RefreshCw,
+  Trash2, Check, Edit, User, Eye, EyeOff, Mail, X, RefreshCw,
   MagicLine, GoogleLine, MicrosoftLine, QqLine, AppleLine,
 } from '@/lib/icons'
 import { getAccountAvatarBg } from '@/lib/icons'
@@ -298,12 +298,7 @@ const handleCreate = async () => {
      setShowPassword(false)
    }
 
-   const handleNewAccount = () => {
-     setSelectedId(null)
-     resetForm()
-   }
-
-const handleSaveEdit = async () => {
+   const handleSaveEdit = async () => {
       if (!selectedId || !form.email || !form.imap_host || !form.smtp_host) { toast.error('请填写邮箱地址和服务器信息'); return }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { toast.error('邮箱格式不正确'); return }
       if (!Number.isInteger(form.imap_port) || form.imap_port < 1 || form.imap_port > 65535) { toast.error('IMAP 端口需为 1-65535 的整数'); return }
@@ -386,33 +381,6 @@ const handleSaveEdit = async () => {
              <nav style={isMobile
                ? { width: '100%', flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 8, display: 'flex', flexDirection: 'row', gap: 8, overflowX: 'auto' }
                : { width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
-              {/* Add new button */}
-              <button
-                onClick={handleNewAccount}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  height: 44,
-                  padding: isMobile ? '0 12px' : '0 14px',
-                  borderRadius: 10,
-                  backgroundColor: !isEditing ? 'var(--color-bg-white)' : 'transparent',
-                  color: !isEditing ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  fontWeight: !isEditing ? 500 : 400,
-                  border: 'none',
-                  cursor: 'pointer',
-                  width: isMobile ? 'auto' : '100%',
-                  flexShrink: 0,
-                  textAlign: 'left',
-                  transition: 'all var(--transition-base)',
-                  boxShadow: !isEditing ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                  fontFamily: 'var(--font-family-cn)',
-                }}
-              >
-                <Plus style={{ width: 18, height: 18, flexShrink: 0 }} />
-                <span style={{ fontSize: 14, whiteSpace: 'nowrap' }}>新建账号</span>
-              </button>
-
               {/* 服务商分类：选中后直接套用该服务商的服务器预设 */}
               {PROVIDER_CHIPS.map(({ key, label }) => {
                 const active = key === provider

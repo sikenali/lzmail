@@ -105,7 +105,7 @@ func (s *AccountStore) ListPublic() ([]models.Account, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var accounts []models.Account
+	accounts := []models.Account{}
 	for rows.Next() {
 		var a models.Account
 		if err := rows.Scan(&a.ID, &a.Name, &a.Email, &a.IMAPHost, &a.IMAPPort, &a.SMTPHost, &a.SMTPPort, &a.AuthType, &a.AuthMethod, &a.Provider, &a.Username, &a.UseIDLE, &a.BrandColor, &a.CreatedAt, &a.UpdatedAt); err != nil {

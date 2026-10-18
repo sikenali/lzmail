@@ -66,6 +66,7 @@ function MailPageInner() {
   const [firstLoad, setFirstLoad] = useState(true)
   const [storeEmpty, setStoreEmpty] = useState<boolean | null>(null)
   const storeEmptyRef = useRef<boolean | null>(null)
+  const accountsKnownRef = useRef(false)
   const scrollHandlerRef = useRef<() => void>(() => {})
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
@@ -108,11 +109,13 @@ function MailPageInner() {
     try {
       const accs = await api.accounts.list()
       const empty = !accs || accs.length === 0
+      accountsKnownRef.current = true
       storeEmptyRef.current = empty
       setStoreEmpty(empty)
     } catch {
-      // 账号列表查不到就按「有账号」处理，把错误交给列表请求自己去提示，
-      // 否则 storeEmpty 停在 unknown，列表永远不加载也永远不报错
+      // 账号列表查不到：乐观按「有账号」处理，让列表请求继续尝试加载（避免误判为空库）；
+      // 但标记为未知，列表再失败时不弹误导性的「邮件列表加载失败」，交给账号接口自己的错误处理
+      accountsKnownRef.current = false
       storeEmptyRef.current = false
       setStoreEmpty(false)
     }
@@ -159,8 +162,8 @@ function MailPageInner() {
       if (!append) {
         setEmails([])
         setTotalCount(0)
-        // 仅在「确认空库」时静默：未知(null)或确认有账号都应当如实报错
-        if (storeEmptyRef.current !== true) {
+        // 仅在「确认有账号」时提示：未知（账号接口也失败）静默，避免空库/离线时误导性报错
+        if (storeEmptyRef.current === false && accountsKnownRef.current) {
           toast.error('邮件列表加载失败，请检查网络或后端服务')
         }
       }

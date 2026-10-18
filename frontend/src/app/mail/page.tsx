@@ -953,8 +953,12 @@ function MailPageInner() {
                           const blob = await resp.blob()
                           const url = URL.createObjectURL(blob)
                           const a = document.createElement('a')
-                          a.href = url; a.download = att.filename; a.click()
-                          URL.revokeObjectURL(url)
+                          a.href = url; a.download = att.filename
+                          document.body.appendChild(a)
+                          a.click()
+                          a.remove()
+                          // 延迟释放：Firefox/部分 Safari 若在 click 后立即 revoke 会取消下载
+                          setTimeout(() => URL.revokeObjectURL(url), 1000)
                         } catch { toast.error('附件下载失败，请重试') }
                       }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-opacity hover:opacity-70"

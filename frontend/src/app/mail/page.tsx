@@ -676,7 +676,7 @@ function MailPageInner() {
           {/* Mobile top bar when in detail view */}
           {mobileView === 'detail' && (
             <div className="flex items-center h-12 px-4 shrink-0 md:hidden border-b" style={{ backgroundColor: 'var(--background)', borderBottom: '1px solid var(--card-border)' }}>
-              <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--primary)' }}>
+              <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-sm font-medium active:opacity-60" style={{ color: 'var(--primary)' }}>
                 <i className="ri-arrow-left-s-line w-5 h-5"></i> 返回
               </button>
               <span className="flex-1 text-center text-sm font-semibold truncate px-4" style={{ color: 'var(--foreground)' }}>
@@ -793,7 +793,7 @@ function MailPageInner() {
         {/* Email detail */}
         <div className={`${mobileView === 'detail' ? 'fixed inset-0 z-30 bg-[var(--background)] overflow-auto md:static md:inset-auto md:z-auto md:flex-1' : 'hidden md:flex-1'}`}>
           {detail ? (
-            <div className="max-w-[780px] mx-auto px-4 py-4 md:px-8 md:py-6 space-y-6 pb-24 md:pb-6">
+            <div className="max-w-[780px] mx-auto px-4 py-4 md:px-8 md:py-6 space-y-6 pb-28 md:pb-6">
               {/* Mobile top action bar */}
               <div className="flex items-center justify-between px-0 py-3 border-b md:hidden" style={{ borderColor: 'var(--card-border)', paddingTop: 'calc(12px + env(safe-area-inset-top))' }}>
                 <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--primary)' }}>
@@ -1018,12 +1018,12 @@ function MailPageInner() {
                 </div>
               </div>
 
-              {/* Mobile bottom action bar */}
-              <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center md:hidden" style={{ backgroundColor: 'var(--card)', borderTop: '1px solid var(--card-border)', height: 'calc(48px + env(safe-area-inset-bottom))', padding: '0 16px', paddingBottom: 'env(safe-area-inset-bottom)', boxSizing: 'border-box' }}>
-                <button onClick={handleReply} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+              {/* Mobile bottom action bar - sits above PageFooter */}
+              <div className="fixed bottom-[58px] left-0 right-0 z-40 flex items-center gap-2 md:hidden" style={{ backgroundColor: 'var(--card)', borderTop: '1px solid var(--card-border)', height: '48px', padding: '0 16px', boxSizing: 'border-box' }}>
+                <button onClick={handleReply} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
                   <i className="ri-reply-line w-5 h-5"></i> 回复
                 </button>
-                <button onClick={handleForward} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium transition-opacity hover:opacity-80 ml-2" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
+                <button onClick={handleForward} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
                   <i className="ri-corner-up-right-line w-5 h-5"></i> 转发
                 </button>
               </div>

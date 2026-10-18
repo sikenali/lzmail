@@ -288,6 +288,7 @@ export function TopNav({
                     left: '50%',
                     transform: 'translateX(-50%)',
                     width: 224,
+                    maxWidth: 'calc(100vw - 48px)',
                     backgroundColor: 'var(--color-bg-white)',
                     border: '1px solid var(--color-border-soft)',
                     borderRadius: 12,

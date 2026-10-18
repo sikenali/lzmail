@@ -125,8 +125,8 @@ export default function Dashboard() {
           <DateTimePicker value={selectedDate} onChange={setSelectedDate} />
         </div>
 
-        {/* Stats cards - 4-column on all screen sizes */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mt-4 sm:mt-5 md:mt-6">
+        {/* Stats cards - 2-column on mobile, 4-column on tablet+ */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mt-4 sm:mt-5 md:mt-6">
           {statCards.map((card, i) => {
             const Icon = card.icon
             return (

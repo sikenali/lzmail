@@ -21,12 +21,12 @@ function TimeStepper({ label, value, step }: { label: string; value: number; ste
     <div className="flex items-center gap-1.5">
       <div className="flex flex-col items-center">
         <button type="button" onClick={() => step(1)}
-          className="w-7 h-5 flex items-center justify-center rounded hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--foreground-tertiary)' }}>
+          className="w-7 h-5 flex items-center justify-center rounded hover:bg-[var(--muted)] active:opacity-60 transition-colors" style={{ color: 'var(--foreground-tertiary)' }}>
           <ChevronUp className="w-3.5 h-3.5" />
         </button>
         <span className="w-12 text-center text-[15px] font-semibold leading-6 tabular-nums" style={{ color: 'var(--foreground)' }}>{pad(value)}</span>
         <button type="button" onClick={() => step(-1)}
-          className="w-7 h-5 flex items-center justify-center rounded hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--foreground-tertiary)' }}>
+          className="w-7 h-5 flex items-center justify-center rounded hover:bg-[var(--muted)] active:opacity-60 transition-colors" style={{ color: 'var(--foreground-tertiary)' }}>
           <ChevronDown className="w-3.5 h-3.5" />
         </button>
       </div>

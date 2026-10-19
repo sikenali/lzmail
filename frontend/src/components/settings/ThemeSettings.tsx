@@ -23,7 +23,7 @@ interface AccentOption {
 }
 
 interface LayoutOption {
-  id: string
+  id: 'topbar' | 'sidebar'
   name: string
   desc: string
 }
@@ -58,8 +58,8 @@ const ACCENTS: AccentOption[] = [
 ]
 
 const LAYOUTS: LayoutOption[] = [
-  { id: 'three', name: '三栏模式 · 完整视图', desc: '文件夹、列表、详情三栏并排，信息密度最高' },
-  { id: 'two', name: '双栏模式 · 精简视图', desc: '列表与详情并排，文件夹收起节省空间' },
+  { id: 'topbar', name: '顶栏模式 · 居中导航', desc: '六大模块在顶栏居中排布，右上角统一为返回与设置' },
+  { id: 'sidebar', name: '侧边栏模式 · 左侧导航', desc: '七大模块在左侧竖列居中排布，顶栏不显示图标文字' },
 ]
 
 export function ThemeSettings() {
@@ -67,13 +67,13 @@ export function ThemeSettings() {
   const isMobile = useIsMobile()
   const [selectedTheme, setSelectedTheme] = useState(settings.theme || 'light')
   const [selectedAccent, setSelectedAccent] = useState(normalizeAccent(settings.accent_color))
-  const [selectedLayout, setSelectedLayout] = useState(settings.layout_density || 'three')
+  const [selectedLayout, setSelectedLayout] = useState(settings.nav_mode || 'topbar')
 
   useEffect(() => {
     setSelectedTheme(settings.theme || 'light')
     setSelectedAccent(normalizeAccent(settings.accent_color))
-    setSelectedLayout(settings.layout_density || 'three')
-  }, [settings.theme, settings.accent_color, settings.layout_density])
+    setSelectedLayout(settings.nav_mode || 'topbar')
+  }, [settings.theme, settings.accent_color, settings.nav_mode])
 
   const handleSelectTheme = (id: string) => {
     setSelectedTheme(id)
@@ -87,7 +87,7 @@ export function ThemeSettings() {
 
   const handleSelectLayout = (id: string) => {
     setSelectedLayout(id)
-    setSetting('layout_density', id)
+    setSetting('nav_mode', id)
     toast.success(`已切换布局：${LAYOUTS.find(l => l.id === id)?.name || ''}`)
   }
 
@@ -188,8 +188,8 @@ export function ThemeSettings() {
                 className={isMobile ? 'flex flex-col gap-3 relative' : 'flex flex-col gap-6 relative'}
                 style={{
                   flex: 1,
-                  border: '0.7px solid var(--card-border)',
-                  backgroundColor: active ? 'var(--primary-light)' : 'var(--card)',
+                  border: active ? '0.7px solid var(--color-primary)' : '0.7px solid var(--card-border)',
+                  backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--card)',
                   borderRadius: 14,
                   padding: mockupPadding,
                   cursor: 'pointer',
@@ -198,49 +198,57 @@ export function ThemeSettings() {
               >
                 <div
                   className="absolute"
-                  style={{ top: 14, right: 14, zIndex: 2, width: 22, height: 22, borderRadius: 9999, backgroundColor: active ? 'var(--primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ top: 14, right: 14, zIndex: 2, width: 22, height: 22, borderRadius: 9999, backgroundColor: active ? 'var(--color-primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {active && <Check className="w-4 h-4 text-white" />}
                 </div>
                 {/* Layout Mockup */}
                 <div style={{ width: '100%', height: isMobile ? 104 : 150, borderRadius: 8, padding: mockupPadding, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(255,255,255,0.5)' }}>
-                  {layout.id === 'three' ? (
-                    <div className="flex flex-col" style={{ flex: 1 }}>
-                      <div className="flex items-center gap-2" style={{ height: 32, backgroundColor: '#fff', borderRadius: 6, padding: '0 12px' }}>
-                        <div className="flex items-center gap-2">
-                          <div style={{ width: 11, height: 10, borderRadius: 9999, backgroundColor: '#C43D3D' }} />
-                          <div style={{ width: 25, height: 6, borderRadius: 9999, backgroundColor: '#2F3640' }} />
-                          <div style={{ width: 17, height: 6, borderRadius: 9999, backgroundColor: '#A7A296' }} />
+                  {layout.id === 'topbar' ? (
+                    /* Topbar mockup */
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, flexShrink: 0 }}>
+                        <div style={{ width: 11, height: 10, borderRadius: '50%', backgroundColor: '#BE3B2E', flexShrink: 0 }} />
+                        <div style={{ width: 25, height: 6, borderRadius: 3, backgroundColor: '#2F3640', flexShrink: 0 }} />
+                        <div style={{ width: 17, height: 6, borderRadius: 3, backgroundColor: '#A7A296', flexShrink: 0 }} />
+                        <div style={{ flex: 1, display: 'flex', gap: 8, justifyContent: 'center', overflow: 'hidden' }}>
+                          {['#BE3B2E', '#D3A93F', '#3E8C6E', '#4A72A8', '#BE3B2E', '#D3A93F'].map((c, i) => (
+                            <div key={i} style={{ width: 31, height: 10, borderRadius: 50, backgroundColor: c, opacity: 0.7, flexShrink: 0 }} />
+                          ))}
                         </div>
-                        <div className="flex gap-2" style={{ marginLeft: 'auto' }}>
-                          <div style={{ width: 9, height: 8, borderRadius: 9999, backgroundColor: '#D6CDC8' }} />
-                          <div style={{ width: 9, height: 8, borderRadius: 9999, backgroundColor: '#D6CDC8' }} />
+                        <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+                          <div style={{ width: 9, height: 8, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
+                          <div style={{ width: 9, height: 8, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
                         </div>
                       </div>
-                      <div className="flex gap-3" style={{ flex: 1, marginTop: 12 }}>
-                        <div style={{ width: 85, borderRadius: 6, backgroundColor: '#E2DDD2' }} />
+                      <div style={{ flex: 1, display: 'flex', gap: 12, padding: '12px 0 0' }}>
+                        <div style={{ width: 85, borderRadius: 6, backgroundColor: '#E2DDD2', flexShrink: 0 }} />
                         <div style={{ flex: 1, borderRadius: 6, backgroundColor: '#E6E2D8' }} />
                       </div>
                     </div>
                   ) : (
-                    <div className="flex" style={{ flex: 1, backgroundColor: 'rgba(245,241,230,1)', borderRadius: 8 }}>
-                      <div className="flex flex-col items-center justify-center" style={{ gap: 12, padding: '12px 0', width: 56 }}>
-                        <div style={{ width: 44, height: 9, borderRadius: 9999, backgroundColor: '#C9A96E' }} />
-                        <div style={{ width: 44, height: 9, borderRadius: 9999, backgroundColor: '#C43D3D' }} />
-                        <div style={{ width: 44, height: 9, borderRadius: 9999, backgroundColor: '#5B8C5A' }} />
-                        <div style={{ width: 44, height: 9, borderRadius: 9999, backgroundColor: '#6B8FA3' }} />
-                        <div style={{ width: 44, height: 9, borderRadius: 9999, backgroundColor: '#2F3640' }} />
+                    /* Sidebar mockup */
+                    <div style={{ flex: 1, display: 'flex', backgroundColor: 'rgba(245,241,230,1)', borderRadius: 8 }}>
+                      <div style={{ width: 56, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', justifyContent: 'center', padding: '12px 0', flexShrink: 0, backgroundColor: '#fff', borderRight: '1px solid #f0ebe3' }}>
+                        {[
+                          { bg: '#D3A93F' },
+                          { bg: '#BE3B2E' },
+                          { bg: '#3E8C6E' },
+                          { bg: '#4A72A8' },
+                          { bg: '#2F3640' },
+                        ].map((item, i) => (
+                          <div key={i} style={{ width: 44, height: 9, borderRadius: 50, backgroundColor: item.bg, opacity: 0.7 }} />
+                        ))}
                       </div>
-                      <div className="flex flex-col" style={{ flex: 1, padding: '12px 0 0 12px' }}>
-                        <div className="flex items-center gap-2" style={{ height: 32, backgroundColor: '#fff', borderRadius: 6, padding: '0 12px', marginBottom: 12 }}>
-                          <div className="flex items-center gap-2">
-                            <div style={{ width: 11, height: 10, borderRadius: 9999, backgroundColor: '#C43D3D' }} />
-                            <div style={{ width: 25, height: 6, borderRadius: 9999, backgroundColor: '#2F3640' }} />
-                            <div style={{ width: 17, height: 6, borderRadius: 9999, backgroundColor: '#A7A296' }} />
-                          </div>
-                          <div className="flex gap-1" style={{ marginLeft: 'auto' }}>
-                            <div style={{ width: 9, height: 8, borderRadius: 9999, backgroundColor: '#D6CDC8' }} />
-                            <div style={{ width: 9, height: 8, borderRadius: 9999, backgroundColor: '#D6CDC8' }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 0 0 12px' }}>
+                        <div style={{ height: 32, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexShrink: 0 }}>
+                          <div style={{ width: 11, height: 10, borderRadius: '50%', backgroundColor: '#BE3B2E', flexShrink: 0 }} />
+                          <div style={{ width: 25, height: 6, borderRadius: 3, backgroundColor: '#2F3640', flexShrink: 0 }} />
+                          <div style={{ width: 17, height: 6, borderRadius: 3, backgroundColor: '#A7A296', flexShrink: 0 }} />
+                          <div style={{ flex: 1 }} />
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <div style={{ width: 9, height: 8, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
+                            <div style={{ width: 9, height: 8, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
                           </div>
                         </div>
                         <div style={{ flex: 1, borderRadius: 6, backgroundColor: '#E6E2D8' }} />

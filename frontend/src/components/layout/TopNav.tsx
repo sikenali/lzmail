@@ -91,9 +91,7 @@ export function TopNav({
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
-  const [hasInteracted, setHasInteracted] = useState(false)
   const navMenuRef = useRef<HTMLDivElement>(null)
-  const indicatorRef = useRef<HTMLDivElement>(null)
 
   const searchString = searchParams.toString()
   const search = searchString ? `?${searchString}` : ''
@@ -141,7 +139,6 @@ export function TopNav({
     : 'LZ'
 
   const handleNavClick = (href: string) => {
-    setHasInteracted(true)
     const target = new URL(href, 'http://x')
     if (target.pathname === '/mail' && pathname === '/mail') {
       const targetFolder = target.searchParams.get('folder') || 'INBOX'
@@ -154,25 +151,6 @@ export function TopNav({
   }
 
   const activeHref = navItems.find(item => isActive(item.href, fullPath))?.href
-
-  const positionIndicator = useCallback(() => {
-    if (isMobile || !activeHref || !navMenuRef.current || !indicatorRef.current) return
-    const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
-    if (!el) return
-    const r = el.getBoundingClientRect()
-    const m = navMenuRef.current.getBoundingClientRect()
-    indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
-    indicatorRef.current.style.width = r.width + 'px'
-  }, [activeHref, isMobile])
-
-  useEffect(() => {
-    positionIndicator()
-  }, [positionIndicator])
-
-  useEffect(() => {
-    window.addEventListener('resize', positionIndicator)
-    return () => window.removeEventListener('resize', positionIndicator)
-  }, [positionIndicator])
 
   return (
     <header
@@ -342,67 +320,7 @@ export function TopNav({
             )}
           </div>
         ) : (
-          <div className="nav-menu" ref={navMenuRef}>
-            <div ref={indicatorRef} className={`nav-indicator${hasInteracted ? ' has-interacted' : ''}`} />
-            {navItems.map(item => {
-              const active = isActive(item.href, fullPath)
-              return (
-                <button
-                  key={item.href}
-                  data-nav={item.href}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`nav-tab${active ? ' is-active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span
-                    style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16 }}
-                  >
-                    <i
-                      className={item.icon}
-                      style={{
-                        fontSize: '15px',
-                        width: 15,
-                        height: 15,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        lineHeight: 1,
-                      }}
-                    ></i>
-                  </span>
-                  <span
-                    style={{ position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.2 }}
-                  >
-                    {item.label}
-                  </span>
-                  {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 5,
-                        minWidth: 12,
-                        height: 12,
-                        padding: '0 3px',
-                        borderRadius: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 8,
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        backgroundColor: 'var(--color-primary)',
-                        color: '#ffffff',
-                        zIndex: 1,
-                      }}
-                    >
-                      {inboxUnread > 99 ? '99+' : inboxUnread}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <div />
         )}
       </div>
 

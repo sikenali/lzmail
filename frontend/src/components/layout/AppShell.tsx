@@ -3,13 +3,16 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { usePathname } from 'next/navigation'
 import { TopNav } from './TopNav'
 import { PageFooter } from './PageFooter'
+import { Sidebar } from './Sidebar'
 import { SettingsModal } from '@/components/settings/SettingsModal'
 import { AccountModal } from '@/components/account/AccountModal'
 import { ComposeModal } from '@/components/compose/ComposeModal'
 import { ContactsModal } from '@/components/contacts/ContactsModal'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const isMobile = useIsMobile()
   const [hash, setHash] = useState('')
 
   useEffect(() => {
@@ -44,18 +47,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col h-dvh" style={{ backgroundColor: 'var(--color-bg-main)' }}>
-      <Suspense fallback={null}>
-        <TopNav
-          onOpenSettings={() => openHash('settings')}
-          onOpenAddAccount={() => openHash('account')}
-        />
-      </Suspense>
-      <main className="flex-1 overflow-auto scroll-contain">{children}</main>
-      <PageFooter
-        onCompose={() => openHash('compose')}
-        onContacts={() => openHash('contact')}
-      />
+    <div className="flex h-dvh" style={{ backgroundColor: 'var(--color-bg-main)' }}>
+      {!isMobile && (
+        <Suspense fallback={null}>
+          <Sidebar />
+        </Suspense>
+      )}
+      <div className="flex flex-col flex-1 min-w-0">
+        <Suspense fallback={null}>
+          <TopNav
+            onOpenSettings={() => openHash('settings')}
+            onOpenAddAccount={() => openHash('account')}
+          />
+        </Suspense>
+        <main className="flex-1 overflow-auto scroll-contain">{children}</main>
+        {!isMobile && (
+          <PageFooter
+            onCompose={() => openHash('compose')}
+            onContacts={() => openHash('contact')}
+          />
+        )}
+      </div>
       <SettingsModal open={hash === 'settings'} onClose={closeModals} />
       <AccountModal open={hash === 'account'} onClose={closeModals} />
       <ComposeModal open={hash === 'compose'} onClose={closeModals} params={{}} />

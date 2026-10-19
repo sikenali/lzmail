@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ErrorBoundary>{children}</ErrorBoundary>
-        <Toaster richColors position="top-center" closeButton />
+        <Toaster richColors position="top-center" closeButton duration={2000} />
       </body>
     </html>
   )

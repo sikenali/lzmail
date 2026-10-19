@@ -302,7 +302,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="h-36 sm:h-44 mt-3 sm:mt-4">
+          <div className="h-32 sm:h-40 mt-3 sm:mt-4">
             <TrendChart data={trendData} />
           </div>
         </div>

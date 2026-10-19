@@ -21,7 +21,7 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[192px] text-sm" style={{ color: 'var(--muted-foreground)' }}>
+      <div className="flex items-center justify-center h-full text-sm" style={{ color: 'var(--muted-foreground)' }}>
         暂无趋势数据
       </div>
     )
@@ -30,7 +30,7 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
   const chartData = data.map(d => ({ name: d.date, receive: d.receive, send: d.send }))
 
   return (
-    <ResponsiveContainer width="100%" height={192}>
+    <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={chartData}>
         <defs>
           <linearGradient id="receiveGrad" x1="0" y1="0" x2="0" y2="1">

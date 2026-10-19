@@ -157,6 +157,8 @@ export function TopNav({
 
   const navMode = settings.nav_mode || 'topbar'
   const showDesktopTabs = !isMobile && (navMode === 'topbar' || navMode === 'top')
+  // 侧边栏模式下左侧已有品牌区，顶栏不再重复显示 logo 与名称
+  const hideBrand = !isMobile && navMode === 'sidebar'
 
   // 将滑动指示器定位到当前激活标签下方
   const updateIndicator = useCallback(() => {
@@ -209,28 +211,32 @@ export function TopNav({
         className="nav-left"
         onClick={() => router.push('/')}
       >
-        <LogoIcon size={26} />
-        <span
-          className="brand-cn"
-          style={{
-            fontSize: '20px',
-            fontWeight: 700,
-            color: 'var(--color-text-primary)',
-            fontFamily: 'var(--font-family-cn)',
-            lineHeight: 1.2,
-            transition: 'color var(--transition-base)',
-          }}
-        >
-          懒猫微邮
-        </span>
-        <div
-          className="hidden sm:block"
-          style={{
-            width: '2px',
-            height: '20px',
-            backgroundColor: 'var(--color-border)',
-          }}
-        ></div>
+        {!hideBrand && (
+          <>
+            <LogoIcon size={26} />
+            <span
+              className="brand-cn"
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-family-cn)',
+                lineHeight: 1.2,
+                transition: 'color var(--transition-base)',
+              }}
+            >
+              懒猫微邮
+            </span>
+            <div
+              className="hidden sm:block"
+              style={{
+                width: '2px',
+                height: '20px',
+                backgroundColor: 'var(--color-border)',
+              }}
+            ></div>
+          </>
+        )}
         <span
           className="hidden sm:inline"
           style={{

@@ -45,6 +45,10 @@ const defaults: Settings = {
   })(),
 }
 
+// 已加载设置的进程内缓存：新挂载的 useSettings 实例直接以缓存初始化，
+// 避免先渲染默认值再被接口覆盖造成的闪烁（如布局三栏→两栏）。
+let settingsCache: Settings | null = null
+
 export const DEFAULT_ACCENT = ''
 const LEGACY_DEFAULT_ACCENTS = ['#BE3B2E', '#C43D3D', '#c43d3d']
 
@@ -59,8 +63,8 @@ export function normalizeAccent(color?: string | null): string {
 }
 
 export function useSettings() {
-  const [settings, setSettings] = useState<Settings>(defaults)
-  const [loading, setLoading] = useState(true)
+  const [settings, setSettings] = useState<Settings>(() => settingsCache ?? defaults)
+  const [loading, setLoading] = useState(() => settingsCache === null)
   const loaded = useRef(false)
 
   // Apply theme to document element
@@ -139,6 +143,7 @@ export function useSettings() {
       if (localStorageTheme && ['light', 'dark', 'system'].includes(localStorageTheme)) {
         mergedSettings.theme = localStorageTheme
       }
+      settingsCache = mergedSettings
       setSettings(mergedSettings)
       // Apply theme: prefer the user's explicit localStorage choice, fall back to API, then defaults
       const apiTheme = s?.theme
@@ -185,7 +190,11 @@ export function useSettings() {
     const handleSettingsChanged = (e: Event) => {
       const detail = (e as CustomEvent<Record<string, string>>).detail
       if (detail && typeof detail === 'object') {
-        setSettings((prev) => ({ ...prev, ...detail }))
+        setSettings((prev) => {
+          const next = { ...prev, ...detail }
+          settingsCache = next
+          return next
+        })
       }
     }
     window.addEventListener(SETTINGS_EVENT, handleSettingsChanged)
@@ -193,7 +202,11 @@ export function useSettings() {
   }, [])
 
   const setSetting = useCallback((key: string, value: string) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value }
+      settingsCache = next
+      return next
+    })
     window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: { [key]: value } }))
     api.settings.set({ [key]: value }).catch(() => toast.error('设置保存失败'))
 
@@ -218,7 +231,11 @@ export function useSettings() {
   }, [])
 
   const setSettingsBatch = useCallback((batch: Record<string, string>) => {
-    setSettings((prev) => ({ ...prev, ...batch }))
+    setSettings((prev) => {
+      const next = { ...prev, ...batch }
+      settingsCache = next
+      return next
+    })
     window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: batch }))
     api.settings.set(batch).catch(() => toast.error('设置保存失败'))
     

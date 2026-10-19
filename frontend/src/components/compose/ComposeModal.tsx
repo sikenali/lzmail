@@ -496,12 +496,12 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? undefined : 'space-between', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 8 : 0, padding: isMobile ? '10px 12px' : '12px 24px', paddingBottom: isMobile ? 'calc(10px + env(safe-area-inset-bottom))' : 12, flexShrink: 0, borderTop: '1px solid var(--color-border-soft)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexBasis: isMobile ? '100%' : undefined }}>
-            <input ref={fileInputRef} type="file" multiple accept="*/*" onChange={handleFileChange} className="hidden" />
             <label
               onDragOver={e => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, cursor: 'pointer', transition: 'all var(--transition-base)', backgroundColor: dragOver ? 'rgba(231,76,60,0.1)' : 'var(--color-bg-secondary)', border: dragOver ? '1.5px dashed var(--color-primary)' : 'none', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-family-cn)' }}>
+              <input ref={fileInputRef} type="file" multiple accept="*/*" onChange={handleFileChange} style={{ display: 'none' }} />
               <Paperclip style={{ width: 16, height: 16, flexShrink: 0 }} /> 添加附件
             </label>
             {!isMobile && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>最大 50MB，支持拖拽上传</span>}

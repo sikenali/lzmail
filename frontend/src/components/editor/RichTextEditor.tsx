@@ -171,8 +171,8 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
           </Tooltip>
         </div>
         {/* Editor */}
-        <div className="flex-1 overflow-auto p-4" style={{ minHeight: 0 }}>
-          <EditorContent editor={editor} className="text-[15px]" style={{ color: 'var(--foreground)' }} />
+        <div className="flex-1 overflow-hidden p-4" style={{ minHeight: 0 }}>
+          <EditorContent editor={editor} className="text-[15px]" style={{ color: 'var(--foreground)', minHeight: 120 }} />
         </div>
       </div>
     )

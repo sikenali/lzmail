@@ -29,7 +29,7 @@ export interface RichTextEditorHandle {
 }
 
 const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  ({ value, onChange, placeholder = '开始撰写邮件正文...', className = '', height = '360px' }, ref) => {
+  ({ value, onChange, placeholder = '开始撰写邮件正文...', className = '', height = '100%' }, ref) => {
     const editor = useEditor({
       extensions: [
         StarterKit,
@@ -172,7 +172,7 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
         </div>
         {/* Editor */}
         <div className="flex-1 overflow-auto p-4" style={{ minHeight: 0 }}>
-          <EditorContent editor={editor} className="min-h-[300px] text-[15px]" style={{ color: 'var(--foreground)' }} />
+          <EditorContent editor={editor} className="text-[15px]" style={{ color: 'var(--foreground)' }} />
         </div>
       </div>
     )

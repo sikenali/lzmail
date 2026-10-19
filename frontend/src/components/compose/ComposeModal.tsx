@@ -276,7 +276,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
         maxHeight={800}
       >
         {/* Form body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px 14px' : '16px 24px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: isMobile ? '12px 14px' : '16px 24px' }}>
           {isMobile ? (
             <>
               {/* Sender - mobile vertical layout */}
@@ -386,7 +386,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
           ) : (
             <>
               {/* Sender - desktop */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12, flexShrink: 0 }}>
                 <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>发件人</span>
                 <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <button
@@ -423,7 +423,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
               </div>
 
               {/* To - desktop */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', flexShrink: 0 }}>
                 <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>收件人</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <ContactPicker value={to} onSelect={emails => setTo(emails.join(', '))} accountId={accountId} />
@@ -436,7 +436,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
 
               {/* Cc - desktop */}
               {showCc && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', flexShrink: 0 }}>
                   <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>抄送</span>
                   <div style={{ display: 'flex', alignItems: 'center', height: 38, borderRadius: 8, flex: 1, padding: '0 14px', backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)' }}>
                     <input value={cc} onChange={e => setCc(e.target.value)} placeholder="输入邮箱地址..."
@@ -448,7 +448,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
 
               {/* Bcc - desktop */}
               {showBcc && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', flexShrink: 0 }}>
                   <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>密送</span>
                   <div style={{ display: 'flex', alignItems: 'center', height: 38, borderRadius: 8, flex: 1, padding: '0 14px', backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)' }}>
                     <input value={bcc} onChange={e => setBcc(e.target.value)} placeholder="输入邮箱地址..."
@@ -459,7 +459,7 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
               )}
 
               {/* Subject - desktop */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', flexShrink: 0 }}>
                 <span style={{ width: 60, flexShrink: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-cn)' }}>主题</span>
                 <div style={{ display: 'flex', alignItems: 'center', height: 38, borderRadius: 8, flex: 1, padding: '0 14px', backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)' }}>
                   <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="输入邮件主题..."
@@ -473,12 +473,12 @@ export function ComposeModal({ open, onClose, params }: { open: boolean; onClose
                 value={body}
                 onChange={setBody}
                 placeholder="开始撰写邮件正文..."
-                className="h-[300px]"
+                className="flex-1 min-h-0"
               />
 
               {/* Attachments - desktop */}
               {attachments.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingTop: 12 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingTop: 12, flexShrink: 0 }}>
                   {attachments.map((att, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '0.7px solid var(--color-border)', backgroundColor: 'var(--color-bg-secondary)', fontSize: 12 }}>
                       <Paperclip style={{ width: 14, height: 14, color: 'var(--color-text-muted)' }} />

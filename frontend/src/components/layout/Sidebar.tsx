@@ -41,12 +41,12 @@ export function Sidebar() {
   useEffect(() => {
     setPathname(window.location.pathname)
     setSearchParams(new URLSearchParams(window.location.search))
-    const onHash = () => {
+    const onPop = () => {
       setPathname(window.location.pathname)
       setSearchParams(new URLSearchParams(window.location.search))
     }
-    window.addEventListener('popstate', onHash)
-    return () => window.removeEventListener('popstate', onHash)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   const fetchCounts = useCallback(() => {
@@ -66,20 +66,28 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar" style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-white)', borderRight: '0.7px solid var(--color-border-soft)' }}>
+    <aside className="sidebar" style={{ width: 76, flexShrink: 0, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-white)', borderRight: '0.7px solid var(--color-border-soft)' }}>
       {/* Logo */}
-      <div
-        style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10, borderBottom: '0.7px solid var(--color-border-soft)', cursor: 'pointer' }}
-        onClick={() => router.push('/')}
-      >
-        <img src="/logo.png" alt="懒猫微邮" style={{ width: 24, height: 24, display: 'block', flexShrink: 0 }} />
-        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          懒猫微邮
-        </span>
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 0 10px' }}>
+        <button
+          title="首页"
+          onClick={() => router.push('/')}
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            border: 'none', cursor: 'pointer',
+            backgroundColor: 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background-color 0.2s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-primary-soft)')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        >
+          <img src="/logo.png" alt="懒猫微邮" style={{ width: 22, height: 22, display: 'block', opacity: 0.85 }} />
+        </button>
       </div>
 
-      {/* Nav items */}
-      <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
+      {/* Nav items — rail style */}
+      <nav style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, overflowY: 'auto', padding: '0 6px' }}>
         {sidebarItems.map(item => {
           const active = isActive(item.href, pathname, searchParams)
           const unreadBadge = item.href === '/mail?folder=INBOX' && inboxUnread > 0
@@ -87,34 +95,34 @@ export function Sidebar() {
             <button
               key={item.href}
               onClick={() => handleClick(item.href)}
+              title={item.label}
               style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 10px',
-                borderRadius: 8,
+                width: 56,
+                padding: '10px 0 8px',
+                borderRadius: 14,
                 border: 'none',
                 backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
-                color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
-                fontFamily: 'var(--font-family-cn)',
-                fontSize: 13,
-                fontWeight: active ? 500 : 400,
-                textAlign: 'left',
-                transition: 'background-color 150ms ease, color 150ms ease',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'background-color 0.2s ease',
                 position: 'relative',
+                flexShrink: 0,
               }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'var(--color-primary-soft)' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent' }}
             >
-              <i className={item.icon} style={{ fontSize: 16, width: 16, height: 16, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.label}</span>
+              <i className={item.icon} style={{ fontSize: 22, width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)', transition: 'color 0.2s ease' }} />
+              <span style={{ fontSize: 11, lineHeight: '1.2', color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontWeight: active ? 500 : 400, transition: 'color 0.2s ease' }}>{item.label}</span>
               {unreadBadge && (
                 <span style={{
-                  minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9999,
+                  position: 'absolute', top: 6, right: 6,
+                  minWidth: 16, height: 16, padding: '0 4px', borderRadius: 9999,
                   backgroundColor: 'var(--color-primary)', color: '#fff',
-                  fontSize: 10, fontWeight: 700,
+                  fontSize: 9, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
                 }}>
                   {inboxUnread > 99 ? '99+' : inboxUnread}
                 </span>
@@ -125,9 +133,13 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div style={{ height: 44, padding: '0 16px', display: 'flex', alignItems: 'center', gap: 8, borderTop: '0.7px solid var(--color-border-soft)', fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)' }}>
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {unreadTotal > 0 ? `${unreadTotal} 封未读` : ''}
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0 14px' }}>
+        <span style={{
+          fontSize: 10.5, lineHeight: '1.2', color: 'var(--color-text-muted)',
+          whiteSpace: 'nowrap', cursor: 'default',
+          fontFamily: 'var(--font-family-cn)',
+        }}>
+          {unreadTotal > 0 ? `${unreadTotal} 未读` : ''}
         </span>
       </div>
     </aside>

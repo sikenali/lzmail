@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const { settings } = useSettings()
-  const navMode = (settings.nav_mode || 'sidebar') as 'sidebar' | 'top'
+  const navMode = (settings.nav_mode || 'topbar') as 'topbar' | 'sidebar'
   const [hash, setHash] = useState('')
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-dvh" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       {showSidebar && (
         <Suspense fallback={null}>
-          <Sidebar />
+          <Sidebar key={navMode} />
         </Suspense>
       )}
       <div className={`flex flex-col flex-1 min-w-0 ${showSidebar ? '' : 'w-full'}`}>

@@ -158,6 +158,39 @@ export function TopNav({
   const navMode = settings.nav_mode || 'topbar'
   const showDesktopTabs = !isMobile && (navMode === 'topbar' || navMode === 'top')
 
+  // 将滑动指示器定位到当前激活标签下方
+  const updateIndicator = useCallback(() => {
+    const menu = navMenuRef.current
+    const ind = indicatorRef.current
+    if (!menu || !ind) return
+    const activeEl = menu.querySelector<HTMLElement>('.nav-tab.is-active')
+    if (!activeEl) {
+      ind.style.width = '0px'
+      return
+    }
+    const menuRect = menu.getBoundingClientRect()
+    const elRect = activeEl.getBoundingClientRect()
+    ind.style.width = `${elRect.width}px`
+    ind.style.transform = `translateX(${elRect.left - menuRect.left}px)`
+  }, [])
+
+  useEffect(() => {
+    if (!showDesktopTabs) return
+    const raf = requestAnimationFrame(updateIndicator)
+    window.addEventListener('resize', updateIndicator)
+    const menu = navMenuRef.current
+    let ro: ResizeObserver | undefined
+    if (menu && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(updateIndicator)
+      ro.observe(menu)
+    }
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', updateIndicator)
+      ro?.disconnect()
+    }
+  }, [showDesktopTabs, activeHref, inboxUnread, isMobile, updateIndicator])
+
   return (
     <header
       className="px-3 sm:px-6"

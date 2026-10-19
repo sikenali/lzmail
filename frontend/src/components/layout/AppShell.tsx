@@ -67,12 +67,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           />
         </Suspense>
         <main className="flex-1 overflow-auto scroll-contain">{children}</main>
-        {!showSidebar && (
-          <PageFooter
-            onCompose={() => openHash('compose')}
-            onContacts={() => openHash('contact')}
-          />
-        )}
+        <PageFooter
+          onCompose={() => openHash('compose')}
+          onContacts={() => openHash('contact')}
+        />
       </div>
       <SettingsModal open={hash === 'settings'} onClose={closeModals} />
       <AccountModal open={hash === 'account'} onClose={closeModals} />

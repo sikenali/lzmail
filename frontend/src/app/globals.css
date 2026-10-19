@@ -504,12 +504,23 @@ body {
   height: 4px;
   border-radius: 9999px;
   background-color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.nav-indicator.has-interacted::after {
+  opacity: 1;
 }
 .no-animations .nav-indicator {
   transition: none !important;
 }
+.no-animations .nav-indicator::after {
+  transition: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
   .nav-indicator {
+    transition: none !important;
+  }
+  .nav-indicator::after {
     transition: none !important;
   }
 }

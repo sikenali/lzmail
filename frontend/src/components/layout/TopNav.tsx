@@ -91,6 +91,7 @@ export function TopNav({
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
+  const [hasInteracted, setHasInteracted] = useState(false)
   const navMenuRef = useRef<HTMLDivElement>(null)
   const indicatorRef = useRef<HTMLDivElement>(null)
 
@@ -140,6 +141,7 @@ export function TopNav({
     : 'LZ'
 
   const handleNavClick = (href: string) => {
+    setHasInteracted(true)
     const target = new URL(href, 'http://x')
     if (target.pathname === '/mail' && pathname === '/mail') {
       const targetFolder = target.searchParams.get('folder') || 'INBOX'
@@ -341,7 +343,7 @@ export function TopNav({
           </div>
         ) : (
           <div className="nav-menu" ref={navMenuRef}>
-            <div ref={indicatorRef} className="nav-indicator" />
+            <div ref={indicatorRef} className={`nav-indicator${hasInteracted ? ' has-interacted' : ''}`} />
             {navItems.map(item => {
               const active = isActive(item.href, fullPath)
               return (

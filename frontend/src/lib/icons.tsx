@@ -75,6 +75,8 @@ export const Table = icon('ri-table-line')
 export const Minus = icon('ri-subtract-line')
 export const Eye = icon('ri-eye-line')
 export const EyeOff = icon('ri-eye-off-line')
+export const Layout3 = icon('ri-layout-3-line')
+export const LayoutGrid = icon('ri-layout-grid-line')
 
 export const PROVIDER_AVATAR_BG: Record<string, string> = {
   gmail:  '#ea4335',

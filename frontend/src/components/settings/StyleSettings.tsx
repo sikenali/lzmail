@@ -1,6 +1,6 @@
 'use client'
 import { useSettings } from '@/hooks/useSettings'
-import { Minus, Plus, Columns2, Layout2, LayoutRow, CollapseVertical } from '@/lib/icons'
+import { Minus, Plus, Columns2, Layout2, LayoutRow, CollapseVertical, Layout3, LayoutGrid } from '@/lib/icons'
 
 export function StyleSettings() {
   const { settings, setSetting } = useSettings()
@@ -102,33 +102,36 @@ export function StyleSettings() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0' }}>
             <div>
-              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>动画效果</div>
-              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>开启或关闭界面过渡动画</div>
+              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>导航布局</div>
+              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>切换文件夹导航显示在侧边栏或顶部</div>
             </div>
-            <button onClick={() => setSetting('animations', settings.animations === 'true' ? 'false' : 'true')}
-              style={{
-                width: 48,
-                height: 28,
-                borderRadius: 9999,
-                display: 'flex',
-                alignItems: 'center',
-                padding: '2px',
-                backgroundColor: (settings.animations || 'true') === 'true' ? 'var(--primary)' : 'var(--border)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-              }}
-            >
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: 9999,
-                backgroundColor: '#ffffff',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                transform: (settings.animations || 'true') === 'true' ? 'translateX(20px)' : 'translateX(0)',
-                transition: 'transform 0.2s',
-              }} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {[
+                { label: '侧边栏', id: 'sidebar', icon: Layout3 },
+                { label: '顶栏',   id: 'top',     icon: LayoutGrid },
+              ].map(item => (
+                <button key={item.id} onClick={() => setSetting('nav_mode', item.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '0 16px',
+                    height: 40,
+                    borderRadius: 8,
+                    fontSize: 13,
+                    backgroundColor: settings.nav_mode === item.id ? 'var(--primary)' : 'var(--muted)',
+                    color: settings.nav_mode === item.id ? '#ffffff' : 'var(--foreground-secondary)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontFamily: 'var(--font-family-cn)',
+                  }}
+                >
+                  <item.icon style={{ fontSize: 16, width: 16, height: 16, color: settings.nav_mode === item.id ? '#ffffff' : 'var(--foreground-secondary)' }} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

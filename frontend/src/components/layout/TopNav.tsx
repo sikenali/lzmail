@@ -153,39 +153,24 @@ export function TopNav({
 
   const activeHref = navItems.find(item => isActive(item.href, fullPath))?.href
 
-  useEffect(() => {
-    if (isMobile || !activeHref) return
-    const updatePosition = () => {
-      if (!navMenuRef.current || !indicatorRef.current) return
-      const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const m = navMenuRef.current.getBoundingClientRect()
-      indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
-      indicatorRef.current.style.width = r.width + 'px'
-      indicatorRef.current.classList.add('active')
-    }
-    requestAnimationFrame(updatePosition)
+  const positionIndicator = useCallback(() => {
+    if (isMobile || !activeHref || !navMenuRef.current || !indicatorRef.current) return
+    const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const m = navMenuRef.current.getBoundingClientRect()
+    indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
+    indicatorRef.current.style.width = r.width + 'px'
   }, [activeHref, isMobile])
 
   useEffect(() => {
-    const handleResize = () => {
-      if (!activeHref || isMobile) return
-      const updatePosition = () => {
-        if (!navMenuRef.current || !indicatorRef.current) return
-        const el = navMenuRef.current.querySelector(`[data-nav="${activeHref}"]`)
-        if (!el) return
-        const r = el.getBoundingClientRect()
-        const m = navMenuRef.current.getBoundingClientRect()
-        indicatorRef.current.style.transform = `translateX(${r.left - m.left}px)`
-        indicatorRef.current.style.width = r.width + 'px'
-        indicatorRef.current.classList.add('active')
-      }
-      requestAnimationFrame(updatePosition)
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [activeHref, isMobile])
+    positionIndicator()
+  }, [positionIndicator])
+
+  useEffect(() => {
+    window.addEventListener('resize', positionIndicator)
+    return () => window.removeEventListener('resize', positionIndicator)
+  }, [positionIndicator])
 
   return (
     <header
@@ -282,7 +267,7 @@ export function TopNav({
               <>
                 <div className="fixed inset-0 z-40" style={{ backgroundColor: 'transparent' }} onClick={() => setFolderMenuOpen(false)} />
                 <div
-                  className="absolute z-50"
+                  className="absolute z-50 nav-folder-dropdown"
                   style={{
                     top: 'calc(100% + 8px)',
                     left: '50%',

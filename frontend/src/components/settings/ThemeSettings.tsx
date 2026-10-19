@@ -67,12 +67,13 @@ export function ThemeSettings() {
   const isMobile = useIsMobile()
   const [selectedTheme, setSelectedTheme] = useState(settings.theme || 'light')
   const [selectedAccent, setSelectedAccent] = useState(normalizeAccent(settings.accent_color))
-  const [selectedLayout, setSelectedLayout] = useState(settings.nav_mode || 'topbar')
+  const normNav = (v?: string) => (v === 'sidebar' ? 'sidebar' : 'topbar')
+  const [selectedLayout, setSelectedLayout] = useState(normNav(settings.nav_mode))
 
   useEffect(() => {
     setSelectedTheme(settings.theme || 'light')
     setSelectedAccent(normalizeAccent(settings.accent_color))
-    setSelectedLayout(settings.nav_mode || 'topbar')
+    setSelectedLayout(normNav(settings.nav_mode))
   }, [settings.theme, settings.accent_color, settings.nav_mode])
 
   const handleSelectTheme = (id: string) => {

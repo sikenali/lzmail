@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const { settings } = useSettings()
-  const navMode = (settings.nav_mode || 'topbar') as 'topbar' | 'sidebar'
+  const navMode = (settings.nav_mode === 'sidebar' ? 'sidebar' : 'topbar') as 'topbar' | 'sidebar'
   const [hash, setHash] = useState('')
 
   useEffect(() => {

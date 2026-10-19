@@ -155,8 +155,8 @@ export function TopNav({
 
   const activeHref = navItems.find(item => isActive(item.href, fullPath))?.href
 
-  const navMode = settings.nav_mode || 'sidebar'
-  const showDesktopTabs = !isMobile && navMode === 'top'
+  const navMode = settings.nav_mode || 'topbar'
+  const showDesktopTabs = !isMobile && (navMode === 'topbar' || navMode === 'top')
 
   return (
     <header

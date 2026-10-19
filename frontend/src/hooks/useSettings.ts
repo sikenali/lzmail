@@ -48,6 +48,10 @@ const defaults: Settings = {
 export const DEFAULT_ACCENT = ''
 const LEGACY_DEFAULT_ACCENTS = ['#BE3B2E', '#C43D3D', '#c43d3d']
 
+// 同一页面内可能存在多个 useSettings 实例（如 AppShell 与设置面板），
+// 通过全局事件让所有实例实时同步，避免只有发起修改的那一份 state 更新。
+export const SETTINGS_EVENT = 'lzmail:settings-changed'
+
 // 归一化强调色：空值 / 旧默认值统一视为「跟随主题」。
 export function normalizeAccent(color?: string | null): string {
   if (!color) return DEFAULT_ACCENT
@@ -176,8 +180,21 @@ export function useSettings() {
     }
   }, [])
 
+  // 监听全局设置变更，实时同步到本实例
+  useEffect(() => {
+    const handleSettingsChanged = (e: Event) => {
+      const detail = (e as CustomEvent<Record<string, string>>).detail
+      if (detail && typeof detail === 'object') {
+        setSettings((prev) => ({ ...prev, ...detail }))
+      }
+    }
+    window.addEventListener(SETTINGS_EVENT, handleSettingsChanged)
+    return () => window.removeEventListener(SETTINGS_EVENT, handleSettingsChanged)
+  }, [])
+
   const setSetting = useCallback((key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
+    window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: { [key]: value } }))
     api.settings.set({ [key]: value }).catch(() => toast.error('设置保存失败'))
 
     if (key === 'theme') {
@@ -202,6 +219,7 @@ export function useSettings() {
 
   const setSettingsBatch = useCallback((batch: Record<string, string>) => {
     setSettings((prev) => ({ ...prev, ...batch }))
+    window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: batch }))
     api.settings.set(batch).catch(() => toast.error('设置保存失败'))
     
     if (batch.theme) {

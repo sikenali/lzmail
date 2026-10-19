@@ -34,7 +34,7 @@ const defaults: Settings = {
   auto_cleanup: 'true',
   auto_cleanup_days: '30',
   animations: 'true',
-  nav_mode: 'sidebar',
+  nav_mode: 'top',
   archive_path: (() => {
     if (typeof navigator === 'undefined') return ''
     const isWin = navigator.userAgent.includes('Windows')

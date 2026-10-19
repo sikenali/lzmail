@@ -12,6 +12,7 @@ var allowedSettingsKeys = map[string]bool{
 	"font_size":         true,
 	"mail_density":      true,
 	"layout_density":    true,
+	"nav_mode":          true,
 	"theme":             true,
 	"accent_color":      true,
 	"animations":        true,

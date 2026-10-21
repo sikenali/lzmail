@@ -444,12 +444,17 @@ func (h *Handler) handleCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validated, err := validateAttachmentPaths(uploadDirOf(h.archiveDir), req.Attachments)
-	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
+	// 草稿只落库、不发送，不会去磁盘读取附件，因此不校验附件路径：
+	// 草稿里的附件此时尚未上传（上传发生在发送时），强制校验会让「带附件存草稿」被 400 拒绝。
+	// 发送路径（draft=false）仍做完整校验。buildMessage 对读不到的附件已容错。
+	if !req.Draft {
+		validated, err := validateAttachmentPaths(uploadDirOf(h.archiveDir), req.Attachments)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		req.Attachments = validated
 	}
-	req.Attachments = validated
 
 	// Save as draft: persist locally (including body), do NOT send over SMTP.
 	if req.Draft {
@@ -655,12 +660,14 @@ func (h *Handler) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validated, err := validateAttachmentPaths(uploadDirOf(h.archiveDir), req.Attachments)
-	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
+	// PATCH 只作用于草稿（上方已校验 not a draft）。草稿不发送、不读取磁盘附件，
+	// 且草稿里的附件可能还没上传（path 为空），所以这里不做硬校验：
+	// 能规范化路径的就规范化，校验不过的保留原始元数据（用户至少能看到自己加过什么）。
+	if len(req.Attachments) > 0 {
+		if validated, err := validateAttachmentPaths(uploadDirOf(h.archiveDir), req.Attachments); err == nil {
+			req.Attachments = validated
+		}
 	}
-	req.Attachments = validated
 
 	// 原地更新：重新生成 .eml 文件，更新邮件记录
 	msg := buildMessage(account.Email, req.To, req.Cc, req.Subject, req.BodyText, req.BodyHTML, req.Attachments)

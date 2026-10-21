@@ -1,0 +1,13 @@
+{
+  "name": "lzmail-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "LZMail 前端全量 UI 功能自测脚本",
+  "scripts": {
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

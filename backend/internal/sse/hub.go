@@ -86,6 +86,13 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
+	// 立刻发一个注释帧并冲刷，把响应头马上送出去。
+	// 否则首个字节要等到 25 秒心跳或第一条事件才写出，期间代理与浏览器都拿不到响应头：
+	// EventSource 会一直挂着不完成，每个 useSSE 调用点各占一个连接，很快占满
+	// 浏览器每个主机的 HTTP/1.1 连接上限（6 个），让其余请求（存草稿等）全部排队等待。
+	fmt.Fprint(w, ": connected\n\n")
+	flusher.Flush()
+
 	lastIDStr := r.Header.Get("Last-Event-ID")
 	if lastIDStr != "" {
 		lastID, _ := strconv.ParseUint(lastIDStr, 10, 64)

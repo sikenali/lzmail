@@ -135,7 +135,7 @@ export function StorageSettings() {
     setDirLoading(true); setDirError('')
     try {
       const res = await api.storage.list(path)
-      setDirEntries(res.entries); setTreeOpen(true)
+      setDirEntries(res.entries ?? []); setTreeOpen(true)
     } catch (e: any) { setDirError(e.message); setDirEntries([]) }
     finally { setDirLoading(false) }
   }

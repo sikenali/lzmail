@@ -25,6 +25,22 @@ func anchorPath(root, p string) (string, error) {
 	return abs, nil
 }
 
+// anchorInArchive 允许在「当前生效的归档根目录」或「已保存但需重启才生效的自定义归档路径」内浏览。
+// 后者是为了让存储面板在改完归档路径后能立即预览新目录，而不是直接返回 400。
+func (h *Handler) anchorInArchive(p string) (string, error) {
+	if resolved, err := anchorPath(h.archiveDir, p); err == nil {
+		return resolved, nil
+	}
+	if all, err := h.settings.GetAll(); err == nil {
+		if next := strings.TrimSpace(all["archive_path"]); next != "" {
+			if resolved, err := anchorPath(next, p); err == nil {
+				return resolved, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("path outside allowed root")
+}
+
 type DirEntry struct {
 	Name    string     `json:"name"`
 	IsDir   bool       `json:"is_dir"`
@@ -49,7 +65,7 @@ func (h *Handler) handleListStorageDirs(w http.ResponseWriter, r *http.Request) 
 	if basePath == "" {
 		basePath = h.archiveDir
 	}
-	resolved, err := anchorPath(h.archiveDir, basePath)
+	resolved, err := h.anchorInArchive(basePath)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
@@ -79,7 +95,7 @@ func (h *Handler) handleListStorageDirs(w http.ResponseWriter, r *http.Request) 
 		return strings.ToLower(entries[i].Name()) < strings.ToLower(entries[j].Name())
 	})
 
-	var result []DirEntry
+	result := make([]DirEntry, 0)
 	for _, e := range entries {
 		if strings.HasPrefix(e.Name(), ".") {
 			continue
@@ -88,6 +104,8 @@ func (h *Handler) handleListStorageDirs(w http.ResponseWriter, r *http.Request) 
 			Name:  e.Name(),
 			IsDir: e.IsDir(),
 			Path:  filepath.Join(basePath, e.Name()),
+			// 空目录也要返回 [] 而不是 null：前端 dirEntries.length 会直接崩掉整页
+			Subdirs: []DirEntry{},
 		}
 		if e.IsDir() {
 			subs, _ := os.ReadDir(entry.Path)
@@ -117,12 +135,13 @@ func (h *Handler) handleListStorageDirs(w http.ResponseWriter, r *http.Request) 
 // treeMaxNodes entries) so the settings page can render the real archive
 // directory structure as a tree.
 func buildTree(basePath string, depth int, budget *int) []TreeEntry {
+	// 返回空切片而非 nil：Go 的 nil slice 会序列化成 JSON null，前端拿去做 .length 会崩。
 	if depth > treeMaxDepth || *budget <= 0 {
-		return nil
+		return []TreeEntry{}
 	}
 	entries, err := os.ReadDir(basePath)
 	if err != nil {
-		return nil
+		return []TreeEntry{}
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].IsDir() != entries[j].IsDir() {
@@ -131,7 +150,7 @@ func buildTree(basePath string, depth int, budget *int) []TreeEntry {
 		return strings.ToLower(entries[i].Name()) < strings.ToLower(entries[j].Name())
 	})
 
-	var result []TreeEntry
+	result := make([]TreeEntry, 0)
 	for _, e := range entries {
 		if *budget <= 0 {
 			break
@@ -144,6 +163,7 @@ func buildTree(basePath string, depth int, budget *int) []TreeEntry {
 			Name:  e.Name(),
 			IsDir: e.IsDir(),
 			Path:  filepath.Join(basePath, e.Name()),
+			Children: []TreeEntry{},
 		}
 		if e.IsDir() {
 			entry.Children = buildTree(entry.Path, depth+1, budget)
@@ -158,7 +178,7 @@ func (h *Handler) handleStorageTree(w http.ResponseWriter, r *http.Request) {
 	if basePath == "" {
 		basePath = h.archiveDir
 	}
-	resolved, err := anchorPath(h.archiveDir, basePath)
+	resolved, err := h.anchorInArchive(basePath)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return

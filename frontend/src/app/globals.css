@@ -30,52 +30,16 @@ html {
   }
 }
 
+/* ===== DESIGN.md canonical tokens (single source of truth) =====
+   Legacy Tailwind / old CSS variables are redefined as aliases of --color-*
+   so existing components keep working without any changes.
+   Light values live here as defaults; [data-theme="dark"] overrides only --color-*. */
 :root {
-  --background: #fbf7f0;
-  --card: #ffffff;
-  --card-border: #f3ede3;
-  --foreground: #3d2b1f;
-  --foreground-secondary: #6b5b4f;
-  --foreground-tertiary: #8b7355;
-  --muted: #f3ede3;
-  --muted-foreground: #b8a88a;
-  --primary: #c43d3d;
-  --primary-light: #fdf2f2;
-  --teal: #6b8fa3;
-  --teal-light: #f0f4f7;
-  --gold: #c9a96e;
-  --gold-light: #fef9f0;
-  --green: #5b8c5a;
-  --green-light: #edf5ec;
-  --blue: #6b8fa3;
-  --blue-light: #f0f4f7;
-  --primary-foreground: #ffffff;
-  --accent: #fef9f0;
-  --accent-foreground: #3d2b1f;
-  --border: #f3ede3;
-  --sidebar-width: 240px;
-  --header-height: 64px;
-  --card-radius: 16px;
-  --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  --gmail: #ea4335;
-  --outlook: #0078d4;
-  --qq: #12b7f5;
-  --netease: #e53e3e;
-  --app-background: #fbf7f0;
-  --sidebar-bg: #fbf7f0;
-  --sidebar-border: #f3ede3;
-  --success: #5b8c5a;
-  --success-bg: #edf5ec;
-  --danger: #c43d3d;
-  --danger-bg: #fdf2f2;
-  --gold: #c9a96e;
-  --gold-bg: #faf3e8;
-  --skeleton-base: #e8e0d4;
-  --skeleton-shine: #f5f0e8;
-
-  /* DESIGN.md Tokens - Light */
+  /* DESIGN.md tokens — Light (Parchment) */
   --color-primary: #C0392B;
+  --color-primary-deep: #3A5C96;
   --color-primary-soft: #FBE9E7;
+  --color-on-primary: #FFFFFF;
   --color-bg-main: #FAF7F2;
   --color-bg-secondary: #F7F3EA;
   --color-bg-card: #FCFBF8;
@@ -89,90 +53,67 @@ html {
   --color-border-soft: #EDE9E0;
   --color-border-hover: #D9D2C2;
   --color-success: #4E9B7A;
+  --color-success-strong: #3E8A6B;
+  --color-success-soft: #E4F0EA;
   --color-info: #4A72A8;
+  --color-info-soft: #E8F0F8;
   --color-warning: #F39C12;
+  --color-warning-soft: #FEF5E7;
   --color-error: #E74C3C;
+  --color-error-soft: #FADCDA;
+
   --font-family: 'Inter', 'SourceHanSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-family-cn: 'SourceHanSans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --transition-fast: 150ms ease;
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
-}
 
-[data-theme="light"] {
-  --background: #fbf7f0;
-  --card: #ffffff;
-  --card-border: #f3ede3;
-  --foreground: #3d2b1f;
-  --foreground-secondary: #6b5b4f;
-  --foreground-tertiary: #8b7355;
-  --muted: #f3ede3;
-  --muted-foreground: #b8a88a;
-  --primary: #c43d3d;
-  --primary-light: #fdf2f2;
-  --teal: #6b8fa3;
-  --teal-light: #f0f4f7;
-  --gold: #c9a96e;
-  --gold-light: #fef9f0;
-  --green: #5b8c5a;
-  --green-light: #edf5ec;
-  --blue: #6b8fa3;
-  --blue-light: #f0f4f7;
-  --primary-foreground: #ffffff;
-  --accent: #fef9f0;
-  --accent-foreground: #3d2b1f;
-  --border: #f3ede3;
-  --app-background: #fbf7f0;
-  --sidebar-bg: #fbf7f0;
-  --sidebar-border: #f3ede3;
-  --success: #5b8c5a;
-  --success-bg: #edf5ec;
-  --danger: #c43d3d;
-  --danger-bg: #fdf2f2;
-  --gold: #c9a96e;
-  --gold-bg: #faf3e8;
-  --skeleton-base: #e8e0d4;
-  --skeleton-shine: #f5f0e8;
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  --skeleton-base: #E8E0D4;
+  --skeleton-shine: #F5F0E8;
+
+  /* Legacy aliases → DESIGN.md tokens */
+  --background: var(--color-bg-main);
+  --app-background: var(--color-bg-main);
+  --sidebar-bg: var(--color-bg-main);
+  --card: var(--color-bg-card);
+  --card-border: var(--color-border);
+  --border: var(--color-border);
+  --sidebar-border: var(--color-border);
+  --muted: var(--color-bg-secondary);
+  --muted-foreground: var(--color-text-faint);
+  --foreground: var(--color-text-primary);
+  --foreground-secondary: var(--color-text-secondary);
+  --foreground-tertiary: var(--color-text-muted);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-on-primary);
+  --primary-light: var(--color-primary-soft);
+  --accent: var(--color-bg-secondary);
+  --accent-foreground: var(--color-text-primary);
+  --success: var(--color-success);
+  --success-bg: var(--color-success-soft);
+  --danger: var(--color-error);
+  --danger-bg: var(--color-error-soft);
+  --danger-border: var(--color-border);
+  --gold: var(--color-warning);
+  --gold-light: var(--color-warning-soft);
+  --gold-bg: var(--color-warning-soft);
+  --green: var(--color-success);
+  --green-light: var(--color-success-soft);
+  --teal: var(--color-info);
+  --teal-light: var(--color-info-soft);
+  --blue: var(--color-info);
+  --blue-light: var(--color-info-soft);
 }
 
 [data-theme="dark"] {
-  --background: #1a1612;
-  --card: #2a2320;
-  --card-border: #3d3430;
-  --foreground: #f5f0e8;
-  --foreground-secondary: #d4c8b8;
-  --foreground-tertiary: #a09080;
-  --muted: #2a2320;
-  --muted-foreground: #a09080;
-  --primary: #d44638;
-  --primary-light: #3a2323;
-  --teal: #7ba0b8;
-  --teal-light: #2a3a42;
-  --gold: #c9a96e;
-  --gold-light: #3a3428;
-  --green: #6b9b6a;
-  --green-light: #2a3a2a;
-  --blue: #7ba0b8;
-  --blue-light: #2a3a42;
-  --primary-foreground: #ffffff;
-  --accent: #2a2320;
-  --accent-foreground: #f5f0e8;
-  --border: #3d3430;
-  --app-background: #1a1612;
-  --sidebar-bg: #2a2320;
-  --sidebar-border: #3d3430;
-  --success: #6b9b6a;
-  --success-bg: #1e2e1e;
-  --danger: #d44638;
-  --danger-bg: #2e1e1e;
-  --gold: #d4b87a;
-  --gold-bg: #2e2a1e;
-  --skeleton-base: #3d3430;
-  --skeleton-shine: #4a4038;
-
-  /* DESIGN.md Tokens - Dark */
+  /* DESIGN.md tokens — Dark (墨夜) */
   --color-primary: #E05050;
   --color-primary-soft: #3A2323;
+  --color-on-primary: #FFFFFF;
   --color-bg-main: #17171A;
   --color-bg-secondary: #1C1C1F;
   --color-bg-card: #232324;
@@ -186,9 +127,18 @@ html {
   --color-border-soft: #2A2B2E;
   --color-border-hover: #3A3B3F;
   --color-success: #5CB98C;
+  --color-success-strong: #4A9A74;
+  --color-success-soft: #1A3A2A;
   --color-info: #82AEDD;
+  --color-info-soft: #1A2A3A;
   --color-warning: #F2B23E;
+  --color-warning-soft: #3A2A1A;
   --color-error: #E86A5A;
+  --color-error-soft: #3A1A1A;
+
+  --skeleton-base: #3D3430;
+  --skeleton-shine: #4A4038;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 
 * {

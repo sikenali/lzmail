@@ -40,14 +40,14 @@ jobs:
           npm ci --registry https://registry.npmmirror.com
           npm run build
 
-      - name: Generate icon from SVG
+      - name: Generate icon from logo
         working-directory: frontend
         run: |
           node -e "
             const sharp = require('sharp');
-            const fs = require('fs');
-            sharp(fs.readFileSync('public/favicon.svg'))
-              .resize(512, 512).png()
+            sharp('public/logo.png')
+              .resize(512, 512)
+              .png()
               .toFile('../lzc/icon.png')
               .then(() => console.log('icon generated'));
           "

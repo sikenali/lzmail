@@ -56,7 +56,7 @@ export function AboutSettings() {
 
         {/* Slogan */}
         <div style={{ marginTop: 16, fontSize: 16, color: 'var(--foreground-secondary)', lineHeight: 1.4 }}>
-          邮件Web管理平台
+          专业的Web邮箱客户端
         </div>
 
         {/* Unofficial tag */}

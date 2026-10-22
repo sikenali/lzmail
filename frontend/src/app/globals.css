@@ -490,20 +490,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.nav-center::-webkit-scrollbar {
-  display: none;
 }
 /* 桌面端：7 个标签放不下时从最左开始横向滚动。
    若沿用 justify-content:center，溢出的左侧标签会被截断且滚不回来；
-   margin-inline:auto 在放得下时仍保持居中，放不下时自动退回起点。 */
+   margin-inline:auto 在放得下时仍保持居中，放不下时自动退回起点。
+   注意：overflow 只能加在桌面端。移动端这个容器里还有文件夹下拉菜单
+   （position:absolute），一旦加 overflow 就会被父容器裁剪，点开后看不到 7 项。 */
 @media (min-width: 768px) {
   .nav-center {
     justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav-center::-webkit-scrollbar {
+    display: none;
   }
   .nav-menu {
     margin-inline: auto;

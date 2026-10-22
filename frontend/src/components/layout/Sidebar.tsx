@@ -3,22 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { useSSE } from '@/hooks/useSSE'
-
-type SidebarItem = {
-  label: string
-  href: string
-  icon: string
-}
-
-const sidebarItems: SidebarItem[] = [
-  { label: '收件箱',   href: '/mail?folder=INBOX',      icon: 'ri-inbox-line' },
-  { label: '标星邮件', href: '/mail?folder=STARRED',    icon: 'ri-star-line' },
-  { label: '稍后处理', href: '/mail?folder=DEFERRED',   icon: 'ri-time-line' },
-  { label: '已发送',   href: '/mail?folder=Sent',       icon: 'ri-send-plane-line' },
-  { label: '草稿箱',   href: '/mail?folder=Drafts',     icon: 'ri-draft-line' },
-  { label: '已删除',   href: '/mail?folder=Trash',      icon: 'ri-delete-bin-line' },
-  { label: '垃圾邮件', href: '/mail?folder=SPAM',       icon: 'ri-alert-line' },
-]
+import { MAIL_NAV_ITEMS, sidebarIconColor } from './mailNavItems'
 
 function isActive(href: string, currentPathname: string, currentSearchParams: URLSearchParams): boolean {
   if (currentPathname === href) return true
@@ -88,7 +73,7 @@ export function Sidebar() {
 
       {/* Nav items — rail style */}
       <nav style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, overflowY: 'auto', padding: '0 6px' }}>
-        {sidebarItems.map(item => {
+        {MAIL_NAV_ITEMS.map(item => {
           const active = isActive(item.href, pathname, searchParams)
           const unreadBadge = item.href === '/mail?folder=INBOX' && inboxUnread > 0
           return (
@@ -114,7 +99,7 @@ export function Sidebar() {
               onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'var(--color-primary-soft)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent' }}
             >
-              <i className={item.icon} style={{ fontSize: 22, width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)', transition: 'color 0.2s ease' }} />
+              <i className={item.icon} style={{ fontSize: 22, width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: sidebarIconColor(item.color, active), transition: 'color 0.2s ease' }} />
               <span style={{ fontSize: 11, lineHeight: '1.2', color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontWeight: active ? 500 : 400, transition: 'color 0.2s ease' }}>{item.label}</span>
               {unreadBadge && (
                 <span style={{

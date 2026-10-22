@@ -1,6 +1,6 @@
 'use client'
 import { Search, getAccountAvatarBg } from '@/lib/icons'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
@@ -8,22 +8,7 @@ import { useSSE } from '@/hooks/useSSE'
 import { Tooltip } from '@/components/Tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { Account } from '@/types'
-
-type NavItem = {
-  label: string
-  href: string
-  icon: string
-}
-
-const navItems: NavItem[] = [
-  { label: '收件箱', href: '/mail?folder=INBOX', icon: 'ri-inbox-line' },
-  { label: '标星邮件', href: '/mail?folder=STARRED', icon: 'ri-star-line' },
-  { label: '稍后处理', href: '/mail?folder=DEFERRED', icon: 'ri-time-line' },
-  { label: '已发送', href: '/mail?folder=Sent', icon: 'ri-send-plane-line' },
-  { label: '草稿箱', href: '/mail?folder=Drafts', icon: 'ri-draft-line' },
-  { label: '已删除', href: '/mail?folder=Trash', icon: 'ri-delete-bin-line' },
-  { label: '垃圾邮件', href: '/mail?folder=SPAM', icon: 'ri-alert-line' },
-]
+import { MAIL_NAV_ITEMS, navIconColor } from './mailNavItems'
 
 function getInitials(name: string): string {
   const clean = name.replace(/@.*$/, '').replace(/[._-]/g, ' ').trim()
@@ -91,9 +76,6 @@ export function TopNav({
   const [userAccount, setUserAccount] = useState<Account | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnread, setInboxUnread] = useState(0)
-  const [hasInteracted, setHasInteracted] = useState(false)
-  const navMenuRef = useRef<HTMLDivElement>(null)
-  const indicatorRef = useRef<HTMLDivElement>(null)
 
   const searchString = searchParams.toString()
   const search = searchString ? `?${searchString}` : ''
@@ -141,7 +123,6 @@ export function TopNav({
     : 'LZ'
 
   const handleNavClick = (href: string) => {
-    setHasInteracted(true)
     const target = new URL(href, 'http://x')
     if (target.pathname === '/mail' && pathname === '/mail') {
       const targetFolder = target.searchParams.get('folder') || 'INBOX'
@@ -153,45 +134,10 @@ export function TopNav({
     router.push(href)
   }
 
-  const activeHref = navItems.find(item => isActive(item.href, fullPath))?.href
-
   const navMode = settings.nav_mode || 'topbar'
   const showDesktopTabs = !isMobile && (navMode === 'topbar' || navMode === 'top')
   // 侧边栏模式下左侧已有品牌区，顶栏不再重复显示 logo 与名称
   const hideBrand = !isMobile && navMode === 'sidebar'
-
-  // 将滑动指示器定位到当前激活标签下方
-  const updateIndicator = useCallback(() => {
-    const menu = navMenuRef.current
-    const ind = indicatorRef.current
-    if (!menu || !ind) return
-    const activeEl = menu.querySelector<HTMLElement>('.nav-tab.is-active')
-    if (!activeEl) {
-      ind.style.width = '0px'
-      return
-    }
-    const menuRect = menu.getBoundingClientRect()
-    const elRect = activeEl.getBoundingClientRect()
-    ind.style.width = `${elRect.width}px`
-    ind.style.transform = `translateX(${elRect.left - menuRect.left}px)`
-  }, [])
-
-  useEffect(() => {
-    if (!showDesktopTabs) return
-    const raf = requestAnimationFrame(updateIndicator)
-    window.addEventListener('resize', updateIndicator)
-    const menu = navMenuRef.current
-    let ro: ResizeObserver | undefined
-    if (menu && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(updateIndicator)
-      ro.observe(menu)
-    }
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', updateIndicator)
-      ro?.disconnect()
-    }
-  }, [showDesktopTabs, activeHref, inboxUnread, isMobile, updateIndicator])
 
   return (
     <header
@@ -250,12 +196,7 @@ export function TopNav({
         </span>
       </div>
 
-      <div
-        style={isMobile
-          ? { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }
-          : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflowX: 'auto', overflowY: 'hidden' }
-        }
-      >
+      <div className="nav-center">
         {isMobile ? (
           <div style={{ position: 'relative' }}>
             <button
@@ -309,7 +250,7 @@ export function TopNav({
                     gap: 2,
                   }}
                 >
-                  {navItems.map(item => {
+                  {MAIL_NAV_ITEMS.map(item => {
                     const active = isActive(item.href, fullPath)
                     return (
                       <button
@@ -334,7 +275,7 @@ export function TopNav({
                       >
                         <i
                           className={item.icon}
-                          style={{ fontSize: '16px', width: '16px', height: '16px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ fontSize: '16px', width: '16px', height: '16px', color: navIconColor(item.color, active), flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                         ></i>
                         <span className="truncate flex-1">{item.label}</span>
                         {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
@@ -366,39 +307,18 @@ export function TopNav({
           </div>
         ) : (
           showDesktopTabs ? (
-            <div className="nav-menu" ref={navMenuRef}>
-              <div ref={indicatorRef} className={`nav-indicator${hasInteracted ? ' has-interacted' : ''}`} />
-              {navItems.map(item => {
+            <nav className="nav-menu" role="navigation" aria-label="邮件文件夹">
+              {MAIL_NAV_ITEMS.map(item => {
                 const active = isActive(item.href, fullPath)
                 return (
                   <button
                     key={item.href}
-                    data-nav={item.href}
                     onClick={() => handleNavClick(item.href)}
-                    className={`nav-tab${active ? ' is-active' : ''}`}
+                    className={`nav-tab nav-tab--${item.color}${active ? ' is-active' : ''}`}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <span
-                      style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16 }}
-                    >
-                      <i
-                        className={item.icon}
-                        style={{
-                          fontSize: '15px',
-                          width: 15,
-                          height: 15,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          lineHeight: 1,
-                        }}
-                      ></i>
-                    </span>
-                    <span
-                      style={{ position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.2 }}
-                    >
-                      {item.label}
-                    </span>
+                    <i className={`${item.icon} nav-tab__icon`}></i>
+                    <span className="nav-tab__label">{item.label}</span>
                     {item.href === '/mail?folder=INBOX' && inboxUnread > 0 && (
                       <span
                         style={{
@@ -417,7 +337,6 @@ export function TopNav({
                           lineHeight: 1,
                           backgroundColor: 'var(--color-primary)',
                           color: '#ffffff',
-                          zIndex: 1,
                         }}
                       >
                         {inboxUnread > 99 ? '99+' : inboxUnread}
@@ -426,7 +345,7 @@ export function TopNav({
                   </button>
                 )
               })}
-            </div>
+            </nav>
           ) : (
             <div />
           )

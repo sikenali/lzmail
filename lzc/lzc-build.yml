@@ -1,0 +1,5 @@
+icon: ./icon.png
+buildscript: ./build.sh
+manifest: ./lzc-manifest.yml
+contentdir: _lpk_content
+pkgout: ./output.lpk

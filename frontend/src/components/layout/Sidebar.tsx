@@ -51,28 +51,28 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar" style={{ width: 76, flexShrink: 0, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-white)', borderRight: '0.7px solid var(--color-border-soft)' }}>
+    <aside className="sidebar" style={{ width: 64, flexShrink: 0, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(var(--bg-rgb), 0.88)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRight: '0.6px solid var(--color-border-soft)' }}>
       {/* Logo */}
-      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 0 10px' }}>
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 0 12px' }}>
         <button
           title="首页"
           onClick={() => router.push('/')}
           style={{
-            width: 40, height: 40, borderRadius: 12,
+            width: 40, height: 40, borderRadius: 10,
             border: 'none', cursor: 'pointer',
             backgroundColor: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background-color 0.2s ease',
+            transition: 'background-color var(--t-fast) ease',
           }}
-          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-primary-soft)')}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(var(--tech-cyan-rgb), 0.08)')}
           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
-          <img src="/logo.png" alt="懒猫微邮" style={{ width: 22, height: 22, display: 'block', opacity: 0.85 }} />
+          <img src="/logo.png" alt="懒猫微邮" style={{ width: 22, height: 22, display: 'block', opacity: 0.9 }} />
         </button>
       </div>
 
       {/* Nav items — rail style */}
-      <nav style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, overflowY: 'auto', padding: '0 6px' }}>
+      <nav style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, overflowY: 'auto', padding: '0 8px' }}>
         {MAIL_NAV_ITEMS.map(item => {
           const active = isActive(item.href, pathname, searchParams)
           const unreadBadge = item.href === '/mail?folder=INBOX' && inboxUnread > 0
@@ -82,30 +82,31 @@ export function Sidebar() {
               onClick={() => handleClick(item.href)}
               title={item.label}
               style={{
-                width: 56,
-                padding: '10px 0 8px',
-                borderRadius: 14,
+                width: 48,
+                height: 48,
+                borderRadius: 8,
                 border: 'none',
-                backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
+                backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 4,
-                transition: 'background-color 0.2s ease',
+                justifyContent: 'center',
+                gap: 2,
+                transition: 'background-color var(--t-fast) ease, color var(--t-fast) ease',
                 position: 'relative',
                 flexShrink: 0,
               }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'var(--color-primary-soft)' }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(var(--tech-cyan-rgb), 0.06)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent' }}
             >
-              <i className={item.icon} style={{ fontSize: 22, width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: sidebarIconColor(item.color, active), transition: 'color 0.2s ease' }} />
-              <span style={{ fontSize: 11, lineHeight: '1.2', color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontWeight: active ? 500 : 400, transition: 'color 0.2s ease' }}>{item.label}</span>
+              <i className={item.icon} style={{ fontSize: 19, width: 19, height: 19, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: active ? 'var(--tech-cyan)' : sidebarIconColor(item.color, false), transition: 'color var(--t-fast) ease' }} />
+              <span style={{ fontSize: 10, lineHeight: '1', color: active ? 'var(--tech-cyan)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontWeight: active ? 600 : 400, fontFamily: 'var(--font-display)', transition: 'color var(--t-fast) ease' }}>{item.label}</span>
               {unreadBadge && (
                 <span style={{
-                  position: 'absolute', top: 6, right: 6,
+                  position: 'absolute', top: 3, right: 3,
                   minWidth: 16, height: 16, padding: '0 4px', borderRadius: 9999,
-                  backgroundColor: 'var(--color-primary)', color: '#fff',
+                  backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary)',
                   fontSize: 9, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
@@ -120,9 +121,9 @@ export function Sidebar() {
       {/* Footer */}
       <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0 14px' }}>
         <span style={{
-          fontSize: 10.5, lineHeight: '1.2', color: 'var(--color-text-muted)',
+          fontSize: 9, lineHeight: '1.2', color: 'var(--color-text-muted)',
           whiteSpace: 'nowrap', cursor: 'default',
-          fontFamily: 'var(--font-family-cn)',
+          fontFamily: 'var(--font-mono)',
         }}>
           {unreadTotal > 0 ? `${unreadTotal} 未读` : ''}
         </span>

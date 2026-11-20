@@ -143,7 +143,7 @@ export function TopNav({
     <header
       className="app-topnav px-3 sm:px-6"
       style={{
-        height: 'calc(72px + env(safe-area-inset-top))',
+        height: 'calc(64px + env(safe-area-inset-top))',
         paddingTop: 'env(safe-area-inset-top)',
         boxSizing: 'border-box',
         display: 'flex',
@@ -157,16 +157,17 @@ export function TopNav({
       >
         {!hideBrand && (
           <>
-            <LogoIcon size={26} />
+            <LogoIcon size={24} />
             <span
               className="brand-cn"
               style={{
-                fontSize: '20px',
+                fontSize: '18px',
                 fontWeight: 700,
+                letterSpacing: '0.3px',
                 color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-family-cn)',
+                fontFamily: 'var(--font-display)',
                 lineHeight: 1.2,
-                transition: 'color var(--transition-base)',
+                transition: 'color var(--t-fast) ease, text-shadow var(--t-fast) ease',
               }}
             >
               懒猫微邮
@@ -174,8 +175,8 @@ export function TopNav({
             <div
               className="hidden sm:block"
               style={{
-                width: '2px',
-                height: '20px',
+                width: '1.5px',
+                height: '18px',
                 backgroundColor: 'var(--color-border)',
               }}
             ></div>
@@ -184,10 +185,11 @@ export function TopNav({
         <span
           className="hidden sm:inline"
           style={{
-            fontSize: '16px',
+            fontSize: '14px',
             color: 'var(--color-text-secondary)',
-            fontFamily: 'var(--font-family-cn)',
+            fontFamily: 'var(--font-display)',
             lineHeight: 1.2,
+            letterSpacing: '0.2px',
           }}
         >
           {pageTitle}
@@ -220,7 +222,7 @@ export function TopNav({
                     fontSize: '9px',
                     fontWeight: 700,
                     backgroundColor: 'var(--color-primary)',
-                    color: '#ffffff',
+                    color: 'var(--color-on-primary)',
                   }}
                 >
                   {inboxUnread > 99 ? '99+' : inboxUnread}
@@ -236,12 +238,12 @@ export function TopNav({
                     top: 'calc(100% + 8px)',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    width: 224,
+                    width: 132,
                     maxWidth: 'calc(100vw - 48px)',
-                    backgroundColor: 'var(--color-bg-white)',
-                    border: '1px solid var(--color-border-soft)',
+                    backgroundColor: 'var(--color-bg-card)',
+                    border: '0.6px solid var(--color-border)',
                     borderRadius: 12,
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
+                    boxShadow: 'var(--shadow-lg), 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.12)',
                     padding: 6,
                     display: 'flex',
                     flexDirection: 'column',
@@ -261,14 +263,15 @@ export function TopNav({
                           gap: 10,
                           padding: '10px 12px',
                           borderRadius: 8,
-                          backgroundColor: active ? 'var(--color-primary-soft)' : 'transparent',
-                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                          backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+                          color: active ? 'var(--tech-cyan)' : 'var(--color-text-secondary)',
                           border: 'none',
                           cursor: 'pointer',
-                          fontFamily: 'var(--font-family-cn)',
+                          fontFamily: 'var(--font-display)',
                           fontSize: '13px',
-                          fontWeight: active ? 500 : 400,
+                          fontWeight: active ? 600 : 500,
                           textAlign: 'left',
+                          transition: 'background-color var(--t-fast) ease, color var(--t-fast) ease',
                         }}
                       >
                         <i
@@ -284,7 +287,7 @@ export function TopNav({
                               padding: '0 5px',
                               borderRadius: 9999,
                               backgroundColor: 'var(--color-primary)',
-                              color: '#fff',
+                              color: 'var(--color-on-primary)',
                               fontSize: 10,
                               fontWeight: 700,
                               display: 'flex',
@@ -334,7 +337,7 @@ export function TopNav({
                           fontWeight: 700,
                           lineHeight: 1,
                           backgroundColor: 'var(--color-primary)',
-                          color: '#ffffff',
+                          color: 'var(--color-on-primary)',
                         }}
                       >
                         {inboxUnread > 99 ? '99+' : inboxUnread}
@@ -381,17 +384,18 @@ export function TopNav({
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               style={{
-                height: '32px',
+                height: '34px',
                 paddingLeft: '30px',
                 paddingRight: '12px',
-                width: '160px',
+                width: '180px',
                 borderRadius: '8px',
                 outline: 'none',
                 fontSize: '13px',
                 backgroundColor: searchFocused ? 'var(--color-bg-white)' : 'var(--color-bg-secondary)',
-                border: `0.7px solid ${searchFocused ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                border: `0.6px solid ${searchFocused ? 'var(--tech-cyan)' : 'var(--color-border)'}`,
                 color: 'var(--color-text-primary)',
-                transition: 'all var(--transition-base)',
+                boxShadow: searchFocused ? '0 0 0 3px rgba(var(--tech-cyan-rgb), 0.18)' : 'none',
+                transition: 'all var(--t-fast) ease',
                 fontFamily: 'var(--font-family-cn)',
               }}
               placeholder="搜索邮件..."
@@ -449,17 +453,18 @@ export function TopNav({
           <div
             className="avatar-btn flex items-center justify-center cursor-pointer"
             style={{
-              width: '28px',
-              height: '28px',
+              width: '30px',
+              height: '30px',
               borderRadius: '50%',
               backgroundColor: avatarBg,
-              transition: 'opacity var(--transition-base)',
+              boxShadow: '0 0 0 1.5px var(--color-bg-white), 0 2px 8px rgba(0,0,0,0.12)',
+              transition: 'opacity var(--t-fast) ease, transform var(--t-fast) var(--ease-spring)',
               flexShrink: 0,
             }}
             title={userAccount.name || userAccount.email}
             onClick={() => onOpenSettings?.()}
           >
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#ffffff' }}>{avatarText}</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>{avatarText}</span>
           </div>
         )}
       </div>

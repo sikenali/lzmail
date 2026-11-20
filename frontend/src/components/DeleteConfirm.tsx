@@ -27,18 +27,18 @@ export function DeleteConfirm({ open, title = '确认删除', message = '确定�
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onCancel}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px]" />
       <div
-        className="relative w-[90%] max-w-[400px] rounded-[16px] p-6 shadow-lg"
-        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', boxShadow: 'var(--card-shadow)' }}
+        className="relative w-[90%] max-w-[400px] rounded-[14px] p-6 shadow-lg"
+        style={{ backgroundColor: 'var(--color-bg-card)', border: '0.6px solid var(--color-border)', boxShadow: 'var(--modal-shadow)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--danger-bg)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--danger-bg)', border: '0.6px solid color-mix(in srgb, var(--danger) 25%, transparent)' }}>
             <AlertTriangle className="w-4 h-4" style={{ color: 'var(--danger)' }} />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>{title}</h3>
+            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>{title}</h3>
             <p className="text-[13px] mt-0.5" style={{ color: 'var(--foreground-tertiary)' }}>{message}</p>
           </div>
         </div>
@@ -47,7 +47,7 @@ export function DeleteConfirm({ open, title = '确认删除', message = '确定�
             onClick={onCancel}
             disabled={confirming}
             className="px-4 h-9 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50"
-            style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}
+            style={{ border: '0.6px solid var(--color-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'transparent' }}
           >
             取消
           </button>

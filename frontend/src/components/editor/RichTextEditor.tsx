@@ -90,9 +90,9 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
     }
 
     return (
-      <div className={`rounded-[8px] border overflow-hidden ${className}`} style={{ borderColor: 'rgba(229,217,196,1)', backgroundColor: 'var(--background)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className={`rounded-[8px] border overflow-hidden ${className}`} style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--background)', height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Toolbar */}
-        <div className="flex items-center gap-0.5 px-3 py-2 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+        <div className="flex items-center gap-0.5 px-3 py-2 border-b" style={{ borderColor: 'var(--color-border)' }}>
           <ToolbarBtn
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
@@ -114,7 +114,7 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
           >
             <UnderlineIcon className="w-4 h-4" />
           </ToolbarBtn>
-          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'var(--color-border)' }} />
           <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="标题1">
             <Heading1 className="w-4 h-4" />
           </ToolbarBtn>
@@ -124,14 +124,14 @@ const RichTextEditorInner = forwardRef<RichTextEditorHandle, RichTextEditorProps
           <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="引用">
             <Quote className="w-4 h-4" />
           </ToolbarBtn>
-          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'var(--color-border)' }} />
           <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="无序列表">
             <List className="w-4 h-4" />
           </ToolbarBtn>
           <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="有序列表">
             <ListOrdered className="w-4 h-4" />
           </ToolbarBtn>
-          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'rgba(229,217,196,1)' }} />
+          <div className="w-[1px] h-5 mx-1.5" style={{ backgroundColor: 'var(--color-border)' }} />
           <ToolbarBtn onClick={insertImage} title="插入图片">
             <ImageIcon className="w-4 h-4" />
           </ToolbarBtn>

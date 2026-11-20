@@ -1,0 +1,67 @@
+{
+  "name": "lzmail",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LZMail desktop shell",
+  "homepage": "https://github.com/sikenali/lzmail",
+  "main": "main.js",
+  "author": "sikenali",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "cloud.lazycat.app.lzmail",
+    "productName": "LZMail",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "bin/lzmail*"
+    ],
+    "asarUnpack": [
+      "bin/**"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "lzmail-windows-x64-${version}.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network;Email",
+      "maintainer": "sikenali",
+      "artifactName": "lzmail-linux-x64-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "artifactName": "lzmail-macos-${arch}-${version}.dmg"
+    }
+  }
+}

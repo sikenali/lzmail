@@ -11,12 +11,15 @@ import (
 	"github.com/lzmail/backend/internal/sse"
 	"github.com/lzmail/backend/internal/store"
 	"github.com/lzmail/backend/internal/sync"
+	"github.com/lzmail/backend/internal/webui"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -83,8 +86,37 @@ func ensureDir(path string) {
 	}
 }
 
+// desktopBuild 由 CI 通过 -X main.desktopBuild=true 注入。
+// 普通服务端 / 开发模式保持 false，不自动打开浏览器、不改变默认数据目录。
+var desktopBuild = "false"
+
+// openBrowser 在桌面模式下打开默认浏览器；失败时仅记录日志，不影响服务。
+func openBrowser(url string) {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	default:
+		cmd = exec.Command("xdg-open", url)
+	}
+	if err := cmd.Start(); err != nil {
+		log.Printf("[desktop] open browser failed: %v", err)
+	}
+}
+
 func main() {
 	cfg := config.Load()
+
+	// 桌面单文件构建（内置前端）在未显式指定 DATA_DIR 时，使用系统用户数据目录，
+	// 避免双击启动时把数据写到不确定的当前工作目录。服务端/LPK 部署仍使用原有默认值。
+	if desktopBuild == "true" && webui.Available() && os.Getenv("DATA_DIR") == "" {
+		if dir, err := os.UserConfigDir(); err == nil && dir != "" {
+			cfg.DataDir = filepath.Join(dir, "lzmail")
+			cfg.ArchiveDir = filepath.Join(cfg.DataDir, "archives")
+		}
+	}
 	log.Println("lzmail backend starting...")
 
 	ensureDir(cfg.DataDir)
@@ -131,6 +163,9 @@ func main() {
 	handler := api.NewHandler(accountStore, emailStore, contactStore, settingsStore, db, sseHub, archiveDir, syncEngine, oauthManager)
 	mux := http.NewServeMux()
 	handler.Register(mux)
+	if webui.Available() {
+		mux.Handle("/", webui.Handler())
+	}
 
 	wrapped := corsMiddleware(api.LoggingMiddleware(api.PathRewriteMiddleware(mux)))
 
@@ -145,6 +180,12 @@ func main() {
 	}
 	log.Println("listening on", addr)
 	go runCleanupJob(accountStore, emailStore, settingsStore)
+	if desktopBuild == "true" && webui.Available() && os.Getenv("LZMAIL_NO_BROWSER") != "1" {
+		go func() {
+			time.Sleep(900 * time.Millisecond)
+			openBrowser("http://127.0.0.1:" + cfg.Port)
+		}()
+	}
 	log.Fatal(srv.ListenAndServe())
 }
 

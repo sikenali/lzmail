@@ -23,6 +23,11 @@ lzmail-server
 # Build artifacts
 frontend/.next/
 frontend/out/
+backend/internal/webui/dist/*
+!backend/internal/webui/dist/.keep
+desktop/node_modules/
+desktop/release/
+desktop/bin/
 lzc/_lpk_content/
 lzc/*.lpk
 lzc/output.lpk

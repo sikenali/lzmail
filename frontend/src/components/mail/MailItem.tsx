@@ -47,8 +47,8 @@ type MailItemProps = {
 }
 
 const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected = false, checked = false, onSelect, onToggle, onStar, folder, density = 'comfortable', isMobile = false }: MailItemProps) {
-   const bc = (brand || email.account_brand || '#c43d3d')
-  const brandColor = bc.startsWith('#') ? bc : '#c43d3d'
+   const bc = (brand || email.account_brand || '#00D4AA')
+  const brandColor = bc.startsWith('#') ? bc : '#00D4AA'
   const unread = email.is_read === false
   const subjectWeight = selected || unread ? '600' : '500'
   const senderWeight = selected || unread ? '600' : '500'
@@ -74,8 +74,9 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
   const rowStyle = {
     padding: mobile ? '12px 14px' : (compact ? '8px 20px' : '16px 20px'),
     minHeight: mobile ? '52px' : (compact ? '40px' : '57px'),
-    backgroundColor: selected ? 'var(--muted)' : 'transparent',
-    borderLeft: selected ? '2.7px solid var(--primary)' : '2.7px solid transparent',
+    backgroundColor: selected ? 'rgba(var(--tech-cyan-rgb), 0.07)' : 'transparent',
+    borderLeft: selected ? '2px solid var(--tech-cyan)' : '2px solid transparent',
+    boxShadow: selected ? 'inset 0 0 18px rgba(var(--tech-cyan-rgb), 0.08)' : 'none',
   }
   return (
     <div onClick={() => onSelect(email.id)} title="查看详情"
@@ -86,11 +87,11 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       {!mobile && (
         <div className="mt-0.5 shrink-0" onClick={(e) => { e.stopPropagation(); onToggle?.(email.id) }}>
           {isChecked ? (
-            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
-              <Check className="w-3 h-3" style={{ color: '#fff' }} />
+            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--tech-cyan)', boxShadow: '0 0 10px rgba(var(--tech-cyan-rgb), 0.35)' }}>
+              <Check className="w-3 h-3" style={{ color: 'var(--color-on-primary)' }} />
             </div>
           ) : (
-            <div className="w-5 h-5 rounded-md border-2" style={{ borderColor: 'rgba(139,115,85,0.4)' }} />
+            <div className="w-5 h-5 rounded-md border" style={{ borderColor: 'rgba(var(--tech-cyan-rgb), 0.28)' }} />
           )}
         </div>
       )}
@@ -107,7 +108,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight, fontSize: senderFontSize }}>
+          <span className="truncate" style={{ color: 'var(--foreground)', fontWeight: senderWeight, fontSize: senderFontSize, fontFamily: 'var(--font-display)' }}>
             {displayName}
           </span>
           {!mobile && (
@@ -139,7 +140,7 @@ const MemoizedMailItem = React.memo(function MailItem({ email, brand, selected =
               </button>
             </Tooltip>
           ) : unread ? (
-            <span className="w-[9px] h-2 rounded-full block" style={{ backgroundColor: 'var(--primary)' }} />
+            <span className="w-[9px] h-2 rounded-full block" style={{ backgroundColor: 'var(--tech-cyan)', boxShadow: '0 0 8px rgba(var(--tech-cyan-rgb), 0.55)' }} />
           ) : null}
         </div>
       )}

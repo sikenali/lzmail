@@ -122,9 +122,11 @@ function OAuthCallbackInner() {
     return (
       <AppShell>
         <div className="flex items-center justify-center py-20" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
-          <div className="w-full max-w-sm rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)' }}>
+          <div className="w-full max-w-sm rounded-[14px] p-6 space-y-4" style={{ backgroundColor: 'var(--color-bg-card)', border: '0.6px solid var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
             <div className="text-center">
-              <div className="text-3xl mb-2">{isGmail ? '📧' : '📬'}</div>
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.10)', border: '0.6px solid rgba(var(--tech-cyan-rgb), 0.25)' }}>
+                <i className={`${isGmail ? 'ri-mail-line' : 'ri-mail-open-line'}`} style={{ fontSize: 22, color: 'var(--tech-cyan)' }}></i>
+              </div>
               <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>授权成功</div>
               <div className="text-xs mt-1" style={{ color: 'var(--foreground-tertiary)' }}>请完善账号信息并保存</div>
             </div>
@@ -133,22 +135,22 @@ function OAuthCallbackInner() {
                 <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>账号名称</label>
                 <input value={name} onChange={e => setName(e.target.value)}
                   className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                  style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+                  style={{ border: '0.6px solid var(--color-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
               </div>
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--foreground-tertiary)' }}>邮箱地址（用于 IMAP/SMTP 登录）</label>
                 <input value={email} onChange={e => setEmail(e.target.value)} placeholder={`user@${isGmail ? 'gmail.com' : 'outlook.com'}`}
                   className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                  style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
+                  style={{ border: '0.6px solid var(--color-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground)' }} />
               </div>
               <button onClick={handleSubmit}
-                className="w-full h-10 rounded-lg text-sm font-medium text-white hover:opacity-90"
-                style={{ backgroundColor: 'var(--primary)' }}>
+                className="w-full h-10 rounded-lg text-sm font-medium hover:opacity-90"
+                style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-display)', boxShadow: '0 4px 18px rgba(var(--tech-cyan-rgb), 0.25)' }}>
                 保存账号
               </button>
               <button onClick={() => router.push('/#account')}
                 className="w-full h-9 rounded-lg text-sm"
-                style={{ border: '1px solid var(--card-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'var(--muted)' }}>
+                style={{ border: '0.6px solid var(--color-border)', color: 'var(--foreground-tertiary)', backgroundColor: 'transparent' }}>
                 取消
               </button>
             </div>
@@ -163,8 +165,8 @@ function OAuthCallbackInner() {
       <AppShell>
         <div className="flex items-center justify-center py-20" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(34,197,94,0.15)' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(34,197,94)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-success-soft)', border: '0.6px solid color-mix(in srgb, var(--color-success) 30%, transparent)', boxShadow: '0 0 24px color-mix(in srgb, var(--color-success) 25%, transparent)' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -190,8 +192,8 @@ function OAuthCallbackInner() {
             </>
           ) : status === 'error' ? (
             <>
-              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(239,68,68,0.15)' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(239,68,68)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-error-soft)', border: '0.6px solid color-mix(in srgb, var(--color-error) 30%, transparent)' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="15" y1="9" x2="9" y2="15" />
                   <line x1="9" y1="9" x2="15" y2="15" />
@@ -200,7 +202,7 @@ function OAuthCallbackInner() {
               <div className="text-lg font-medium">{message}</div>
               <button onClick={() => router.push('/#account')}
                 className="px-4 py-2 rounded-lg text-sm"
-                style={{ border: '1px solid var(--card-border)', backgroundColor: 'var(--muted)', color: 'var(--foreground-tertiary)' }}>
+                style={{ border: '0.6px solid var(--color-border)', backgroundColor: 'transparent', color: 'var(--foreground-tertiary)' }}>
                 返回账号管理
               </button>
             </>

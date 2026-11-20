@@ -51,15 +51,23 @@ let settingsCache: Settings | null = null
 
 export const DEFAULT_ACCENT = ''
 const LEGACY_DEFAULT_ACCENTS = ['#BE3B2E', '#C43D3D', '#c43d3d']
+// 旧暖砂色板 → 星云五色（仅做显示归一化，不写回服务端，保留用户选择语义）
+const LEGACY_ACCENT_MAP: Record<string, string> = {
+  '#d3a93f': '#FFB347', '#D3A93F': '#FFB347',
+  '#3e8c6e': '#00A878', '#3E8C6E': '#00A878',
+  '#4a72a8': '#4A9EFF', '#4A72A8': '#4A9EFF',
+  '#2f3640': '#4A9EFF', '#2F3640': '#4A9EFF',
+}
 
 // 同一页面内可能存在多个 useSettings 实例（如 AppShell 与设置面板），
 // 通过全局事件让所有实例实时同步，避免只有发起修改的那一份 state 更新。
 export const SETTINGS_EVENT = 'lzmail:settings-changed'
 
-// 归一化强调色：空值 / 旧默认值统一视为「跟随主题」。
+// 归一化强调色：空值 / 旧默认值统一视为「跟随主题」；旧色板映射到星云色板。
 export function normalizeAccent(color?: string | null): string {
   if (!color) return DEFAULT_ACCENT
-  return LEGACY_DEFAULT_ACCENTS.includes(color) ? DEFAULT_ACCENT : color
+  if (LEGACY_DEFAULT_ACCENTS.includes(color)) return DEFAULT_ACCENT
+  return LEGACY_ACCENT_MAP[color] || color
 }
 
 export function useSettings() {
@@ -77,18 +85,30 @@ export function useSettings() {
     }
   }
 
-  // 双轨镜像：同时写入传统 token 与 DESIGN token，使全站跟随强调色。
-  // 默认色（空）则移除内联覆盖，回落到主题默认主色。
+  // 双轨镜像：同时写入传统 token 与 DESIGN-1 Nebula token，使全站（含电光青发光/焦点环）
+  // 跟随强调色。默认色（空）则移除内联覆盖，回落到主题默认主色。
   // 仅负责渲染，不做持久化；持久化只由 setSetting 的显式用户操作触发。
   const applyAccent = (color?: string | null) => {
     const root = document.documentElement
     const value = normalizeAccent(color)
+    const hex = value.replace('#', '')
+    const rgb = hex.length === 6
+      ? [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)]
+      : null
+    const lum = rgb ? (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255 : 0.7
+    const onPrimary = lum > 0.55 ? '#0A1628' : '#FFFFFF'
     const soft = value ? value + '1A' : ''
     const vars: [string, string][] = [
       ['--primary', value],
       ['--primary-light', soft],
+      ['--primary-fill', value],
+      ['--primary-on', onPrimary],
       ['--color-primary', value],
       ['--color-primary-soft', soft],
+      ['--color-on-primary', onPrimary],
+      ['--tech-cyan', value],
+      ['--tech-cyan-rgb', rgb ? rgb.join(', ') : ''],
+      ['--btn-shadow', rgb ? `rgba(${rgb.join(', ')}, 0.30)` : ''],
     ]
     vars.forEach(([name, v]) => {
       if (v) root.style.setProperty(name, v)

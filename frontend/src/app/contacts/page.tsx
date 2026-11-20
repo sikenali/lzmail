@@ -13,15 +13,16 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { Tooltip } from '@/components/Tooltip'
 import type { Contact } from '@/types'
 
+/* 头像色板走主题变量，随浅色/深空主题自动切换，避免深色模式下的高亮色块 */
 const AVATAR_COLOR_PAIRS = [
-  { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
-  { bg: 'rgba(237,245,236,1)', text: '#5b8c5a' },
-  { bg: 'rgba(240,244,247,1)', text: '#6b8fa3' },
-  { bg: 'rgba(254,249,240,1)', text: '#c9a96e' },
-  { bg: 'rgba(253,235,242,1)', text: '#a855f7' },
-  { bg: 'rgba(254,240,238,1)', text: '#ea580c' },
-  { bg: 'rgba(224,242,254,1)', text: '#0891b2' },
-  { bg: 'rgba(243,237,227,1)', text: '#8b7355' },
+  { bg: 'var(--brand-green-soft)', text: 'var(--brand-green)' },
+  { bg: 'var(--brand-gold-soft)', text: 'var(--brand-gold-strong)' },
+  { bg: 'var(--brand-blue-soft)', text: 'var(--brand-blue)' },
+  { bg: 'var(--brand-red-soft)', text: 'var(--brand-red)' },
+  { bg: 'var(--color-info-soft)', text: 'var(--color-info)' },
+  { bg: 'var(--color-warning-soft)', text: 'var(--color-warning)' },
+  { bg: 'var(--color-success-soft)', text: 'var(--color-success)' },
+  { bg: 'var(--color-bg-secondary)', text: 'var(--color-text-secondary)' },
 ]
 
 function getAvatarStyle(name: string) {
@@ -147,143 +148,127 @@ export default function ContactsPage() {
 
   return (
     <AppShell>
-      <div className="px-4 py-5 md:px-10 md:py-8" style={{ backgroundColor: 'var(--background)', minHeight: '100%' }}>
-        {/* 标题行 */}
-        <div className="flex items-center gap-4 mb-6" style={{ flexWrap: 'wrap', rowGap: 12 }}>
-          <div className={isMobile ? 'flex items-center gap-4 w-full' : 'flex items-center gap-4 flex-1'}>
-            <div className="shrink-0" style={{ width: 5, height: 32, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--foreground)', lineHeight: '36px', margin: 0 }}>
-                联系人
-              </h1>
-              <p style={{ fontSize: 13, color: 'var(--foreground-tertiary)', lineHeight: '18px', margin: '4px 0 0' }}>
-                管理您的联系人列表
-              </p>
-            </div>
+      <div className="workspace-page">
+        {/* §4.1 标题行（复用 lzc2vsdx ResultView） */}
+        <div className="result-title-row">
+          <div className="title-left">
+            <h1>联系人</h1>
+            <span className="status-pill">
+              <i className="ri-contacts-book-line" />
+              {total} 人
+            </span>
+            <span className="title-desc">管理您的联系人列表</span>
           </div>
-          {/* 账号选择器 */}
-          {accounts.length > 1 && (
-            <select
-              value={selectedAccountId ?? ''}
-              onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
-              className="h-[40px] px-3 rounded-[8px] text-[13px] outline-none"
-              style={{ backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
-            >
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.email}</option>
-              ))}
-            </select>
-          )}
-          {/* 搜索框 */}
-          <div className="relative flex-1 max-w-[280px]" style={{ flexShrink: 0, flexBasis: isMobile ? '100%' : undefined, maxWidth: isMobile ? '100%' : undefined }}>
-            <input
-              value={searchQ}
-              onChange={e => handleSearch(e.target.value)}
-              placeholder="搜索姓名或邮箱..."
-              className="w-full h-[40px] pl-9 pr-4 rounded-[8px] outline-none text-[13px]"
-              style={{ backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
-            />
-            {searchQ && (
-              <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(184,168,138,1)' }}>
-                <X className="w-3.5 h-3.5" />
-              </button>
+          <div className="title-actions" style={{ flexWrap: 'wrap' }}>
+            {accounts.length > 1 && (
+              <select
+                value={selectedAccountId ?? ''}
+                onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
+                className="h-[36px] px-3 rounded-[8px] text-[13px] outline-none"
+                style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)', fontFamily: 'var(--font-family-cn)' }}
+              >
+                {accounts.map(a => (
+                  <option key={a.id} value={a.id}>{a.email}</option>
+                ))}
+              </select>
             )}
-          </div>
-          <button
-            onClick={openCreate}
-            disabled={accounts.length === 0}
-            title={accounts.length === 0 ? '请先在「账号管理」中添加邮箱账号' : undefined}
-            className="flex items-center gap-2 h-[40px] px-5 rounded-[10px] text-[14px] font-medium transition-opacity hover:opacity-90 shrink-0"
-            style={{ backgroundColor: accounts.length === 0 ? 'var(--color-border)' : 'rgba(107,143,163,1)', color: accounts.length === 0 ? 'var(--color-text-faint)' : '#ffffff', cursor: accounts.length === 0 ? 'not-allowed' : 'pointer' }}
-          >
-            <UserAdd className="w-4 h-4" />
-            添加联系人
-          </button>
-        </div>
-
-        {/* Featured contacts grid */}
-        {!loading && contacts.length > 0 && (
-          <div className="mb-8" style={{ paddingTop: isMobile ? 12 : 32 }}>
-            <div className="flex gap-5" style={{ display: 'flex', overflowX: isMobile ? 'auto' : undefined, paddingBottom: isMobile ? 4 : undefined }}>
-              {contacts.slice(0, 4).map((c) => (
-                <div key={c.id}
-                  className="flex flex-col"
-                  style={{
-                    backgroundColor: 'var(--card)',
-                    border: '0.7px solid var(--card-border)',
-                    borderRadius: 16,
-                    padding: 24,
-                    boxShadow: '0 2px 12px rgba(139,115,85,0.06)',
-                    flex: 1,
-                    minWidth: isMobile ? 260 : 0,
-                  }}
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center justify-center shrink-0" style={{ width: 56, height: 56, borderRadius: 9999, backgroundColor: getAvatarStyle(c.name).bg }}>
-                      <span style={{ fontSize: 20, fontWeight: 700, color: getAvatarStyle(c.name).text }}>
-                        {c.name?.[0] || '?'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--foreground)', lineHeight: '22px' }}>{c.name || '(无名)'}</span>
-                      </div>
-                      {c.title && <span style={{ fontSize: 13, color: 'var(--foreground-tertiary)', lineHeight: '18px' }}>{c.title}</span>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 mb-4">
-                    {c.email && (
-                      <div className="flex items-center gap-2">
-                        <MailIcon className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
-                        <span style={{ fontSize: 13, color: 'var(--foreground-secondary)' }}>{c.email}</span>
-                      </div>
-                    )}
-                    {c.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
-                        <span style={{ fontSize: 13, color: 'var(--foreground-secondary)' }}>{c.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-auto">
-                    <button
-                      disabled={!c.email}
-                      onClick={() => { if (!c.email) return; router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
-                      className="flex items-center justify-center gap-2 w-full h-[37px] rounded-[8px]"
-                      style={{ backgroundColor: getAvatarStyle(c.name).bg, color: getAvatarStyle(c.name).text, fontSize: 12, fontWeight: 500, opacity: c.email ? 1 : 0.4, cursor: c.email ? 'pointer' : 'not-allowed' }}
-                    >
-                      <Send className="w-[14px] h-[14px]" style={{ color: getAvatarStyle(c.name).text }} />
-                      发邮件
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Table section */}
-        <div className="rounded-[16px] overflow-x-auto" style={{ backgroundColor: 'var(--card)', padding: isMobile ? 12 : 24 }}>
-          <div style={{ minWidth: isMobile ? undefined : 1056 }}>
-          {/* Table title bar */}
-          <div className="flex items-center justify-between mb-5" style={{ flexWrap: 'wrap', rowGap: 8 }}>
-            <div className="flex items-center gap-3">
-              <div className="shrink-0" style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: 'rgba(107,143,163,1)' }} />
-              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
-              <span className="flex items-center justify-center" style={{ width: 42, height: 22, borderRadius: 6, backgroundColor: 'var(--teal-light)', fontSize: 12, fontWeight: 500, color: 'var(--teal)' }}>
-                {total}人
-              </span>
+            <div className="relative" style={{ width: isMobile ? '100%' : 220 }}>
+              <i className="ri-search-line" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-muted)' }} />
+              <input
+                value={searchQ}
+                onChange={e => handleSearch(e.target.value)}
+                placeholder="搜索姓名或邮箱..."
+                className="w-full h-[36px] pl-8 pr-8 rounded-[8px] outline-none text-[13px]"
+                style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }}
+              />
+              {searchQ && (
+                <button onClick={() => handleSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }}>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <button
-              onClick={() => setSortAsc(a => !a)}
-              className="flex items-center gap-1 h-8 px-3 rounded-[8px]"
-              style={{ backgroundColor: 'var(--muted)', fontSize: 12, fontWeight: 500, color: 'var(--foreground-secondary)' }}
+              onClick={openCreate}
+              disabled={accounts.length === 0}
+              title={accounts.length === 0 ? '请先在「账号管理」中添加邮箱账号' : undefined}
+              className="save-btn"
+              style={{ opacity: accounts.length === 0 ? 0.45 : 1, cursor: accounts.length === 0 ? 'not-allowed' : 'pointer' }}
             >
-              {sortAsc ? '按名称' : '按名称↓'}
-              <ArrowUpDown className="w-3.5 h-3.5" />
+              <UserAdd className="w-4 h-4" />
+              添加联系人
             </button>
           </div>
+        </div>
 
+        {/* lzc2vsdx 工作区双栏：左列常用联系人 + 右列联系人表格 */}
+        <div className="workspace-columns">
+          <div className="left-column">
+            <section className="card panel-card">
+              <div className="panel-header">
+                <span className="title-bar" />
+                <span className="title-text">常用联系人</span>
+                <span className="title-desc">快速发信</span>
+              </div>
+              <div className="type-list">
+                {loading ? (
+                  <div className="type-desc" style={{ padding: '12px 4px' }}>加载中...</div>
+                ) : contacts.length === 0 ? (
+                  <div className="type-card" style={{ cursor: 'default' }}>
+                    <span className="type-icon" style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text-muted)' }}>
+                      <i className="ri-contacts-line" />
+                    </span>
+                    <span className="type-texts">
+                      <span className="type-title">暂无联系人</span>
+                      <span className="type-desc">点击右上角「添加联系人」</span>
+                    </span>
+                  </div>
+                ) : contacts.slice(0, 6).map((c) => {
+                  const s = getAvatarStyle(c.name)
+                  return (
+                    <div key={c.id} className="type-card" style={{ cursor: 'default' }}>
+                      <span className="type-icon" style={{ background: s.bg, color: s.text, fontWeight: 700, fontSize: 14 }}>
+                        {c.name?.[0] || '?'}
+                      </span>
+                      <span className="type-texts">
+                        <span className="type-title">{c.name || '(无名)'}</span>
+                        <span className="type-desc">{c.email || c.phone || '—'}</span>
+                      </span>
+                      <button
+                        disabled={!c.email}
+                        onClick={() => { if (!c.email) return; router.push(`/compose?to=${encodeURIComponent(c.email)}`) }}
+                        className="check-badge active"
+                        style={{ border: 'none', cursor: c.email ? 'pointer' : 'not-allowed', opacity: c.email ? 1 : 0.4 }}
+                        aria-label="发邮件"
+                        title="发邮件"
+                      >
+                        <Send className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          </div>
+
+          <div className="right-column">
+            <section className="card preview-card" style={{ overflowX: 'auto' }}>
+              <div className="preview-header">
+                <div className="preview-title-left">
+                  <span className="title-bar" />
+                  <span className="title-text">{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
+                  <span className="title-desc">{total} 人</span>
+                </div>
+                <button
+                  onClick={() => setSortAsc(a => !a)}
+                  className="soft-action"
+                  style={{ height: 32, padding: '0 10px', fontSize: 12 }}
+                >
+                  {sortAsc ? '按名称' : '按名称↓'}
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div style={{ minWidth: isMobile ? undefined : 980, marginTop: 12 }}>
           {/* Table header */}
           {!isMobile && (
           <div className="flex items-center" style={{ height: 41, padding: '0 16px', marginBottom: 0 }}>
@@ -395,7 +380,7 @@ export default function ContactsPage() {
                     {menuId === c.id && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setMenuId(null)} />
-                        <div className="absolute right-4 z-50 mt-1 rounded-[10px] py-1 shadow-lg" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', width: 120 }}>
+                        <div className="absolute right-4 z-50 mt-1 rounded-[10px] py-1 shadow-lg" style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)', width: 120 }}>
                           <button
                             onClick={() => openEdit(c)}
                             className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[var(--muted)]"
@@ -448,7 +433,7 @@ export default function ContactsPage() {
                       key={p}
                       onClick={() => setPage(p)}
                       className="h-8 w-8 rounded-[8px] text-[13px] flex items-center justify-center"
-                      style={{ backgroundColor: page === p ? 'var(--primary)' : 'var(--muted)', color: page === p ? '#fff' : 'var(--foreground-secondary)' }}
+                      style={{ backgroundColor: page === p ? 'var(--tech-cyan)' : 'var(--muted)', color: page === p ? 'var(--color-on-primary)' : 'var(--foreground-secondary)', fontFamily: 'var(--font-mono)' }}
                     >
                       {p + 1}
                     </button>
@@ -465,6 +450,8 @@ export default function ContactsPage() {
               </div>
             </div>
           )}
+              </div>
+            </section>
           </div>
         </div>
 

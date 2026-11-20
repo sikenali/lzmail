@@ -63,14 +63,14 @@ export function TagManager({ email, onClose }: { email: Email; onClose: () => vo
     borderRadius: 9999,
     fontSize: 11,
     fontWeight: 500,
-    border: `0.7px solid ${active ? 'var(--primary)' : 'var(--card-border)'}`,
-    backgroundColor: active ? 'var(--primary-light)' : 'transparent',
-    color: active ? 'var(--primary)' : 'var(--foreground-secondary)',
+    border: `0.6px solid ${active ? 'rgba(var(--tech-cyan-rgb), 0.35)' : 'var(--card-border)'}`,
+    backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+    color: active ? 'var(--tech-cyan)' : 'var(--foreground-secondary)',
     cursor: 'pointer',
   })
 
   return (
-    <div className="w-[240px] p-3 rounded-[12px]" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', boxShadow: '0 8px 28px rgba(0,0,0,0.14)' }}>
+    <div className="w-[240px] p-3 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-card)', border: '0.6px solid var(--color-border)', boxShadow: 'var(--shadow-lg), 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.12)' }}>
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: 'var(--foreground)' }}>
           <TagIcon className="w-4 h-4" style={{ color: 'var(--primary)' }} /> 标签
@@ -105,11 +105,11 @@ export function TagManager({ email, onClose }: { email: Email; onClose: () => vo
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); create() } }}
           placeholder="新标签名称"
           className="flex-1 min-w-0 h-8 px-2.5 rounded-[8px] outline-none text-[12px]"
-          style={{ backgroundColor: 'var(--background)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+          style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }}
         />
         <button onClick={create} disabled={busy || !newName.trim()} aria-label="创建标签"
           className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-opacity disabled:opacity-40"
-          style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+          style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)' }}>
           <Plus className="w-4 h-4" />
         </button>
       </div>

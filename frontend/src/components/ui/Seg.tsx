@@ -16,7 +16,7 @@ export function Seg<T extends string>({ options, value, onChange, size = 'md' }:
   return (
     <div
       role="group"
-      style={{ display: 'flex', alignItems: 'center', gap: 4, padding: 4, backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border-soft)', borderRadius: 10, maxWidth: '100%', overflowX: 'auto' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 4, padding: 4, backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border-soft)', borderRadius: 10, maxWidth: '100%', overflowX: 'auto' }}
     >
       {options.map(o => {
         const active = value === o.value
@@ -28,12 +28,12 @@ export function Seg<T extends string>({ options, value, onChange, size = 'md' }:
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px',
               height: h, borderRadius: 7, fontSize: 13,
-              backgroundColor: active ? 'var(--color-bg-white)' : 'transparent',
-              color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
+              backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+              color: active ? 'var(--tech-cyan)' : 'var(--color-text-secondary)',
+              boxShadow: active ? '0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.25)' : 'none',
               fontWeight: active ? 600 : 500,
-              border: 'none', cursor: 'pointer', transition: 'all var(--transition-fast)',
-              whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-family-cn)',
+              border: 'none', cursor: 'pointer', transition: 'background-color var(--t-fast) ease, color var(--t-fast) ease',
+              whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-display)',
             }}
           >
             {o.icon}

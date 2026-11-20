@@ -6,14 +6,14 @@ import { X } from '@/lib/icons'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
-  { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
-  { bg: 'rgba(237,245,236,1)', text: '#5b8c5a' },
-  { bg: 'rgba(240,244,247,1)', text: '#6b8fa3' },
-  { bg: 'rgba(254,249,240,1)', text: '#c9a96e' },
-  { bg: 'rgba(253,235,242,1)', text: '#a855f7' },
-  { bg: 'rgba(254,240,238,1)', text: '#ea580c' },
-  { bg: 'rgba(224,242,254,1)', text: '#0891b2' },
-  { bg: 'rgba(243,237,227,1)', text: '#8b7355' },
+  { bg: 'var(--brand-green-soft)', text: 'var(--brand-green)' },
+  { bg: 'var(--brand-gold-soft)', text: 'var(--brand-gold-strong)' },
+  { bg: 'var(--brand-blue-soft)', text: 'var(--brand-blue)' },
+  { bg: 'var(--brand-red-soft)', text: 'var(--brand-red)' },
+  { bg: 'var(--color-info-soft)', text: 'var(--color-info)' },
+  { bg: 'var(--color-warning-soft)', text: 'var(--color-warning)' },
+  { bg: 'var(--color-success-soft)', text: 'var(--color-success)' },
+  { bg: 'var(--color-bg-secondary)', text: 'var(--color-text-secondary)' },
 ]
 
 function getAvatarStyle(name: string) {
@@ -108,12 +108,12 @@ export function ContactFormModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto" style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fadeIn 0.2s ease' }} onClick={onClose}>
-      <div className="w-[440px] max-w-full rounded-[16px] p-6" style={{ backgroundColor: 'var(--card)', border: '1px solid var(--card-border)', animation: 'scaleIn 0.2s ease' }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto" style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s ease' }} onClick={onClose}>
+      <div className="w-[440px] max-w-full rounded-[14px] p-6" style={{ backgroundColor: 'var(--color-bg-card)', border: '0.6px solid var(--color-border)', boxShadow: 'var(--modal-shadow)', animation: 'scaleIn 0.2s ease' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{editingId ? '编辑联系人' : '新建联系人'}</h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)]">
-            <X className="w-4 h-4" style={{ color: 'var(--foreground-tertiary)' }} />
+          <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)', fontFamily: 'var(--font-display)', letterSpacing: '0.2px' }}>{editingId ? '编辑联系人' : '新建联系人'}</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-[8px] hover:bg-[rgba(0,212,170,0.08)]" style={{ color: 'var(--color-text-muted)', transition: 'color var(--t-fast) ease' }}>
+            <X className="w-4 h-4" />
           </button>
         </div>
         <div className="flex items-center gap-3 mb-4">
@@ -135,15 +135,15 @@ export function ContactFormModal({
               placeholder={f.ph}
               value={form[f.key]}
               onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-              className="w-full h-[40px] px-4 rounded-[8px] outline-none text-[14px] bg-transparent"
-              style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+              className="w-full h-[40px] px-4 rounded-[8px] outline-none text-[14px]"
+              style={{ border: '0.6px solid var(--color-border)', backgroundColor: 'var(--color-bg-secondary)', color: 'var(--foreground)', fontFamily: 'var(--font-family-cn)' }}
             />
           ))}
           <div className="flex gap-2 justify-end pt-2">
-            <button onClick={onClose} className="px-4 h-9 rounded-[8px] text-[14px] hover:bg-[var(--muted)]" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>
+            <button onClick={onClose} className="px-4 h-9 rounded-[8px] text-[14px] hover:bg-[var(--muted)]" style={{ border: '0.6px solid var(--color-border)', color: 'var(--foreground-tertiary)' }}>
               取消
             </button>
-            <button onClick={saveContact} disabled={saving} className="px-4 h-9 bg-[var(--primary)] text-white rounded-[8px] text-[14px] font-medium hover:opacity-90 disabled:opacity-50">
+            <button onClick={saveContact} disabled={saving} className="px-4 h-9 rounded-[8px] text-[14px] font-medium hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-display)' }}>
               {saving ? '保存中...' : '保存'}
             </button>
           </div>

@@ -23,9 +23,10 @@ export function AboutSettings() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'var(--card)',
-          border: '0.7px solid var(--card-border)',
-          borderRadius: isMobile ? 14 : 16,
+          backgroundColor: 'var(--color-bg-card)',
+          border: '0.6px solid var(--color-border)',
+          borderRadius: 14,
+          boxShadow: 'var(--shadow-md)',
           minHeight: isMobile ? 420 : 480,
           padding: isMobile ? '32px 20px' : '40px 32px',
         }}
@@ -39,8 +40,9 @@ export function AboutSettings() {
             width: isMobile ? 96 : 118,
             height: isMobile ? 96 : 118,
             borderRadius: 9999,
-            border: '0.7px solid var(--card-border)',
-            backgroundColor: 'var(--primary-light)',
+            border: '0.6px solid rgba(var(--tech-cyan-rgb), 0.3)',
+            backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.10)',
+            boxShadow: '0 0 28px rgba(var(--tech-cyan-rgb), 0.22)',
           }}
         >
           <img
@@ -53,7 +55,7 @@ export function AboutSettings() {
         </div>
 
         {/* Brand Name */}
-        <div style={{ marginTop: isMobile ? 24 : 32, fontSize: isMobile ? 21 : 24, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.2 }}>
+        <div style={{ marginTop: isMobile ? 24 : 32, fontSize: isMobile ? 21 : 24, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.2, fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
           懒猫微邮
         </div>
 
@@ -81,7 +83,7 @@ export function AboutSettings() {
             aria-label="访问 GitHub 仓库"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: isMobile ? 24 : 32, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
           >
-            <i className="ri-github-line" style={{ fontSize: isMobile ? 30 : 34, color: 'var(--foreground-secondary)' }}></i>
+            <i className="ri-github-line" style={{ fontSize: isMobile ? 30 : 34, color: 'var(--tech-cyan)', transition: 'text-shadow var(--t-fast) ease' }}></i>
           </a>
         </Tooltip>
 

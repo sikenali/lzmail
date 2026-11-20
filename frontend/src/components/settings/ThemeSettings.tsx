@@ -31,39 +31,39 @@ interface LayoutOption {
 const THEMES: ThemeOption[] = [
   {
     id: 'light',
-    name: '浅色主题 · 暖砂',
-    desc: '当前默认，长时间阅读邮件不易疲劳',
-    skin: '#FBF7F0',
+    name: '浅色 · 星云',
+    desc: '默认科技浅色，界面清晰，长时间阅读邮件不易疲劳',
+    skin: '#F4F7FA',
     topbar: '#FFFFFF',
-    content: '#F3EDE3',
-    previewBg: '#F7EED4',
+    content: '#EEF2F7',
+    previewBg: '#EAF2F8',
   },
   {
     id: 'dark',
-    name: '深色主题 · 墨夜',
-    desc: '夜间或暗光环境邮件阅读更护眼',
-    skin: '#1E1E24',
-    topbar: '#2A2A32',
-    content: '#3A3A42',
-    previewBg: '#333A45',
+    name: '深色 · 深空',
+    desc: '深空科技底色，夜间或暗光环境处理邮件更护眼',
+    skin: '#0A0F18',
+    topbar: '#151D2C',
+    content: '#0F1623',
+    previewBg: '#0A0F18',
   },
 ]
 
 const ACCENTS: AccentOption[] = [
-  { key: 'default', name: '朱红 · 默认', color: '#BE3B2E', value: '' },
-  { key: '#d3a93f', name: '鎏金', color: '#D3A93F', value: '#D3A93F' },
-  { key: '#3e8c6e', name: '玉绿', color: '#3E8C6E', value: '#3E8C6E' },
-  { key: '#4a72a8', name: '云蓝', color: '#4A72A8', value: '#4A72A8' },
-  { key: '#2f3640', name: '黛墨', color: '#2F3640', value: '#2F3640' },
+  { key: 'default', name: '电光青 · 默认', color: '#00D4AA', value: '' },
+  { key: '#FFB347', name: '鎏金', color: '#FFB347', value: '#FFB347' },
+  { key: '#00A878', name: '玉绿', color: '#00A878', value: '#00A878' },
+  { key: '#4A9EFF', name: '云蓝', color: '#4A9EFF', value: '#4A9EFF' },
+  { key: '#FF4D6D', name: '珊瑚', color: '#FF4D6D', value: '#FF4D6D' },
 ]
 
 const LAYOUTS: LayoutOption[] = [
-  { id: 'topbar', name: '顶栏模式 · 居中导航', desc: '六大模块在顶栏居中排布，右上角统一为返回与设置' },
-  { id: 'sidebar', name: '侧边栏模式 · 左侧导航', desc: '七大模块在左侧竖列居中排布，顶栏不显示图标文字' },
+  { id: 'topbar', name: '顶栏模式 · 居中导航', desc: '邮件模块在顶栏居中排布，右上角统一为设置与账号入口' },
+  { id: 'sidebar', name: '侧边栏模式 · 左侧导航', desc: '邮件模块在左侧竖列居中排布，顶栏仅显示页面标题' },
 ]
 
-const LAYOUT_TAB_COLORS = ['#BE3B2E', '#D3A93F', '#3E8C6E', '#4A72A8', '#BE3B2E', '#D3A93F']
-const LAYOUT_SIDE_COLORS = ['#D3A93F', '#BE3B2E', '#3E8C6E', '#4A72A8', '#2F3640']
+const LAYOUT_TAB_COLORS = ['#00D4AA', '#FFB347', '#00A878', '#4A9EFF', '#FF4D6D', '#FFB347']
+const LAYOUT_SIDE_COLORS = ['#FFB347', '#00D4AA', '#00A878', '#4A9EFF', '#FF4D6D']
 
 export function ThemeSettings() {
   const { settings, setSetting } = useSettings()
@@ -117,168 +117,111 @@ export function ThemeSettings() {
       }
 
   return (
-    <div className="flex flex-col gap-5" style={{ maxWidth: 1620 }}>
-      {/* 外观主题 Card */}
-      <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: cardPadding }}>
-        <div style={{ fontSize: cardTitleSize, fontWeight: 500, color: 'var(--foreground)' }}>外观主题</div>
-        <div className={isMobile ? 'flex gap-3' : 'flex gap-6'} style={{ marginTop: isMobile ? 14 : 20 }}>
+    <div className="settings-view">
+      {/* §6.2 外观主题 Card（复用 lzc2vsdx ThemeSettingsView） */}
+      <section className="theme-card">
+        <h3 className="card-title">外观主题</h3>
+        <div className="mode-grid">
           {THEMES.map(theme => {
             const active = selectedTheme === theme.id
             return (
-              <div
+              <button
                 key={theme.id}
+                type="button"
+                className={`mode-card ${active ? 'active' : ''}`}
                 onClick={() => handleSelectTheme(theme.id)}
-                className={isMobile ? 'flex flex-col gap-3 relative' : 'flex flex-col gap-6 relative'}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  border: '0.7px solid ' + (active ? 'var(--color-primary)' : 'var(--card-border)'),
-                  backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--card)',
-                  borderRadius: 14,
-                  padding: mockupPadding,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
+                aria-pressed={active}
               >
-                <div
-                  className="absolute"
-                  style={{ top: 14, right: 14, zIndex: 2, width: 22, height: 22, borderRadius: 9999, backgroundColor: active ? 'var(--color-primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {active && <Check className="w-4 h-4 text-white" />}
-                </div>
-                <div className="flex flex-col justify-between" style={{ width: '100%', height: isMobile ? 96 : 128, borderRadius: 8, padding: mockupPadding, backgroundColor: theme.previewBg }}>
-                  <div style={{ width: '100%', height: isMobile ? 22 : 28, borderRadius: 5, backgroundColor: theme.topbar }} />
-                  <div style={{ width: '100%', height: isMobile ? 40 : 54, borderRadius: 6, backgroundColor: theme.content }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: nameSize, fontWeight: 500, color: 'var(--foreground)' }}>{theme.name}</div>
-                  <div style={{ fontSize: descSize, color: 'var(--foreground-tertiary)', marginTop: descMargin }}>{theme.desc}</div>
-                </div>
-              </div>
+                {active && (
+                  <span className="check-badge theme">
+                    <Check className="w-3 h-3" />
+                  </span>
+                )}
+                <span className={`thumb ${theme.id === 'light' ? 'thumb-light' : 'thumb-dark'}`}>
+                  <span className="thumb-bar" />
+                  <span className="thumb-content" />
+                </span>
+                <span className="mode-name">{theme.name}</span>
+                <span className="mode-desc">{theme.desc}</span>
+              </button>
             )
           })}
         </div>
-      </div>
+      </section>
 
-      {/* 强调色 Card */}
-      <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: cardPadding }}>
-        <div style={{ fontSize: cardTitleSize, fontWeight: 500, color: 'var(--foreground)' }}>强调色</div>
-        <div className="flex" style={{ gap: isMobile ? 10 : 40, marginTop: isMobile ? 14 : 24, flexWrap: isMobile ? 'wrap' : 'nowrap', justifyContent: isMobile ? 'space-around' : undefined }}>
+      {/* §6.3 强调色 Card */}
+      <section className="theme-card">
+        <h3 className="card-title">强调色</h3>
+        <div className="accent-row">
           {ACCENTS.map(accent => {
             const active = selectedAccent === accent.value
             return (
-              <div
+              <button
                 key={accent.key}
+                type="button"
+                className="accent-item"
                 onClick={() => handleSelectAccent(accent.value)}
-                className="flex flex-col items-center"
-                style={{ gap: isMobile ? 8 : 16, cursor: 'pointer' }}
+                aria-pressed={active}
               >
-                <div
-                  className="flex items-center justify-center"
-                  style={{ width: isMobile ? 40 : 80, height: isMobile ? 40 : 80, borderRadius: 9999, backgroundColor: accent.color, transition: 'all 0.2s' }}
-                >
-                  {active && <Check className={isMobile ? 'w-5 h-5 text-white' : 'w-[30px] h-[30px] text-white'} />}
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 11 : 15,
-                    color: active ? 'var(--foreground)' : 'var(--foreground-secondary)',
-                    fontWeight: active ? 700 : 400,
-                  }}
-                >
-                  {accent.name}
-                </div>
-              </div>
+                <span className={`accent-swatch ${active ? 'active' : ''}`} style={{ background: accent.color }}>
+                  {active && <Check className="w-5 h-5" style={{ color: accent.color === '#FFB347' ? '#0A1628' : '#FFFFFF' }} />}
+                </span>
+                <span className={`accent-name ${active ? 'active' : ''}`}>{accent.name}</span>
+              </button>
             )
           })}
         </div>
-      </div>
+      </section>
 
-      {/* 布局切换 Card */}
-      <div style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', borderRadius: 16, padding: cardPadding }}>
-        <div style={{ fontSize: cardTitleSize, fontWeight: 500, color: 'var(--foreground)' }}>布局切换</div>
-        <div className={isMobile ? 'flex gap-2' : 'flex gap-6'} style={{ marginTop: isMobile ? 12 : 20 }}>
+      {/* §6.4 布局切换 Card */}
+      <section className="theme-card">
+        <h3 className="card-title">布局切换</h3>
+        <div className="layout-grid">
           {LAYOUTS.map(lay => {
             const active = selectedLayout === lay.id
             return (
-              <div
+              <button
                 key={lay.id}
+                type="button"
+                className={`layout-card ${active ? 'active' : ''}`}
                 onClick={() => handleSelectLayout(lay.id)}
-                className={isMobile ? 'flex flex-col gap-2 relative' : 'flex flex-col gap-6 relative'}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  border: active ? '0.7px solid var(--color-primary)' : '0.7px solid var(--card-border)',
-                  backgroundColor: active ? 'var(--color-primary-soft)' : 'var(--card)',
-                  borderRadius: 14,
-                  padding: isMobile ? 10 : mockupPadding,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
+                aria-pressed={active}
               >
-                <div
-                  className="absolute"
-                  style={{ top: 10, right: 10, zIndex: 2, width: badgeSize, height: badgeSize, borderRadius: 9999, backgroundColor: active ? 'var(--color-primary)' : 'transparent', border: active ? 'none' : '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {active && <Check className={isMobile ? 'w-3 h-3 text-white' : 'w-4 h-4 text-white'} />}
-                </div>
-                {/* Layout Mockup */}
-                <div style={{ width: '100%', height: layout.h, borderRadius: 8, padding: layout.pad, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(255,255,255,0.5)', overflow: 'hidden', minWidth: 0 }}>
-                  {lay.id === 'topbar' ? (
-                    /* Topbar mockup */
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      <div style={{ height: layout.barH, display: 'flex', alignItems: 'center', padding: `0 ${layout.barPad}px`, gap: layout.barGap, flexShrink: 0, minWidth: 0 }}>
-                        <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#BE3B2E', flexShrink: 0 }} />
-                        <div style={{ width: layout.p1W, height: layout.p1H, borderRadius: 3, backgroundColor: '#2F3640', flexShrink: 0 }} />
-                        <div style={{ width: layout.p2W, height: layout.p2H, borderRadius: 3, backgroundColor: '#A7A296', flexShrink: 0 }} />
-                        <div style={{ flex: 1, display: 'flex', gap: layout.tabGap, justifyContent: 'center', overflow: 'hidden', minWidth: 0 }}>
-                          {Array.from({ length: layout.tabN }).map((_, i) => (
-                            <div key={i} style={{ width: layout.tabW, height: layout.tabH, borderRadius: 50, backgroundColor: LAYOUT_TAB_COLORS[i % LAYOUT_TAB_COLORS.length], opacity: 0.7, flexShrink: 0 }} />
-                          ))}
-                        </div>
-                        <div style={{ display: 'flex', gap: layout.rightGap, marginLeft: 'auto', flexShrink: 0 }}>
-                          <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
-                          <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
-                        </div>
-                      </div>
-                      <div style={{ flex: 1, display: 'flex', gap: layout.bodyGap, padding: `${layout.bodyPad}px 0 0`, minWidth: 0 }}>
-                        <div style={{ width: layout.listW, borderRadius: 6, backgroundColor: '#E2DDD2', flexShrink: 0 }} />
-                        <div style={{ flex: 1, borderRadius: 6, backgroundColor: '#E6E2D8', minWidth: 0 }} />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Sidebar mockup */
-                    <div style={{ flex: 1, display: 'flex', backgroundColor: 'rgba(245,241,230,1)', borderRadius: 8, minWidth: 0 }}>
-                      <div style={{ width: layout.sbW, display: 'flex', flexDirection: 'column', gap: layout.sbGap, alignItems: 'center', justifyContent: 'center', padding: `${layout.sbPad}px 0`, flexShrink: 0, backgroundColor: '#fff', borderRight: '1px solid #f0ebe3' }}>
-                        {LAYOUT_SIDE_COLORS.map((c, i) => (
-                          <div key={i} style={{ width: layout.sbItemW, height: layout.sbItemH, borderRadius: 50, backgroundColor: c, opacity: 0.7 }} />
-                        ))}
-                      </div>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: `${layout.bodyPad}px 0 0 ${layout.bodyGap}px`, minWidth: 0 }}>
-                        <div style={{ height: layout.barH, display: 'flex', alignItems: 'center', gap: layout.barGap, marginBottom: layout.bodyGap, flexShrink: 0, minWidth: 0 }}>
-                          <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#BE3B2E', flexShrink: 0 }} />
-                          <div style={{ width: layout.p1W, height: layout.p1H, borderRadius: 3, backgroundColor: '#2F3640', flexShrink: 0 }} />
-                          <div style={{ width: layout.p2W, height: layout.p2H, borderRadius: 3, backgroundColor: '#A7A296', flexShrink: 0 }} />
-                          <div style={{ flex: 1 }} />
-                          <div style={{ display: 'flex', gap: layout.rightGap, flexShrink: 0 }}>
-                            <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
-                            <div style={{ width: layout.dot, height: layout.dotH, borderRadius: '50%', backgroundColor: '#D6CDC8' }} />
-                          </div>
-                        </div>
-                        <div style={{ flex: 1, borderRadius: 6, backgroundColor: '#E6E2D8', minWidth: 0 }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div style={{ fontSize: layout.nameSize, fontWeight: 500, color: 'var(--foreground)' }}>{lay.name}</div>
-                  <div style={{ fontSize: layout.descSize, color: 'var(--foreground-tertiary)', marginTop: descMargin, lineHeight: 1.35 }}>{lay.desc}</div>
-                </div>
-              </div>
+                {active && (
+                  <span className="check-badge theme">
+                    <Check className="w-3 h-3" />
+                  </span>
+                )}
+                {lay.id === 'topbar' ? (
+                  <span className="mockup mock-topbar">
+                    <span className="mock-topbar-bar">
+                      <span className="nav-dot" /><span className="nav-dot" /><span className="nav-dot" />
+                      <span className="nav-dot" /><span className="nav-dot" /><span className="nav-dot" />
+                      <span className="actions-dot" /><span className="actions-dot" />
+                    </span>
+                    <span className="mock-topbar-content">
+                      <span className="block block-wide" /><span className="block" />
+                    </span>
+                  </span>
+                ) : (
+                  <span className="mockup mock-sidebar">
+                    <span className="mock-sidebar-rail">
+                      <span className="rail-dot" /><span className="rail-dot" /><span className="rail-dot" />
+                      <span className="rail-dot" /><span className="rail-dot" /><span className="rail-dot" />
+                    </span>
+                    <span className="mock-sidebar-main">
+                      <span className="main-title" />
+                      <span className="block block-wide" /><span className="block" />
+                    </span>
+                  </span>
+                )}
+                <span className="layout-name">{lay.name}</span>
+                <span className="layout-desc">{lay.desc}</span>
+              </button>
             )
           })}
         </div>
-      </div>
+      </section>
     </div>
   )
 }

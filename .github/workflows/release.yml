@@ -1,4 +1,4 @@
-name: Release LPK
+name: Release
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  lpk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,7 +22,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -60,23 +62,252 @@ jobs:
           VERSION=$(echo "${LPK_VERSION}" | sed 's/^v//')
           VERSION="${VERSION:-0.0.0}"
           echo "Building version: $VERSION"
-          # 设置版本号供 build.sh 使用
           export LPK_VERSION="$VERSION"
           bash build.sh
-          # 生成 LPK
           node $(npm root -g)/@lazycatcloud/lzc-cli/scripts/cli.js project release -o output.lpk
-          # 重命名为版本化文件名
           LPK_NAME="cloud.lazycat.app.lzmail-v${VERSION}.lpk"
           mv output.lpk "$LPK_NAME"
-          echo "LPK_FILE=$LPK_NAME" >> $GITHUB_ENV
           echo "Generated: $LPK_NAME"
 
-      - name: Get tag version
+      - name: Upload LPK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lpk
+          path: lzc/*.lpk
+
+  desktop-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build frontend
+        shell: bash
+        working-directory: frontend
+        run: |
+          npm ci --registry https://registry.npmmirror.com
+          # package-lock 仅在 Linux 上生成，缺少 Windows 原生可选依赖，显式补装
+          npm install --no-save lightningcss-win32-x64-msvc@1.32.0 @tailwindcss/oxide-win32-x64-msvc@4.3.3 --registry https://registry.npmmirror.com
+          npm run build
+
+      - name: Embed frontend assets
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cp -a frontend/out/. backend/internal/webui/dist/
+          echo "{\"version\":\"$VERSION\"}" > backend/internal/webui/dist/version.json
+
+      - name: Build backend binary
+        shell: bash
+        working-directory: backend
+        run: |
+          mkdir -p ../desktop/bin
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -X main.desktopBuild=true" \
+            -o "../desktop/bin/lzmail.exe" ./cmd/lzmail
+
+      - name: Build Electron Windows portable exe
+        shell: bash
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          npm ci --registry https://registry.npmmirror.com
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npx electron-builder --win portable --x64 --publish never
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: desktop/release/lzmail-windows-x64-*.exe
+
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Get version
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Tag: v$VERSION"
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci --registry https://registry.npmmirror.com
+          npm run build
+
+      - name: Embed frontend assets
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cp -a frontend/out/. backend/internal/webui/dist/
+          echo "{\"version\":\"$VERSION\"}" > backend/internal/webui/dist/version.json
+
+      - name: Build backend binary
+        working-directory: backend
+        run: |
+          mkdir -p ../desktop/bin
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -X main.desktopBuild=true" \
+            -o "../desktop/bin/lzmail" ./cmd/lzmail
+
+      - name: Build Electron Linux packages
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          npm ci --registry https://registry.npmmirror.com
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npx electron-builder --linux AppImage deb --x64 --publish never
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            desktop/release/lzmail-linux-x64-*.AppImage
+            desktop/release/lzmail-linux-x64-*.deb
+
+  desktop-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci --registry https://registry.npmmirror.com
+          # package-lock 仅在 Linux 上生成，缺少 macOS 原生可选依赖，按 runner 架构补装
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ]; then
+            npm install --no-save lightningcss-darwin-arm64@1.32.0 @tailwindcss/oxide-darwin-arm64@4.3.3 --registry https://registry.npmmirror.com
+          else
+            npm install --no-save lightningcss-darwin-x64@1.32.0 @tailwindcss/oxide-darwin-x64@4.3.3 --registry https://registry.npmmirror.com
+          fi
+          npm run build
+
+      - name: Embed frontend assets
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cp -a frontend/out/. backend/internal/webui/dist/
+          echo "{\"version\":\"$VERSION\"}" > backend/internal/webui/dist/version.json
+
+      - name: Install Electron tooling
+        working-directory: desktop
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          npm ci --registry https://registry.npmmirror.com
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Build macOS x86_64 dmg
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p desktop/bin
+          rm -f desktop/bin/lzmail
+          (cd backend && CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -X main.desktopBuild=true" \
+            -o "../desktop/bin/lzmail" ./cmd/lzmail)
+          (cd desktop && npx electron-builder --mac dmg --x64 --publish never)
+          mv "desktop/release/lzmail-macos-x64-$VERSION.dmg" "desktop/release/lzmail-macos-x86_64-$VERSION.dmg"
+
+      - name: Build macOS arm64 dmg
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          rm -f desktop/bin/lzmail
+          (cd backend && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath \
+            -ldflags="-s -w -X main.desktopBuild=true" \
+            -o "../desktop/bin/lzmail" ./cmd/lzmail)
+          (cd desktop && npx electron-builder --mac dmg --arm64 --publish never)
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: desktop/release/lzmail-macos-*.dmg
+
+  publish:
+    needs: [lpk, desktop-windows, desktop-linux, desktop-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: List artifacts
+        run: ls -lh dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -85,4 +316,4 @@ jobs:
           name: LZMail v${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: |
-            lzc/${{ env.LPK_FILE }}
+            dist/*

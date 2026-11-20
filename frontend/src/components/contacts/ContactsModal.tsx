@@ -14,14 +14,14 @@ import { useDebounce } from '@/hooks/useSSE'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
-  { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
-  { bg: 'rgba(237,245,236,1)', text: '#5b8c5a' },
-  { bg: 'rgba(240,244,247,1)', text: '#6b8fa3' },
-  { bg: 'rgba(254,249,240,1)', text: '#c9a96e' },
-  { bg: 'rgba(253,235,242,1)', text: '#a855f7' },
-  { bg: 'rgba(254,240,238,1)', text: '#ea580c' },
-  { bg: 'rgba(224,242,254,1)', text: '#0891b2' },
-  { bg: 'rgba(243,237,227,1)', text: '#8b7355' },
+  { bg: 'var(--brand-green-soft)', text: 'var(--brand-green)' },
+  { bg: 'var(--brand-gold-soft)', text: 'var(--brand-gold-strong)' },
+  { bg: 'var(--brand-blue-soft)', text: 'var(--brand-blue)' },
+  { bg: 'var(--brand-red-soft)', text: 'var(--brand-red)' },
+  { bg: 'var(--color-info-soft)', text: 'var(--color-info)' },
+  { bg: 'var(--color-warning-soft)', text: 'var(--color-warning)' },
+  { bg: 'var(--color-success-soft)', text: 'var(--color-success)' },
+  { bg: 'var(--color-bg-secondary)', text: 'var(--color-text-secondary)' },
 ]
 
 function getAvatarStyle(name: string) {
@@ -183,7 +183,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
               onChange={e => handleSearch(e.target.value)}
               placeholder="搜索姓名或邮箱..."
               className="w-[200px] h-[36px] pl-9 pr-8 rounded-[8px] outline-none text-[13px]"
-              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
             />
             {searchQ && (
               <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}>
@@ -196,7 +196,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
               value={selectedAccountId ?? ''}
               onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
               className="h-[36px] px-3 rounded-[8px] text-[13px] outline-none"
-              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+              style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
             >
               {accounts.map(a => (
                 <option key={a.id} value={a.id}>{a.email}</option>
@@ -217,7 +217,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                   onChange={e => handleSearch(e.target.value)}
                   placeholder="搜索姓名或邮箱..."
                   className="w-full h-[40px] pl-9 pr-8 rounded-[8px] outline-none text-[13px]"
-                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
                 />
                 {searchQ && (
                   <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}>
@@ -230,7 +230,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                   value={selectedAccountId ?? ''}
                   onChange={e => { setPage(0); setSelectedAccountId(Number(e.target.value)) }}
                   className="h-[40px] px-3 rounded-[8px] text-[13px] outline-none w-full"
-                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
+                  style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}
                 >
                   {accounts.map(a => (
                     <option key={a.id} value={a.id}>{a.email}</option>
@@ -245,8 +245,8 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
               {/* Table title bar */}
               <div className="flex items-center justify-between mb-4" style={{ flexWrap: 'wrap', rowGap: 8 }}>
                 <div className="flex items-center gap-3">
-                  <div style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: 'var(--color-primary)' }} />
-                  <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
+                  <div style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: 'var(--tech-cyan)', boxShadow: '0 0 6px rgba(var(--tech-cyan-rgb), 0.35)' }} />
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>{searchQ ? `搜索 "${searchQ}"` : '全部联系人'}</span>
                   <span className="flex items-center justify-center" style={{ width: 40, height: 20, borderRadius: 6, backgroundColor: 'var(--color-primary-soft)', fontSize: 11, fontWeight: 500, color: 'var(--color-primary)' }}>
                     {total}人
                   </span>
@@ -255,7 +255,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                     disabled={accounts.length === 0}
                     title={accounts.length === 0 ? '请先在「账号管理」中添加邮箱账号' : undefined}
                     className="flex items-center gap-1.5 h-[32px] px-3 rounded-[8px] text-[13px] font-medium transition-all hover:opacity-90"
-                    style={{ backgroundColor: accounts.length === 0 ? 'var(--color-border)' : 'var(--color-primary)', color: accounts.length === 0 ? 'var(--color-text-faint)' : '#ffffff', border: 'none', cursor: accounts.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-family-cn)' }}
+                    style={{ backgroundColor: accounts.length === 0 ? 'var(--color-border)' : 'var(--tech-cyan)', color: accounts.length === 0 ? 'var(--color-text-faint)' : 'var(--color-on-primary)', border: 'none', cursor: accounts.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-display)', boxShadow: accounts.length === 0 ? 'none' : '0 4px 18px rgba(var(--tech-cyan-rgb), 0.25)' }}
                   >
                     <UserAdd className="w-4 h-4" />
                     添加联系人
@@ -264,7 +264,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                 <button
                   onClick={() => setSortAsc(a => !a)}
                   className="flex items-center gap-1 h-7 px-3 rounded-[8px]"
-                  style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}
+                  style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-family-cn)' }}
                 >
                   {sortAsc ? '按名称' : '按名称↓'}
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -382,7 +382,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                         {menuId === c.id && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setMenuId(null)} />
-                            <div className="absolute right-4 z-50 mt-1 rounded-[10px] py-1 shadow-lg" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', width: 110 }}>
+                            <div className="absolute right-4 z-50 mt-1 rounded-[10px] py-1 shadow-lg" style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--card-border)', width: 110 }}>
                               <button
                                 onClick={() => openEdit(c)}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[var(--muted)]"
@@ -435,7 +435,7 @@ export function ContactsModal({ open, onClose }: { open: boolean; onClose: () =>
                           key={p}
                           onClick={() => setPage(p)}
                           className="h-7 w-7 rounded-[8px] text-[13px] flex items-center justify-center"
-                          style={{ backgroundColor: page === p ? 'var(--primary)' : 'var(--muted)', color: page === p ? '#fff' : 'var(--foreground-secondary)' }}
+                          style={{ backgroundColor: page === p ? 'var(--tech-cyan)' : 'var(--muted)', color: page === p ? 'var(--color-on-primary)' : 'var(--foreground-secondary)', fontFamily: 'var(--font-mono)' }}
                         >
                           {p + 1}
                         </button>

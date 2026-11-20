@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { api } from '@/lib/api'
 import { formatBytes } from '@/lib/format'
-import { CustomSelect } from '@/components/ui/CustomSelect'
+import { Seg } from '@/components/ui/Seg'
 import { DeleteConfirm } from '@/components/DeleteConfirm'
 import type { MailStats, StorageTreeNode } from '@/types'
 import { Folder, FileText, RefreshCw, Trash2, Edit, Contact } from '@/lib/icons'
@@ -24,15 +24,17 @@ function DirTree({ entries, onSelect, selected, depth = 0 }: {
               onClick={() => e.is_dir && onSelect(e.path)}
               className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-[6px] text-[12px] transition-colors hover:bg-[var(--accent)]"
               style={{
-                backgroundColor: isSelected ? 'var(--primary-light)' : 'transparent',
-                color: isSelected ? 'var(--primary)' : 'var(--foreground-secondary)',
+                backgroundColor: isSelected ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+                color: isSelected ? 'var(--tech-cyan)' : 'var(--foreground-secondary)',
                 paddingLeft: `${12 + depth * 16}px`,
                 cursor: e.is_dir ? 'pointer' : 'default',
               }}
             >
-              <span style={{ color: e.is_dir ? 'var(--gold)' : 'var(--foreground-tertiary)', fontSize: '14px' }}>
-                {e.is_dir ? '📁' : '📄'}
-              </span>
+              {e.is_dir ? (
+                <Folder className="w-[15px] h-[15px] shrink-0" style={{ color: 'var(--brand-gold-strong)' }} />
+              ) : (
+                <FileText className="w-[15px] h-[15px] shrink-0" style={{ color: 'var(--foreground-tertiary)' }} />
+              )}
               <span className="truncate">{e.name}</span>
             </button>
             {e.subdirs && e.subdirs.length > 0 && (
@@ -170,36 +172,39 @@ export function StorageSettings() {
   const cleanupDays = parseInt(settings.auto_cleanup_days || '30')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ borderRadius: 16, border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--card-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="settings-view">
+      <section className="theme-card">
+        <h3 className="card-title">存储管理</h3>
+        <div style={{ padding: '0 4px' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '0.6px solid var(--color-border-soft)' }}>
+          <div className="storage-dir-row">
             <div>
-              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>归档根目录</div>
-              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>邮件 .eml 文件与附件的存储路径</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>归档根目录</div>
+              <div style={{ fontSize: 12, color: 'var(--foreground-tertiary)' }}>邮件 .eml 文件与附件的存储路径</div>
             </div>
             {!editingPath ? (
               <button onClick={handleStartEdit} disabled={!hasAccount} title={!hasAccount ? '请先添加邮箱账号' : '点击修改归档目录'}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500, backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)', color: 'var(--foreground-secondary)', opacity: hasAccount ? 1 : 0.5, cursor: hasAccount ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
-                <Folder style={{ fontSize: 16, width: 16, height: 16, color: 'var(--gold)' }} />
-                <span style={{ fontFamily: 'monospace' }}>{hasAccount ? archivePath : '添加账号后显示'}</span>
-                <Edit style={{ fontSize: 14, width: 14, height: 14, color: 'var(--foreground-tertiary)' }} />
+                className="storage-dir-btn"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500, backgroundColor: 'var(--accent)', border: '0.6px solid var(--color-border)', color: 'var(--foreground-secondary)', opacity: hasAccount ? 1 : 0.5, cursor: hasAccount ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
+                <Folder style={{ fontSize: 16, width: 16, height: 16, flexShrink: 0, color: 'var(--gold)' }} />
+                <span className="storage-dir-path" style={{ fontFamily: 'monospace' }}>{hasAccount ? archivePath : '添加账号后显示'}</span>
+                <Edit style={{ fontSize: 14, width: 14, height: 14, flexShrink: 0, color: 'var(--foreground-tertiary)' }} />
               </button>
             ) : (
-              <div className="flex-1 max-w-[600px] ml-8">
+              <div className="flex-1 max-w-[600px] ml-8 storage-path-edit">
                 <div className="flex items-center gap-2">
                   <input value={pathInput} onChange={e => { pathInputTouched.current = true; setPathInput(e.target.value) }}
                     className="flex-1 h-10 px-3 rounded-lg outline-none text-[13px] font-mono bg-transparent"
-                    style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+                    style={{ border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }}
                     placeholder="输入归档路径，如 ~/lzmail/archives" />
-                  <button onClick={handleSavePath} className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all" style={{ backgroundColor: 'var(--primary)', color: '#ffffff' }}>确定</button>
-                  <button onClick={handleCancelEdit} className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all" style={{ border: '0.7px solid var(--card-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
+                  <button onClick={handleSavePath} className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all" style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-display)' }}>确定</button>
+                  <button onClick={handleCancelEdit} className="px-3 h-10 rounded-lg text-[12px] font-medium transition-all" style={{ border: '0.6px solid var(--color-border)', color: 'var(--foreground-tertiary)' }}>取消</button>
                 </div>
                 <div className="relative mt-2" ref={treeRef}>
                   {dirLoading && <div className="text-[12px] py-2" style={{ color: 'var(--muted-foreground)' }}>加载中...</div>}
                   {dirError && <div className="text-[12px] py-2" style={{ color: 'var(--danger)' }}>{dirError}</div>}
                   {treeOpen && dirEntries.length > 0 && (
-                    <div className="rounded-[8px] p-2 max-h-48 overflow-y-auto" style={{ border: '0.7px solid var(--card-border)', backgroundColor: 'var(--background)' }}>
+                    <div className="rounded-[8px] p-2 max-h-48 overflow-y-auto" style={{ border: '0.6px solid var(--color-border)', backgroundColor: 'var(--background)' }}>
                       <div className="text-[11px] font-semibold px-2 pb-1" style={{ color: 'var(--muted-foreground)' }}>目录层级</div>
                       <DirTree entries={dirEntries} onSelect={handleSelectDir} selected={pathInput} />
                     </div>
@@ -217,48 +222,48 @@ export function StorageSettings() {
             </div>
           )}
         </div>
-        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
+        <div className="px-6 py-5" style={{ borderBottom: '0.6px solid var(--color-border-soft)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>目录结构</div>
-              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>当前归档文件的组织方式预览</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>目录结构</div>
+              <div style={{ fontSize: 12, color: 'var(--foreground-tertiary)' }}>当前归档文件的组织方式预览</div>
             </div>
             <button onClick={reloadTree} className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
               <RefreshCw className="w-3.5 h-3.5" /> 刷新
             </button>
           </div>
-          <div className="mt-4 rounded-[12px] p-5 max-h-[280px] overflow-auto" style={{ backgroundColor: 'var(--accent)', border: '0.7px solid var(--card-border)' }}>
+          <div className="mt-4 rounded-[12px] p-5 max-h-[280px] overflow-auto" style={{ backgroundColor: 'var(--accent)', border: '0.6px solid var(--color-border)' }}>
             {storageRoot ? <StorageTreeView root={storageRoot} /> : (
               <div className="text-[12px] py-2" style={{ color: 'var(--muted-foreground)' }}>暂无可预览的目录结构</div>
             )}
           </div>
         </div>
-        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--card-border)' }}>
-          <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>存储统计</div>
-          <div className="flex items-center gap-8">
-            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>附件占用</div></div>
-            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--muted-foreground)' }}>—</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件 .eml（未计入）</div></div>
-            <div className="text-center"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{totalEmails.toLocaleString()}</div><div className="text-[11px] mt-1" style={{ color: 'var(--foreground-tertiary)' }}>邮件总数</div></div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between text-xs mb-1.5"><span style={{ color: 'var(--foreground-tertiary)' }}>已使用</span><span style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span></div>
+        <div className="px-6 py-5" style={{ borderBottom: '0.6px solid var(--color-border-soft)' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>存储统计</div>
+          <div className="storage-stats">
+            <div className="storage-stat"><div className="storage-stat-value" style={{ color: 'var(--foreground)' }}>{formatBytes(storageBytes)}</div><div className="storage-stat-label">附件占用</div></div>
+            <div className="storage-stat"><div className="storage-stat-value" style={{ color: 'var(--muted-foreground)' }}>—</div><div className="storage-stat-label">邮件 .eml（未计入）</div></div>
+            <div className="storage-stat"><div className="storage-stat-value" style={{ color: 'var(--foreground)' }}>{totalEmails.toLocaleString()}</div><div className="storage-stat-label">邮件总数</div></div>
+            <div className="storage-stat"><div className="storage-stat-value" style={{ color: 'var(--foreground)' }}>{contactCount.toLocaleString()}</div><div className="storage-stat-label">联系人</div></div>
+            <div className="storage-progress">
+              <div className="flex items-center justify-between text-xs mb-1.5"><span style={{ color: 'var(--foreground-tertiary)' }}>已使用</span><span style={{ color: 'var(--foreground)', fontFamily: 'var(--font-mono)' }}>{formatBytes(storageBytes)} / {formatBytes(storageCap)}</span></div>
               <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--muted)' }}>
                 <div className="h-full rounded-full transition-all" style={{ width: `${storagePct}%`, backgroundColor: 'var(--gold)' }} />
               </div>
             </div>
-            <div className="text-center min-w-[80px]"><div className="text-[22px] font-bold" style={{ color: 'var(--foreground)' }}>{contactCount.toLocaleString()}</div><div className="flex items-center justify-center gap-1 mt-1" style={{ color: 'var(--foreground-tertiary)' }}><Contact className="w-3 h-3" /><span className="text-[11px]">联系人</span></div></div>
           </div>
         </div>
         <div className="px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="storage-cleanup-row">
             <div>
-              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>自动清理</div>
-              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>定期清理已删除的邮件</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>自动清理</div>
+              <div style={{ fontSize: 12, color: 'var(--foreground-tertiary)' }}>定期清理已删除的邮件</div>
             </div>
-            <div className="flex items-center gap-2">
-              <CustomSelect value={String(cleanupDays)} width={110} onChange={(v) => setSetting('auto_cleanup_days', v)}
-                options={[{ value: '0', label: '永不清理' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }, { value: '180', label: '180 天' }]} />
+            <div className="storage-cleanup-controls">
+              <Seg<string> value={String(cleanupDays)} size="sm" onChange={(v) => setSetting('auto_cleanup_days', v)}
+                options={[{ value: '0', label: '永不' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }, { value: '180', label: '180 天' }]} />
               {accounts.length > 1 && (
-                <CustomSelect value={cleanupAccountId ? String(cleanupAccountId) : String(accounts[0].id)} width={160} onChange={(v) => setCleanupAccountId(Number(v))}
+                <Seg<string> value={cleanupAccountId ? String(cleanupAccountId) : String(accounts[0].id)} size="sm" onChange={(v) => setCleanupAccountId(Number(v))}
                   options={accounts.map(a => ({ value: String(a.id), label: a.name || a.email }))} />
               )}
               {accounts.length > 0 && (
@@ -271,7 +276,7 @@ export function StorageSettings() {
                     if (preview.count === 0) { toast.success(`${acc.name || acc.email} 没有需要清理的邮件`); return }
                     setCleanupConfirm({ acc, days: d, count: preview.count })
                   } catch (e: any) { toast.error(e.message || '获取清理预览失败') }
-                }} className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-[12px] font-medium transition-all hover:opacity-80" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '0.7px solid var(--danger-border)' }}>
+                }} className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-[12px] font-medium transition-all hover:opacity-80" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '0.6px solid color-mix(in srgb, var(--danger) 30%, transparent)', fontFamily: 'var(--font-display)' }}>
                   <Trash2 className="w-3.5 h-3.5" /> 立即清理
                 </button>
               )}
@@ -297,7 +302,8 @@ export function StorageSettings() {
             <div className="text-[12px] px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--accent)', color: 'var(--foreground-tertiary)' }}>请先添加邮箱账号后启用自动清理</div>
           )}
         </div>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }

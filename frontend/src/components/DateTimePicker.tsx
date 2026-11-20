@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Calendar, ChevronDown, ChevronRight, ChevronUp, ArrowLeft } from '@/lib/icons'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -51,8 +52,25 @@ export function DateTimePicker({ value, onChange, className }: {
   })
   const [hour, setHour] = useState(() => parseValue(value).getHours())
   const [minute, setMinute] = useState(() => parseValue(value).getMinutes())
-  const [alignRight, setAlignRight] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const updatePosition = () => {
+    const rect = ref.current?.getBoundingClientRect()
+    if (!rect) return
+    const width = 268
+    const margin = 8
+    const estHeight = 340
+    let left = rect.right - width
+    if (left < margin) left = rect.left
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin))
+    let top = rect.bottom + 4
+    if (top + estHeight > window.innerHeight - margin) {
+      top = Math.max(margin, rect.top - estHeight - 4)
+    }
+    setPos({ top, left })
+  }
 
   useEffect(() => {
     if (open) {
@@ -61,19 +79,29 @@ export function DateTimePicker({ value, onChange, className }: {
       setSelectedDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()))
       setHour(d.getHours())
       setMinute(d.getMinutes())
-      const rect = ref.current?.getBoundingClientRect()
-      if (rect) setAlignRight(rect.right + 268 > (window.innerWidth || document.documentElement.clientWidth))
+      updatePosition()
     }
     // 仅在打开面板时用 value 初始化各选区；打开后父级 value 变化不应覆盖用户的输入。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   useEffect(() => {
+    if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current?.contains(t)) return
+      if (dropdownRef.current?.contains(t)) return
+      setOpen(false)
     }
-    if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    const reposition = () => updatePosition()
+    document.addEventListener('mousedown', handler)
+    window.addEventListener('resize', reposition)
+    window.addEventListener('scroll', reposition, true)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      window.removeEventListener('resize', reposition)
+      window.removeEventListener('scroll', reposition, true)
+    }
   }, [open])
 
   const year = viewDate.getFullYear()
@@ -111,16 +139,17 @@ export function DateTimePicker({ value, onChange, className }: {
     <div ref={ref} className={`relative ${className || ''}`}>
       <button type="button" onClick={() => setOpen(!open)}
         className="flex items-center gap-2 h-9 px-3 rounded-lg text-sm outline-none transition-colors hover:bg-[var(--muted)] cursor-pointer"
-        style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)', color: 'var(--foreground)' }}
+        style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }}
       >
         <Calendar className="w-4 h-4 shrink-0" style={{ color: 'var(--foreground-secondary)' }} />
         <span className="text-[12px] font-medium whitespace-nowrap" style={{ color: 'var(--foreground-secondary)' }}>{display}</span>
         <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: 'var(--foreground-tertiary)' }} />
       </button>
 
-      {open && (
-        <div className={`absolute z-50 top-full mt-1 rounded-[12px] ${alignRight ? 'right-0' : 'left-0'}`}
-          style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', boxShadow: '0 8px 28px rgba(0,0,0,0.14)', width: 268, padding: 12 }}
+      {open && pos && createPortal((
+        <div ref={dropdownRef}
+          className="rounded-[12px]"
+          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, backgroundColor: 'var(--color-bg-card)', border: '0.6px solid var(--color-border)', boxShadow: 'var(--shadow-lg), 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.12)', width: 268, padding: 12 }}
         >
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => setViewDate(new Date(year, month - 1, 1))}
@@ -150,32 +179,33 @@ export function DateTimePicker({ value, onChange, className }: {
                 <button key={i} type="button" onClick={() => setSelectedDate(new Date(year, month, day))}
                   className="h-7 flex items-center justify-center rounded-[6px] text-[12px] transition-colors"
                   style={{
-                    backgroundColor: sel ? 'var(--primary)' : today ? 'var(--primary-light)' : 'transparent',
-                    color: sel ? '#fff' : today ? 'var(--primary)' : 'var(--foreground)',
+                    backgroundColor: sel ? 'var(--tech-cyan)' : today ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+                    color: sel ? 'var(--color-on-primary)' : today ? 'var(--tech-cyan)' : 'var(--foreground)',
                     fontWeight: sel || today ? 600 : 400,
-                    border: today && !sel ? '0.7px solid var(--primary)' : 'none',
+                    border: today && !sel ? '0.6px solid rgba(var(--tech-cyan-rgb), 0.35)' : 'none',
+                    boxShadow: sel ? '0 0 10px rgba(var(--tech-cyan-rgb), 0.3)' : 'none',
                   }}
                 >{day}</button>
               )
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-3 mt-3 pt-3" style={{ borderTop: '0.7px solid var(--card-border)' }}>
+          <div className="flex items-center justify-center gap-3 mt-3 pt-3" style={{ borderTop: '0.6px solid var(--color-border-soft)' }}>
             <TimeStepper label="时" value={hour} step={stepHour} />
             <span className="text-base font-semibold" style={{ color: 'var(--foreground-tertiary)' }}>:</span>
             <TimeStepper label="分" value={minute} step={stepMinute} />
           </div>
 
-          <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '0.7px solid var(--card-border)' }}>
+          <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '0.6px solid var(--color-border-soft)' }}>
             <button type="button" onClick={() => setOpen(false)}
               className="h-8 px-3 rounded-lg text-[12px] transition-colors hover:bg-[var(--muted)]"
               style={{ color: 'var(--foreground-tertiary)' }}>取消</button>
             <button type="button" onClick={confirm}
-              className="h-8 px-4 rounded-lg text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: 'var(--primary)' }}>确定</button>
+              className="h-8 px-4 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-display)' }}>确定</button>
           </div>
         </div>
-      )}
+      ), document.body)}
     </div>
   )
 }

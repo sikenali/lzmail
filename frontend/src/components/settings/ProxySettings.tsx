@@ -52,13 +52,14 @@ export function ProxySettings() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ borderRadius: 16, border: '0.7px solid var(--card-border)', backgroundColor: 'var(--card)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <div style={{ padding: '20px 24px' }}>
+    <div className="settings-view">
+      <section className="theme-card">
+        <h3 className="card-title">代理设置</h3>
+        <div style={{ padding: '0 4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <div>
-              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>代理模式</div>
-              <div style={{ fontSize: 14, color: 'var(--foreground-tertiary)' }}>选择 IMAP 连接使用的代理方式</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>代理模式</div>
+              <div style={{ fontSize: 12, color: 'var(--foreground-tertiary)' }}>选择 IMAP 连接使用的代理方式</div>
             </div>
           </div>
           <Seg<'none' | 'global' | 'custom'>
@@ -72,38 +73,40 @@ export function ProxySettings() {
           />
         </div>
         {proxyMode === 'custom' && (
-          <div style={{ padding: '20px 24px', borderTop: '1px solid var(--card-border)' }}>
-            <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--foreground)' }}>自定义代理</div>
+          <div style={{ padding: '20px 24px', borderTop: '0.6px solid var(--color-border-soft)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>自定义代理</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
               <CustomSelect value={proxyProto} width={110} onChange={v => setProxyProto(v)}
                 options={[{ value: 'http', label: 'HTTP' }, { value: 'https', label: 'HTTPS' }, { value: 'socks5', label: 'SOCKS5' }]} />
               <input value={proxyHost} onChange={e => setProxyHost(e.target.value)} placeholder="代理地址，如 127.0.0.1"
-                style={{ flex: 1, minWidth: 160, height: 40, padding: '0 12px', borderRadius: 8, outline: 'none', fontSize: 13, backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+                style={{ flex: 1, minWidth: 160, height: 40, padding: '0 12px', borderRadius: 8, outline: 'none', fontSize: 13, backgroundColor: 'var(--muted)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }} />
               <input value={proxyPort} onChange={e => setProxyPort(e.target.value)} placeholder="端口"
-                style={{ width: 96, height: 40, padding: '0 12px', borderRadius: 8, outline: 'none', fontSize: 13, backgroundColor: 'var(--muted)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }} />
+                style={{ width: 96, height: 40, padding: '0 12px', borderRadius: 8, outline: 'none', fontSize: 13, backgroundColor: 'var(--muted)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)' }} />
             </div>
           </div>
         )}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ padding: '16px 24px', borderTop: '0.6px solid var(--color-border-soft)', display: 'flex', justifyContent: 'flex-end' }}>
           <button onClick={handleSave} disabled={saving}
             style={{
               padding: '0 16px',
               height: 40,
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
+              backgroundColor: 'var(--tech-cyan)',
+              color: 'var(--color-on-primary)',
               borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 500,
+              fontSize: 13,
+              fontWeight: 600,
               border: 'none',
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.5 : 1,
-              transition: 'all 0.2s',
+              transition: 'all var(--t-fast) ease',
+              fontFamily: 'var(--font-display)',
+              boxShadow: '0 4px 18px rgba(var(--tech-cyan-rgb), 0.25)',
             }}
           >
             {saving ? '保存中…' : '保存设置'}
           </button>
         </div>
-      </div>
+      </section>
       <div style={{ fontSize: 12, color: 'var(--foreground-tertiary)' }}>
         <div>• 不使用代理：直连邮件服务器</div>
         <div style={{ marginTop: 4 }}>• 全局代理：自动使用系统环境变量 http_proxy/https_proxy</div>

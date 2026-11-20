@@ -616,20 +616,20 @@ function MailPageInner() {
     if (!detail) return null
     return (
       <div className="relative">
-        <button onClick={() => setMoreOpen(v => !v)} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[var(--muted)] transition-colors" style={{ backgroundColor: 'var(--muted)' }}>
+        <button onClick={() => setMoreOpen(v => !v)} className="w-9 h-9 flex items-center justify-center rounded-[8px] hover:bg-[rgba(0,212,170,0.08)] transition-colors" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}>
           <i className="ri-more-2-line w-5 h-5" style={{ color: 'var(--foreground-secondary)' }}></i>
         </button>
         {moreOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
-            <div className="absolute right-0 top-full z-50 mt-1 rounded-[10px] py-1 shadow-lg w-40" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
-              <button onClick={() => { setMoreOpen(false); handleDeleteRequest() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+            <div className="absolute right-0 top-full z-50 mt-1 rounded-[10px] py-1 shadow-lg w-40" style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)' }}>
+              <button onClick={() => { setMoreOpen(false); handleDeleteRequest() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className="ri-delete-bin-line w-4 h-4"></i> 删除
               </button>
-              <button onClick={() => { setMoreOpen(false); handleReplyAll() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              <button onClick={() => { setMoreOpen(false); handleReplyAll() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className="ri-reply-line w-4 h-4"></i> 回复全部
               </button>
-              <button onClick={() => { setMoreOpen(false); handleMarkAllRead() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              <button onClick={() => { setMoreOpen(false); handleMarkAllRead() }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className="ri-mail-check-line w-4 h-4"></i> 全部已读
               </button>
               <button onClick={() => {
@@ -646,11 +646,11 @@ function MailPageInner() {
                   setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: !newStarred } : e))
                   toast.error('标星失败，请重试')
                 })
-              }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className={`ri-star${detail.email.is_starred ? '-fill' : '-line'} w-4 h-4`} style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)' }}></i>
                 {detail.email.is_starred ? '取消标星' : '标星'}
               </button>
-              <button onClick={() => { setMoreOpen(false); setFolderMoveOpen(v => !v) }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[var(--muted)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              <button onClick={() => { setMoreOpen(false); setFolderMoveOpen(v => !v) }} className="w-full px-3 py-2.5 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)] flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <i className="ri-folder-transfer-line w-4 h-4"></i> 移动到
               </button>
                       </div>
@@ -670,12 +670,12 @@ function MailPageInner() {
 
   return (
     <AppShell>
-      <div className="flex h-full relative">
+      <div className="mail-workspace relative">
         {/* Email list */}
-        <div className={`${mobileView === 'detail' ? 'hidden md:flex' : 'flex'} w-full ${listWidth} border-r shrink-0 flex flex-col`} style={{ backgroundColor: 'var(--background)', borderColor: 'var(--card-border)' }}>
+        <div className={`${mobileView === 'detail' ? 'hidden md:flex' : 'flex'} w-full ${listWidth} mail-list-pane card`}>
           {/* Mobile top bar when in detail view */}
           {mobileView === 'detail' && (
-            <div className="flex items-center h-12 px-4 shrink-0 md:hidden border-b" style={{ backgroundColor: 'var(--background)', borderBottom: '1px solid var(--card-border)' }}>
+            <div className="flex items-center h-12 px-4 shrink-0 md:hidden border-b" style={{ backgroundColor: 'var(--background)', borderBottom: '0.6px solid var(--color-border)' }}>
               <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-sm font-medium active:opacity-60" style={{ color: 'var(--primary)' }}>
                 <i className="ri-arrow-left-s-line w-5 h-5"></i> 返回
               </button>
@@ -686,32 +686,31 @@ function MailPageInner() {
             </div>
           )}
 
-          {/* Toolbar */}
-          <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b`} style={{ borderColor: 'var(--card-border)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold" style={{ color: 'var(--foreground)' }}>
-                  {filterTabs.find(t => t.value === folder)?.label || folderLabelMap[folder] || '收件箱'}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>共 {totalCount || emails.length} 封</span>
-              </div>
-               <div className="flex items-center gap-2">
-<Tooltip text="刷新" side="bottom">
-                  <button onClick={handleRefresh} disabled={storeEmpty === true} className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--muted)', opacity: storeEmpty ? 0.35 : 1 }}>
+          {/* Toolbar — lzc2vsdx panel-header 结构 */}
+          <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b`} style={{ borderColor: 'var(--color-border-soft)' }}>
+            <div className="panel-header" style={{ marginBottom: 12 }}>
+              <span className="title-bar" />
+              <span className="title-text">
+                {filterTabs.find(t => t.value === folder)?.label || folderLabelMap[folder] || '收件箱'}
+              </span>
+              <span className="title-desc">共 {totalCount || emails.length} 封</span>
+              <div className="panel-actions">
+                <Tooltip text="刷新" side="bottom">
+                  <button onClick={handleRefresh} disabled={storeEmpty === true} className="flex items-center justify-center rounded-[8px] transition-all duration-200 hover:opacity-80 disabled:cursor-not-allowed" style={{ width: 32, height: 32, backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)', opacity: storeEmpty ? 0.35 : 1 }}>
                     <RefreshCw className={`w-4 h-4 ${(firstLoad && loading) || syncing ? 'animate-spin' : ''}`} style={{ color: 'var(--foreground-secondary)', opacity: storeEmpty ? 0.5 : 1, animationDuration: '0.8s' }} />
                   </button>
-</Tooltip>
-               </div>
+                </Tooltip>
+              </div>
             </div>
                <form onSubmit={e => e.preventDefault()} className="flex items-center gap-2 mt-3">
                   {emails.length > 0 && (
                     <div className="shrink-0 mt-0.5 cursor-pointer" onClick={handleSelectAll} title={selectAllChecked ? '取消全选' : (searching ? '全选当前页搜索结果' : '全选当前文件夹邮件')}>
                       {selectAllChecked ? (
                         <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
-                          <Check className="w-3 h-3" style={{ color: '#fff' }} />
+                          <Check className="w-3 h-3" style={{ color: 'var(--color-on-primary)' }} />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 rounded-md border-2" style={{ borderColor: 'rgba(139,115,85,0.4)' }} />
+                        <div className="w-5 h-5 rounded-md border-2" style={{ borderColor: 'rgba(var(--tech-cyan-rgb), 0.28)' }} />
                       )}
                     </div>
                   )}
@@ -719,10 +718,10 @@ function MailPageInner() {
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
                     <input ref={searchInputRef} value={searchQ} onChange={e => setSearchQ(e.target.value)}
                       className="w-full h-10 pl-9 pr-8 rounded-[8px] outline-none text-sm placeholder:text-[var(--muted-foreground)]"
-                      style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', color: 'var(--foreground)' }}
+                      style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border)', color: 'var(--foreground)', fontFamily: 'var(--font-family-cn)', transition: 'border-color var(--t-fast) ease, box-shadow var(--t-fast) ease' }}
                       placeholder="搜索邮件..." />
                     {searchQ && (
-                      <button onClick={() => setSearchQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
+                      <button onClick={() => setSearchQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)', color: 'var(--foreground-secondary)' }}>
                         <i className="ri-close-line w-3 h-3"></i>
                       </button>
                     )}
@@ -747,11 +746,11 @@ function MailPageInner() {
             ) : (
               groupedEmails.map((group) => (
                 <div key={group.label}>
-                  <div className="px-5 pt-3 pb-1 text-[11px] font-semibold sticky top-0 z-10" style={{ color: 'var(--foreground-tertiary)', backgroundColor: 'var(--background)' }}>
+                  <div className="px-5 pt-3 pb-1 text-[11px] font-semibold sticky top-0 z-10" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--background)', fontFamily: 'var(--font-mono)', letterSpacing: '0.5px' }}>
                     {group.label}（{group.items.length}）
                   </div>
                   {group.items.map((email) => (
-                    <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[var(--muted)]'}`} style={{ borderColor: 'var(--card-border)' }}>
+                    <div key={email.id} className={`border-b transition-colors ${selectedId === email.id ? 'bg-[var(--muted)]' : 'hover:bg-[rgba(0,212,170,0.08)]'}`} style={{ borderColor: 'var(--card-border)' }}>
                         <MailItem email={email} brand={email.account_brand} folder={folder} selected={selectedId === email.id} checked={selectedIds.has(email.id)} onSelect={handleSelect} onToggle={toggleSelect} onStar={handleStar} density={mailDensity} isMobile={isMobile && mobileView !== 'detail'} />
                       </div>
                   ))}
@@ -781,19 +780,19 @@ function MailPageInner() {
                 已选择 {selectAllChecked ? `全部 ${totalCount} 封` : `${selectedIds.size} 封`}
               </span>
               <div className="flex items-center gap-1 ml-auto">
-                <Tooltip text="标记已读"><button onClick={() => handleBulk('mark_read')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><MailCheck className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                <Tooltip text="标记未读"><button onClick={() => handleBulk('mark_unread')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><Mail className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(true)} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><FolderMove className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                <Tooltip text="删除"><button onClick={handleDeleteRequest} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[var(--muted)] transition-colors"><Trash2 className="w-4 h-4" style={{ color: 'var(--danger)' }} /></button></Tooltip>
+                <Tooltip text="标记已读"><button onClick={() => handleBulk('mark_read')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[rgba(0,212,170,0.08)] transition-colors"><MailCheck className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="标记未读"><button onClick={() => handleBulk('mark_unread')} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[rgba(0,212,170,0.08)] transition-colors"><Mail className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(true)} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[rgba(0,212,170,0.08)] transition-colors"><FolderMove className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                <Tooltip text="删除"><button onClick={handleDeleteRequest} className="w-8 h-8 flex items-center justify-center rounded-[6px] hover:bg-[rgba(0,212,170,0.08)] transition-colors"><Trash2 className="w-4 h-4" style={{ color: 'var(--danger)' }} /></button></Tooltip>
               </div>
             </div>
           )}
         </div>
 
         {/* Email detail */}
-        <div className={`${mobileView === 'detail' ? 'fixed inset-0 z-30 bg-[var(--background)] overflow-auto md:static md:inset-auto md:z-auto md:flex-1' : 'hidden md:flex-1'}`}>
+        <div className={`${mobileView === 'detail' ? 'fixed inset-0 z-30 bg-[var(--background)] overflow-auto md:static md:inset-auto md:z-auto md:flex-1' : 'hidden md:flex-1'} mail-detail-pane card`}>
           {detail ? (
-            <div className="max-w-[780px] mx-auto px-4 py-4 md:px-8 md:py-6 space-y-6 pb-28 md:pb-6">
+            <div className="max-w-[820px] mx-auto px-4 py-4 md:px-8 md:py-6 space-y-6 pb-28 md:pb-6">
               {/* Mobile top action bar */}
               <div className="flex items-center justify-between px-0 py-3 border-b md:hidden" style={{ borderColor: 'var(--card-border)', paddingTop: 'calc(12px + env(safe-area-inset-top))' }}>
                 <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--primary)' }}>
@@ -805,15 +804,29 @@ function MailPageInner() {
                 <MoreActionsDropdown />
               </div>
 
+              {/* lzc2vsdx editor-card 头部 */}
+              <div className="hidden md:flex editor-header" style={{ height: 46, paddingLeft: 8, paddingRight: 8 }}>
+                <div className="editor-title">
+                  <i className="ri-mail-open-line" />
+                  <span>邮件详情</span>
+                  <span className="editor-count">第 {selectedId ? (emails.findIndex(e => e.id === selectedId) + 1) : 0} 封 / 共 {totalCount || emails.length} 封</span>
+                </div>
+                <span className="hint-row">
+                  <i className="ri-information-line" />
+                  <span>支持回复、转发与标签管理</span>
+                </span>
+              </div>
+              <div className="editor-divider hidden md:block" />
+
               {/* PC/Tablet toolbar */}
-              <div className="hidden md:flex items-center justify-between px-6 py-4">
+              <div className="hidden md:flex items-center justify-between px-6 py-4" style={{ background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
                 <div className="flex items-center gap-4">
 <div className="flex items-center gap-1">
-                  <Tooltip text="删除"><button onClick={handleDeleteRequest} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Trash2 className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                  <Tooltip text="回复"><button onClick={handleReply} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                  <Tooltip text="回复全部"><button onClick={handleReplyAll} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                  <Tooltip text="转发"><button onClick={handleForward} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Forward className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                   <Tooltip text="全部已读"><button onClick={handleMarkAllRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="删除"><button onClick={handleDeleteRequest} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Trash2 className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="回复"><button onClick={handleReply} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="回复全部"><button onClick={handleReplyAll} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Reply className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="转发"><button onClick={handleForward} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Forward className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                   <Tooltip text="全部已读"><button onClick={handleMarkAllRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><MailCheck className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                    <Tooltip text={detail.email.is_starred ? '取消标星' : '标星'}><button onClick={async () => {
                      if (!selectedId) return
                      const newStarred = !detail.email.is_starred
@@ -827,20 +840,20 @@ function MailPageInner() {
                        setEmails(prev => prev.map(e => e.id === selectedId ? { ...e, is_starred: !newStarred } : e))
                        toast.error('标星失败，请重试')
                      }
-                   }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}>
+                   }} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}>
                      <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
                    </button></Tooltip>
                   </div>
                   <div className="w-px h-6 bg-[var(--card-border)]" />
                   <div className="flex items-center gap-1 relative">
-                  <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                  <Tooltip text={detail.email.is_read ? '标记未读' : '标记已读'}><button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
-                  <Tooltip text="标签"><button onClick={() => setTagMgrOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><Tag className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="移动到"><button onClick={() => setFolderMoveOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><FolderMove className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text={detail.email.is_read ? '标记未读' : '标记已读'}><button onClick={handleMarkRead} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Tags className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
+                  <Tooltip text="标签"><button onClick={() => setTagMgrOpen(o => !o)} className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><Tag className="w-[18px] h-[18px]" style={{ color: 'var(--foreground-secondary)' }} /></button></Tooltip>
                  {folderMoveOpen && (
                    <>
                      <div className="fixed inset-0 z-40" onClick={() => setFolderMoveOpen(false)} />
                      <div className="absolute left-0 top-full z-50 mt-1 rounded-[10px] py-1 shadow-lg"
-                       style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)', minWidth: 140 }}>
+                       style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)', minWidth: 140 }}>
                          {[
                            { value: 'INBOX', label: '收件箱' },
                            { value: 'Sent', label: '已发送' },
@@ -852,7 +865,7 @@ function MailPageInner() {
                            { value: 'SPAM', label: '垃圾邮件' },
                          ].map(f => (
                          <button key={f.value} onClick={() => handleMove(f.value)}
-                           className="w-full px-3 py-2 text-left text-[13px] hover:bg-[var(--muted)]"
+                           className="w-full px-3 py-2 text-left text-[13px] hover:bg-[rgba(0,212,170,0.08)]"
                            style={{ color: 'var(--foreground)' }}>
                            {f.label}
                          </button>
@@ -867,15 +880,15 @@ function MailPageInner() {
                    第 {selectedId ? (emails.findIndex(e => e.id === selectedId) + 1) : 0} 封，共 {totalCount || emails.length} 封
                  </span>
                  <div className="flex items-center gap-1">
-                   <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><ChevronUp className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
-                   <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--muted)' }}><ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                   <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><ChevronUp className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
+                   <button onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-full transition-opacity hover:opacity-80" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}><ChevronDown className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} /></button>
                  </div>
                </div>
              </div>
 
               {/* Subject */}
               <div className="flex items-start justify-between gap-4">
-                <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)' }}>{detail.email.subject || '(无主题)'}</h1>
+                <h1 className="text-[22px] leading-snug font-bold" style={{ color: 'var(--foreground)', fontFamily: 'var(--font-display)', letterSpacing: '-0.2px' }}>{detail.email.subject || '(无主题)'}</h1>
                 <div className="flex items-center gap-2 shrink-0 pt-1">
                     <Tooltip text={detail.email.is_starred ? '取消标星' : '标星'}>
                     <button
@@ -894,7 +907,7 @@ function MailPageInner() {
                         }
                       }}
                       className="w-9 h-9 flex items-center justify-center rounded-[8px] transition-all hover:opacity-80"
-                      style={{ backgroundColor: 'var(--muted)' }}
+                      style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}
                       aria-label={detail.email.is_starred ? '取消标星' : '标星'}
                     >
                       <Star className="w-[18px] h-[18px]" style={{ color: detail.email.is_starred ? 'var(--gold)' : 'var(--foreground-secondary)', fill: detail.email.is_starred ? 'var(--gold)' : 'none' }} />
@@ -904,7 +917,7 @@ function MailPageInner() {
               </div>
 
               {/* From info */}
-              <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'var(--muted)' }}>
+              <div className="flex items-start gap-4 p-4 rounded-[12px]" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}>
                 {detail.email.sender_avatar_url || detail.email.recipient_avatar_url ? (
                   <img src={detail.email.recipient_avatar_url && detail.email.folder === 'Sent' ? detail.email.recipient_avatar_url : detail.email.sender_avatar_url} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 ) : (
@@ -959,7 +972,7 @@ function MailPageInner() {
 
               {/* Attachments */}
               {detail.attachments && detail.attachments.length > 0 && (
-                <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--background)', border: '0.7px solid var(--border)' }}>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--background)', border: '0.6px solid var(--color-border)' }}>
                   <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>附件（{detail.attachments.length}个）</div>
                   <div className="flex flex-wrap gap-2">
                     {detail.attachments.map((att, i) => (
@@ -979,7 +992,7 @@ function MailPageInner() {
                         } catch { toast.error('附件下载失败，请重试') }
                       }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-opacity hover:opacity-70"
-                        style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--border)', cursor: 'pointer' }}>
+                        style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)', cursor: 'pointer' }}>
                         <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                           style={{ backgroundColor: i % 2 === 0 ? 'var(--danger-bg)' : 'var(--success-bg)' }}>
                           <Paperclip className="w-4 h-4" style={{ color: i % 2 === 0 ? 'var(--danger)' : 'var(--success)' }} />
@@ -1003,7 +1016,7 @@ function MailPageInner() {
               )}
 
               {/* Quick reply */}
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)' }}>
                 <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>快捷回复</div>
                 <RichTextEditor ref={replyEditorRef} value={replyText} onChange={setReplyText} placeholder="输入回复内容..." className="min-h-[120px] h-[120px]" />
                 <div className="flex items-center justify-between mt-2 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
@@ -1011,7 +1024,7 @@ function MailPageInner() {
                     <Tooltip text="发送">
                     <button onClick={handleReply} disabled={!replyText.trim() && !replyEditorRef.current?.getText().trim()}
                       className="flex items-center gap-2 px-4 h-9 rounded-lg font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-                      style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+                      style={{ backgroundColor: 'var(--primary)', color: 'var(--color-on-primary)' }}>
                       <Send className="w-4 h-4" /> 发送
                     </button>
                     </Tooltip>
@@ -1019,11 +1032,11 @@ function MailPageInner() {
               </div>
 
               {/* Mobile bottom action bar - sits above PageFooter */}
-              <div className="fixed bottom-[58px] left-0 right-0 z-40 flex items-center gap-2 md:hidden" style={{ backgroundColor: 'var(--card)', borderTop: '1px solid var(--card-border)', height: '48px', padding: '0 16px', boxSizing: 'border-box' }}>
-                <button onClick={handleReply} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>
+              <div className="fixed bottom-[58px] left-0 right-0 z-40 flex items-center gap-2 md:hidden" style={{ backgroundColor: 'var(--card)', borderTop: '0.6px solid var(--color-border)', height: '48px', padding: '0 16px', boxSizing: 'border-box' }}>
+                <button onClick={handleReply} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'var(--primary)', color: 'var(--color-on-primary)' }}>
                   <i className="ri-reply-line w-5 h-5"></i> 回复
                 </button>
-                <button onClick={handleForward} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground-secondary)' }}>
+                <button onClick={handleForward} className="flex-1 flex items-center justify-center gap-2 h-full rounded-lg font-medium active:opacity-70" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)', color: 'var(--foreground-secondary)' }}>
                   <i className="ri-corner-up-right-line w-5 h-5"></i> 转发
                 </button>
               </div>
@@ -1043,8 +1056,8 @@ function MailPageInner() {
                 if (!email) return null
                 return (
                   <div key={email.id} onClick={() => { setSelectedIds(new Set([email.id])); handleSelect(email.id) }}
-                    className="p-4 rounded-xl cursor-pointer transition-colors hover:bg-[var(--muted)]"
-                    style={{ backgroundColor: 'var(--card)', border: '0.7px solid var(--card-border)' }}>
+                    className="p-4 rounded-xl cursor-pointer transition-colors hover:bg-[rgba(0,212,170,0.08)]"
+                    style={{ backgroundColor: 'var(--card)', border: '0.6px solid var(--color-border)' }}>
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                         style={{ backgroundColor: getAccountAvatarBg({ brand_color: email.account_brand }) }}>
@@ -1092,7 +1105,7 @@ function MailPageInner() {
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--muted)' }}>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.05)', border: '0.6px solid var(--color-border-soft)' }}>
                   <Mail className="w-8 h-8" style={{ color: 'var(--muted-foreground)' }} />
                 </div>
                 <p className="text-sm" style={{ color: 'var(--foreground-tertiary)' }}>选择一封邮件查看详情</p>

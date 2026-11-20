@@ -7,14 +7,14 @@ import { Tooltip } from '@/components/Tooltip'
 import type { Contact } from '@/types'
 
 const AVATAR_COLOR_PAIRS = [
-  { bg: 'rgba(253,242,242,1)', text: '#c43d3d' },
-  { bg: 'rgba(237,245,236,1)', text: '#5b8c5a' },
-  { bg: 'rgba(240,244,247,1)', text: '#6b8fa3' },
-  { bg: 'rgba(254,249,240,1)', text: '#c9a96e' },
-  { bg: 'rgba(253,235,242,1)', text: '#a855f7' },
-  { bg: 'rgba(254,240,238,1)', text: '#ea580c' },
-  { bg: 'rgba(224,242,254,1)', text: '#0891b2' },
-  { bg: 'rgba(243,237,227,1)', text: '#8b7355' },
+  { bg: 'var(--brand-green-soft)', text: 'var(--brand-green)' },
+  { bg: 'var(--brand-gold-soft)', text: 'var(--brand-gold-strong)' },
+  { bg: 'var(--brand-blue-soft)', text: 'var(--brand-blue)' },
+  { bg: 'var(--brand-red-soft)', text: 'var(--brand-red)' },
+  { bg: 'var(--color-info-soft)', text: 'var(--color-info)' },
+  { bg: 'var(--color-warning-soft)', text: 'var(--color-warning)' },
+  { bg: 'var(--color-success-soft)', text: 'var(--color-success)' },
+  { bg: 'var(--color-bg-secondary)', text: 'var(--color-text-secondary)' },
 ]
 
 function getAvatarStyle(name: string) {
@@ -194,7 +194,7 @@ export default function ContactPicker({
       {/* 输入区域 */}
       <div
         className="flex items-center gap-2 h-[41px] rounded-[8px] px-3 cursor-text"
-        style={{ backgroundColor: 'var(--background)', border: '0.7px solid rgba(229,217,196,1)' }}
+        style={{ backgroundColor: 'var(--background)', border: '0.6px solid var(--color-border)' }}
         onClick={() => setOpen(true)}
       >
         {/* 已选联系人标签 */}
@@ -204,13 +204,13 @@ export default function ContactPicker({
               <span
                 key={email}
                 className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full text-[11px] font-medium shrink-0"
-                style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}
+                style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.08)', color: 'var(--color-text-secondary)' }}
               >
                 {email}
                 <button
                   onClick={e => { e.stopPropagation(); setManualEmails(prev => prev.filter(x => x !== email)) }}
-                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-[rgba(196,61,61,0.1)]"
-                  style={{ color: 'rgba(184,168,138,1)' }}
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-[rgba(0,212,170,0.12)]"
+                  style={{ color: 'var(--color-text-muted)' }}
                 >
                   <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -225,13 +225,13 @@ export default function ContactPicker({
                 <span
                   key={id}
                   className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full text-[11px] font-medium shrink-0"
-                  style={{ backgroundColor: 'rgba(243,237,227,1)', color: 'rgba(107,91,79,1)' }}
+                  style={{ backgroundColor: 'rgba(var(--tech-cyan-rgb), 0.08)', color: 'var(--color-text-secondary)' }}
                 >
                   {c.email}
                   <button
                     onClick={e => { e.stopPropagation(); toggleSelect(c) }}
-                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-[rgba(196,61,61,0.1)]"
-                    style={{ color: 'rgba(184,168,138,1)' }}
+                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-[rgba(0,212,170,0.12)]"
+                    style={{ color: 'var(--color-text-muted)' }}
                   >
                     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -257,7 +257,7 @@ export default function ContactPicker({
         <Tooltip text="选择联系人">
           <button
             onClick={e => { e.stopPropagation(); setOpen(true) }}
-            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(243,237,227,1)]"
+            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[rgba(var(--tech-cyan-rgb), 0.08)]"
             style={{ color: 'var(--foreground-secondary)' }}
             aria-label="选择联系人"
           >
@@ -272,14 +272,14 @@ export default function ContactPicker({
           className="absolute z-50 top-full mt-1 left-0 rounded-[12px] overflow-hidden"
           style={{
             backgroundColor: 'var(--card)',
-            border: '0.7px solid rgba(229,217,196,1)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            border: '0.6px solid var(--color-border)',
+            boxShadow: 'var(--shadow-lg), 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.12)',
             minWidth: 300,
             maxWidth: 380,
           }}
         >
           {/* 搜索栏 */}
-          <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(229,217,196,1)' }}>
+          <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--color-border)' }}>
             <input
               value={query}
               onChange={e => handleInputChange(e.target.value)}
@@ -304,7 +304,7 @@ export default function ContactPicker({
           ) : filtered.length === 0 && query.trim().length > 0 ? (
             EMAIL_RE.test(query.trim()) ? (
               <div
-                className="px-3 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
+                className="px-3 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(var(--tech-cyan-rgb), 0.08)]"
                 style={{ color: 'var(--foreground)' }}
                 onClick={() => addManualEmail(query)}
               >
@@ -324,15 +324,15 @@ export default function ContactPicker({
                   <div
                     key={contact.id}
                     className="hover-row-warm flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
-                    style={{ backgroundColor: isSelected ? 'rgba(243,237,227,0.5)' : 'transparent' }}
+                    style={{ backgroundColor: isSelected ? 'rgba(var(--tech-cyan-rgb), 0.08)' : 'transparent' }}
                     onClick={() => toggleSelect(contact)}
                   >
                     {/* 勾选框 */}
                     <div
                       className="w-5 h-5 rounded shrink-0 flex items-center justify-center transition-all"
                       style={{
-                        border: isSelected ? '1.5px solid rgba(196,61,61,1)' : '1.5px solid rgba(229,217,196,1)',
-                        backgroundColor: isSelected ? 'rgba(196,61,61,1)' : 'transparent',
+                        border: isSelected ? '1.5px solid var(--tech-cyan)' : '1.5px solid var(--color-border)',
+                        backgroundColor: isSelected ? 'var(--tech-cyan)' : 'transparent',
                       }}
                     >
                       {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -350,7 +350,7 @@ export default function ContactPicker({
                       <div className="text-[11px] truncate" style={{ color: 'var(--muted-foreground)' }}>{contact.email}</div>
                     </div>
                     {contact.company && (
-                      <span className="text-[11px] shrink-0" style={{ color: 'rgba(184,168,138,1)' }}>{contact.company}</span>
+                      <span className="text-[11px] shrink-0" style={{ color: 'var(--color-text-muted)' }}>{contact.company}</span>
                     )}
                   </div>
                 )
@@ -361,8 +361,8 @@ export default function ContactPicker({
           {/* 更多按钮 */}
           {hasMore && (
             <div
-              className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(243,237,227,1)]"
-              style={{ borderTop: '0.7px solid rgba(229,217,196,1)', color: 'rgba(107,91,79,1)', fontSize: 12 }}
+              className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer transition-colors hover:bg-[rgba(var(--tech-cyan-rgb), 0.08)]"
+              style={{ borderTop: '0.6px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: 12 }}
               onClick={e => { e.stopPropagation(); toggleShowAll() }}
             >
               <span>查看全部 {allContacts.length} 位联系人</span>
@@ -372,7 +372,7 @@ export default function ContactPicker({
 
           {/* 搜索结果显示计数 */}
           {query.trim().length > 0 && !loading && (
-            <div className="px-4 py-2 text-[11px]" style={{ color: 'var(--muted-foreground)', borderTop: '0.7px solid rgba(229,217,196,1)' }}>
+            <div className="px-4 py-2 text-[11px]" style={{ color: 'var(--muted-foreground)', borderTop: '0.6px solid var(--color-border)' }}>
               找到 {filtered.length} 位联系人
             </div>
           )}
@@ -381,7 +381,7 @@ export default function ContactPicker({
           {selectedCount > 0 && (
             <div
               className="flex items-center justify-end gap-2 px-4 py-2.5"
-              style={{ borderTop: '0.7px solid rgba(229,217,196,1)' }}
+              style={{ borderTop: '0.6px solid var(--color-border)' }}
               onClick={e => e.stopPropagation()}
             >
               <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
@@ -389,7 +389,7 @@ export default function ContactPicker({
               </span>
               <button
                 className="px-4 h-[30px] rounded-[8px] text-[13px] font-medium transition-opacity hover:opacity-85"
-                style={{ backgroundColor: 'rgba(196,61,61,1)', color: '#ffffff' }}
+                style={{ backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-display)', boxShadow: '0 4px 16px rgba(var(--tech-cyan-rgb), 0.25)' }}
                 onClick={handleConfirm}
               >
                 确认

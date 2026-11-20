@@ -27,7 +27,7 @@ export function PersonalSettings() {
           options={SUB_TABS.map(t => ({ value: t.key, label: t.label, icon: t.icon }))}
         />
       </div>
-      <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
+      <div style={{ paddingRight: 4 }}>
         {subTab === 'style' && <StyleSettings />}
         {subTab === 'proxy' && <ProxySettings />}
         {subTab === 'storage' && <StorageSettings />}

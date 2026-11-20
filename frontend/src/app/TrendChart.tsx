@@ -50,11 +50,12 @@ export default function TrendChart({ data }: { data: TrendPoint[] }) {
             return [value, label]
           }}
           contentStyle={{
-            backgroundColor: 'var(--card)',
-            border: '1px solid var(--card-border)',
+            backgroundColor: 'var(--color-bg-card)',
+            border: '0.6px solid rgba(var(--tech-cyan-rgb), 0.25)',
             borderRadius: '12px',
-            boxShadow: 'var(--card-shadow)',
+            boxShadow: 'var(--shadow-lg)',
             color: 'var(--foreground)',
+            fontFamily: 'var(--font-display)',
           }}
           labelStyle={{ color: 'var(--foreground-secondary)' }}
         />

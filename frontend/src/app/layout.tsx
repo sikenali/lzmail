@@ -20,8 +20,8 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
-    { media: '(prefers-color-scheme: dark)', color: '#232324' },
+    { media: '(prefers-color-scheme: light)', color: '#F4F7FA' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A0F18' },
   ],
 }
 
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
         <script
           dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('lzmail_theme');var dark=false;if(t==='dark'){dark=true}else if(t==='light'){dark=false}else{var mq=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');dark=!!(mq&&mq.matches)}document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){}})()` }}
           suppressHydrationWarning

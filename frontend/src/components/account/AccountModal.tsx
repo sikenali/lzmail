@@ -334,10 +334,10 @@ const handleCreate = async () => {
    }
 
    const getSyncBadge = (a: Account, state: string, mode: string) => {
-     if (state === 'syncing') return { label: '同步中', color: 'var(--color-warning)', bg: 'rgba(243,156,18,0.1)', dotColor: 'var(--color-warning)' }
-     if (state === 'error') return { label: '异常', color: 'var(--color-error)', bg: 'rgba(231,76,60,0.1)', dotColor: 'var(--color-error)' }
+     if (state === 'syncing') return { label: '同步中', color: 'var(--color-warning)', bg: 'var(--color-warning-soft)', dotColor: 'var(--color-warning)' }
+     if (state === 'error') return { label: '异常', color: 'var(--color-error)', bg: 'var(--color-error-soft)', dotColor: 'var(--color-error)' }
      if (mode === 'poll') return { label: '轮询 · 1分钟', color: 'var(--color-text-muted)', bg: 'var(--color-bg-secondary)', dotColor: 'var(--color-text-muted)' }
-     return { label: 'IDLE · 实时', color: 'var(--color-success)', bg: 'rgba(78,155,122,0.1)', dotColor: 'var(--color-success)' }
+     return { label: 'IDLE · 实时', color: 'var(--color-success)', bg: 'var(--color-success-soft)', dotColor: 'var(--color-success)' }
    }
 
    const formatLastSync = (ts: number) => {
@@ -390,8 +390,8 @@ const handleCreate = async () => {
         <div style={{ flex: 1, minHeight: 0, gap: isMobile ? 12 : 20, display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '12px 16px' : '20px 24px' }}>
              {/* Left: Account list */}
              <nav style={isMobile
-               ? { width: '100%', flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 8, display: 'flex', flexDirection: 'row', gap: 8, overflowX: 'auto' }
-               : { width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
+               ? { width: '100%', flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border-soft)', borderRadius: 12, padding: 8, display: 'flex', flexDirection: 'row', gap: 8, overflowX: 'auto' }
+               : { width: 240, flexShrink: 0, backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border-soft)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
               {/* 服务商分类：选中后直接套用该服务商的服务器预设 */}
               {PROVIDER_CHIPS.map(({ key, label }) => {
                 const active = key === provider
@@ -417,9 +417,9 @@ const handleCreate = async () => {
                           padding: '0 12px', borderRadius: 8, fontSize: 12, whiteSpace: 'nowrap',
                           fontWeight: active ? 500 : 400, cursor: 'pointer', border: 'none',
                           flexShrink: 0, fontFamily: 'var(--font-family-cn)',
-                          backgroundColor: active ? 'var(--color-bg-white)' : 'transparent',
-                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                          boxShadow: active ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                          backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+                          color: active ? 'var(--tech-cyan)' : 'var(--color-text-secondary)',
+                          boxShadow: active ? 'inset 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.25)' : 'none',
                           transition: 'all var(--transition-base)',
                         }
                       : {
@@ -428,9 +428,9 @@ const handleCreate = async () => {
                           fontWeight: active ? 500 : 400, cursor: 'pointer', border: 'none',
                           width: '100%', flexShrink: 0, textAlign: 'left',
                           fontFamily: 'var(--font-family-cn)',
-                          backgroundColor: active ? 'var(--color-bg-white)' : 'transparent',
-                          color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                          boxShadow: active ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                          backgroundColor: active ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
+                          color: active ? 'var(--tech-cyan)' : 'var(--color-text-secondary)',
+                          boxShadow: active ? 'inset 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.25)' : 'none',
                           transition: 'all var(--transition-base)',
                         }}
                   >
@@ -468,21 +468,21 @@ const handleCreate = async () => {
                         height: 52,
                         padding: isMobile ? '0 10px' : '0 12px',
                         borderRadius: 10,
-                        backgroundColor: isSelected ? 'var(--color-bg-white)' : 'transparent',
+                        backgroundColor: isSelected ? 'rgba(var(--tech-cyan-rgb), 0.10)' : 'transparent',
                         border: 'none',
                         cursor: 'pointer',
                         width: isMobile ? 'auto' : '100%',
                         flexShrink: 0,
                         textAlign: 'left',
                         transition: 'all var(--transition-base)',
-                        boxShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                        boxShadow: isSelected ? 'inset 0 0 0 0.6px rgba(var(--tech-cyan-rgb), 0.25)' : 'none',
                       }}
                     >
                       <div style={{ width: 32, height: 32, borderRadius: 9999, backgroundColor: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                         <User style={{ width: '60%', height: '60%', color: 'white', display: 'block', margin: 'auto' }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? 150 : undefined }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: isSelected ? 'var(--tech-cyan)' : 'var(--color-text-primary)', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {a.name || a.email}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-cn)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -501,53 +501,53 @@ const handleCreate = async () => {
             {/* Right: Form */}
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingRight: 4 }}>
               <div className="p-1" style={{ paddingBottom: 16 }}>
-                <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
+                <div className="p-5 rounded-[12px]" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border-soft)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                      <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>账号名称</label>
                       <input placeholder={activeProvider ? `账号名称（${activeProvider.label}）` : '账号名称（如：Gmail）'} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>邮箱地址</label>
                       <input placeholder={activeProvider ? `邮箱：${activeProvider.emailHint}` : '邮箱：例如 xxx@example.com'} value={form.email} onChange={e => handleEmailChange(e.target.value)}
-                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>IMAP 服务器</label>
                       <input placeholder={activeProvider ? `IMAP：${activeProvider.imapHost}` : 'IMAP 服务器（如 imap.qq.com）'} value={form.imap_host} onChange={e => setForm({ ...form, imap_host: e.target.value })}
-                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>IMAP 端口</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <input type="number" value={form.imap_port} onChange={e => setForm({ ...form, imap_port: Number(e.target.value) })}
-                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                       </div>
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>SMTP 服务器</label>
                       <input placeholder={activeProvider ? `SMTP：${activeProvider.smtpHost}` : 'SMTP 服务器（如 smtp.qq.com）'} value={form.smtp_host} onChange={e => setForm({ ...form, smtp_host: e.target.value })}
-                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>SMTP 端口</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <input type="number" value={form.smtp_port} onChange={e => setForm({ ...form, smtp_port: Number(e.target.value) })}
-                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                          className="h-9 px-3 rounded-lg outline-none text-sm flex-1" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                       </div>
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>用户名</label>
                       <input placeholder={activeProvider ? `用户名：${activeProvider.usernameHint}` : '用户名 / 邮箱地址'} value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}
-                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                        className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                     </div>
                     {form.auth_method !== 'oauth2' && (
                       <div>
                         <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 4, fontFamily: 'var(--font-family-cn)' }}>密码</label>
                         <div style={{ position: 'relative' }}>
                           <input type={showPassword ? 'text' : 'password'} placeholder={isEditing ? '留空则不修改密码' : (activeProvider ? `密码：${activeProvider.passwordTip}` : '密码 / 授权码')} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                            className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-primary)', paddingRight: 36, fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
+                            className="h-9 px-3 rounded-lg outline-none text-sm w-full" style={{ backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-primary)', paddingRight: 36, fontFamily: 'var(--font-family-cn)', boxSizing: 'border-box' }} />
                           <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }} aria-label={showPassword ? '隐藏密码' : '显示密码'}>
                             {showPassword ? <EyeOff style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} /> : <Eye style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }} />}
                           </button>
@@ -557,19 +557,19 @@ const handleCreate = async () => {
                    {form.auth_method === 'oauth2' && !isEditing && (
                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, fontSize: 12, backgroundColor: 'var(--color-bg-white)', color: 'var(--color-text-muted)' }}>
                        <span>已授权</span>
-                       <span style={{ marginLeft: 'auto', fontSize: 10, padding: '2px 6px', borderRadius: 4, backgroundColor: 'var(--color-primary)', color: 'white' }}>OAuth</span>
+                       <span style={{ marginLeft: 'auto', fontSize: 10, padding: '2px 6px', borderRadius: 4, backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', fontFamily: 'var(--font-mono)' }}>OAuth</span>
                      </div>
                    )}
                    {(provider === 'gmail' || provider === 'outlook') && !isEditing && (
                      <button type="button" onClick={() => handleOAuthLogin(provider as Exclude<ProviderKey, 'auto' | 'other'>)}
-                       style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: '0.7px solid var(--color-border)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-white)', cursor: 'pointer' }}>
+                       style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: '0.6px solid var(--color-border)', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-white)', cursor: 'pointer' }}>
                        <svg style={{ width: 14, height: 14 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                        OAuth 授权
                      </button>
                    )}
                  </div>
                  {activeProvider && (
-                   <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, fontSize: 12, lineHeight: '20px', display: 'flex', alignItems: 'flex-start', gap: 8, backgroundColor: 'var(--color-bg-white)', border: '0.7px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                   <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, fontSize: 12, lineHeight: '20px', display: 'flex', alignItems: 'flex-start', gap: 8, backgroundColor: 'var(--color-bg-white)', border: '0.6px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
                      <span style={{ flexShrink: 0, fontWeight: 600, color: activeProvider.brand }}>{activeProvider.label}</span>
                      <span style={{ fontFamily: 'var(--font-family-cn)' }}>{activeProvider.guide}</span>
                    </div>
@@ -583,7 +583,7 @@ const handleCreate = async () => {
                      重置
                    </button>
                    <button onClick={isEditing ? handleSaveEdit : handleCreate} disabled={saving}
-                     style={{ padding: '0 16px', height: 40, backgroundColor: 'var(--color-primary)', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: 'none', opacity: saving ? 0.5 : 1, fontFamily: 'var(--font-family-cn)' }}>
+                     style={{ padding: '0 16px', height: 40, backgroundColor: 'var(--tech-cyan)', color: 'var(--color-on-primary)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', opacity: saving ? 0.5 : 1, fontFamily: 'var(--font-display)', boxShadow: '0 4px 18px rgba(var(--tech-cyan-rgb), 0.25)' }}>
                      {saving ? '保存中...' : (isEditing ? '保存修改' : '保存账号')}
                    </button>
                  </div>
@@ -591,7 +591,7 @@ const handleCreate = async () => {
 
                {/* Account details when editing */}
                {isEditing && selectedAccount && (
-                 <div className="p-5 rounded-[12px] mt-4" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-soft)' }}>
+                 <div className="p-5 rounded-[12px] mt-4" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '0.6px solid var(--color-border-soft)' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--color-border-soft)' }}>
                      <div style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: syncStatus[selectedAccount.id] === 'syncing' ? 'var(--color-warning)' : syncStatus[selectedAccount.id] === 'error' ? 'var(--color-error)' : 'var(--color-success)', animation: syncStatus[selectedAccount.id] === 'syncing' ? 'pulse 1.5s ease infinite' : 'none' }}></div>
                      <span style={{ fontSize: 13, color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-cn)' }}>
@@ -618,7 +618,7 @@ const handleCreate = async () => {
                        立即同步
                      </button>
                      <button onClick={() => handleDelete(selectedAccount.id)}
-                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 36, borderRadius: 8, fontSize: 13, cursor: 'pointer', backgroundColor: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', color: 'var(--color-error)', fontFamily: 'var(--font-family-cn)' }}>
+                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 36, borderRadius: 8, fontSize: 13, cursor: 'pointer', backgroundColor: 'var(--color-error-soft)', border: '0.6px solid color-mix(in srgb, var(--color-error) 30%, transparent)', color: 'var(--color-error)', fontFamily: 'var(--font-display)' }}>
                        <Trash2 style={{ width: 14, height: 14 }} />
                        删除账号
                      </button>

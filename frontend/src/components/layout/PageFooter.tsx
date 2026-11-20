@@ -51,7 +51,7 @@ export function PageFooter({
         target="_blank"
         rel="noopener noreferrer"
         style={{
-          color: 'var(--color-primary)',
+          color: 'var(--tech-cyan)',
           textDecoration: 'none',
           cursor: 'pointer',
           fontWeight: 500,
@@ -66,13 +66,15 @@ export function PageFooter({
     <footer
       className="px-4 sm:px-8"
       style={{
-        height: 'calc(58px + env(safe-area-inset-bottom))',
+        height: 'calc(48px + env(safe-area-inset-bottom))',
         paddingBottom: 'env(safe-area-inset-bottom)',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
-        backgroundColor: 'linear-gradient(180deg, var(--color-bg-white) 0%, var(--color-bg-secondary) 100%)',
-        borderTop: '1px solid var(--color-border-soft)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(var(--bg-rgb), 0.78)',
+        borderTop: '0.6px solid rgba(var(--tech-cyan-rgb), 0.12)',
         flexShrink: 0,
       }}
     >
@@ -81,14 +83,15 @@ export function PageFooter({
         style={{ cursor: 'pointer' }}
         onClick={() => router.push('/')}
       >
-        <LogoIcon size={20} />
+        <LogoIcon size={18} />
         <span
           className="hidden sm:inline"
           style={{
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 500,
-            color: 'var(--color-text-body)',
-            fontFamily: 'var(--font-family-cn)',
+            color: 'var(--color-text-secondary)',
+            fontFamily: 'var(--font-display)',
+            letterSpacing: '0.2px',
           }}
         >
           懒猫微邮
@@ -96,7 +99,7 @@ export function PageFooter({
       </div>
 
       {/* 移动端：版权居中 */}
-      <div className="flex-1 text-center md:hidden">{copyright('12px')}</div>
+      <div className="flex-1 text-center md:hidden">{copyright('11px')}</div>
 
       {/* 桌面端：操作图标居中 */}
       <div className="hidden md:flex items-center mx-auto">{actions}</div>
@@ -105,7 +108,7 @@ export function PageFooter({
       <div className="md:hidden flex items-center shrink-0">{actions}</div>
 
       {/* 桌面端：版权靠右 */}
-      <div className="hidden md:flex items-center shrink-0">{copyright('14px')}</div>
+      <div className="hidden md:flex items-center shrink-0">{copyright('12px')}</div>
     </footer>
   )
 }

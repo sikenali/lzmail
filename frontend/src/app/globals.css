@@ -105,11 +105,11 @@ html {
   --glow-md: 0 8px 32px rgba(var(--tech-cyan-rgb), 0.18);
   --glow-lg: 0 12px 48px rgba(var(--tech-cyan-rgb), 0.25);
 
-  /* ── §1 字体族 ───────────────────────────────────────────── */
-  --font-display: 'Space Grotesk', 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-  --font-family: 'Inter', 'SourceHanSans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-family-cn: 'SourceHanSans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* ── §1 字体族（与 lzeditor 默认字体一致，字体文件自托管于 public/fonts）── */
+  --font-display: 'Space Grotesk', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, 'SFMono-Regular', monospace;
+  --font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family-cn: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
 
   /* ── §11.2 动效变量 ──────────────────────────────────────── */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -254,7 +254,7 @@ body {
   background-image:
     radial-gradient(1100px 520px at 50% -8%, rgba(var(--tech-cyan-rgb), 0.07), transparent 70%);
   color: var(--foreground);
-  font-family: var(--font-family-cn), var(--font-family);
+  font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
